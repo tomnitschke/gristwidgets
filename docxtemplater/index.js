@@ -82,7 +82,7 @@ ready(async function(){
     ],
   });
   grist.onRecord(gristRecordSelected);
-  grist.onMessage("message", gristMessageReceived);
+  grist.on("message", gristMessageReceived);
   document.querySelector("#button_process").addEventListener("click", function(){
     processFile(currentData.url, currentData.data, currentData.outputFileName);
   });
