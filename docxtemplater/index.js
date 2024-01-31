@@ -33,12 +33,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   }
 }
 
-async function gristMessageReceived(message) {
-  if (!message.tableId) {
-    document.body.innerHTML = "<b>Please grant access first.</b>";
-  }
-}
-
 async function processFile(url, data, outputFileName) {
   try {
     if (!url || !data || !outputFileName) {
@@ -78,7 +72,6 @@ ready(async function(){
     ],
   });
   grist.onRecord(gristRecordSelected);
-  grist.on("message", gristMessageReceived);
   document.querySelector("#button_process").addEventListener("click", function(){
     processFile(currentData.url, currentData.data, currentData.outputFileName);
   });
