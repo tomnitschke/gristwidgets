@@ -10,10 +10,14 @@ const ATTACHMENTID_COL_NAME = "attachment_id";
 const DATA_COL_NAME = "data";
 const FILENAME_COL_NAME = "filename";
 const currentData = { url: null, data: null, outputFileName: null, };
-const elem_status = document.querySelector("#status");
 
 function handleError(err) {
-  elem_status.innerHTML = String(err);
+  let elem = document.querySelector("#status");
+  if (elem) {
+    elem.innerHTML = String(err);
+  } else {
+    document.body.innerHTML = String(err);
+  }
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
