@@ -64,9 +64,9 @@ ready(async function(){
   grist.ready({
     requiredAccess: "read table",
     columns: [
-      { name: ATTACHMENTID_COL_NAME, title: "Attachment ID", description: "ID number of a Grist attachment." },
-      { name: DATA_COL_NAME, title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
-      { name: FILENAME_COL_NAME, title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
+      { name: ATTACHMENTID_COL_NAME, type: "Integer", title: "Attachment ID", description: "ID number of a Grist attachment." },
+      { name: DATA_COL_NAME, type: "Any", title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
+      { name: FILENAME_COL_NAME, type: "Text", title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
     ],
   });
   grist.onRecord(gristRecordSelected);
