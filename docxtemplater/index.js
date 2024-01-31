@@ -36,10 +36,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
 async function gristMessageReceived(message) {
   if (!message.tableId) {
     document.body.innerHTML = "<b>Please grant access first.</b>";
-    return;
-  }
-  if (message.dataChange) {
-    document.body.innerHTML = "<b>Please set up 'select by' for this widget first.</b>";
   }
 }
 
