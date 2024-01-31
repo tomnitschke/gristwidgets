@@ -28,6 +28,8 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     } catch (err) {
       handleError(err);
     }
+  } else {
+    document.body.innerHTML = "<b>Please map all columns first.</b>";
   }
 }
 
