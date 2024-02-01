@@ -49,7 +49,7 @@ async function processFile(url, data, outputFileName) {
       if (err) {
         throw err;
       }
-      const templater = docxtemplater(new PizZip(content), {
+      const templater = window.docxtemplater(new PizZip(content), {
         paragraphLoop: true,
         linebreaks: true,
       });
