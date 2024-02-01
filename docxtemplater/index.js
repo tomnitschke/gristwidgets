@@ -67,7 +67,7 @@ async function processFile(url, data, outputFileName) {
         paragraphLoop: true,
         linebreaks: true,
         delimiters: { start: "((", end: "))" },
-        parser: AngularExpressionParser,
+        parser: AngularExpressionsParser,
       });
       templater.render(data);
       saveAs(templater.getZip().generate({
