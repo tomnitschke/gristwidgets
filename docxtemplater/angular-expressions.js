@@ -199,7 +199,11 @@ exportedValue.Lexer = expressions.Lexer;
 module.exports = exportedValue;
 
 
-},{"angular-expressions":2}],2:[function(require,module,exports){
+},{"angular-expressions":3}],2:[function(require,module,exports){
+const AngularExpressionsParser = require("./expressions.js");
+
+
+},{"./expressions.js":1}],3:[function(require,module,exports){
 "use strict";
 
 var parse = require("./parse.js");
@@ -279,7 +283,7 @@ exports.Parser = Parser;
 exports.compile = compile;
 exports.filters = filters;
 
-},{"./parse.js":3}],3:[function(require,module,exports){
+},{"./parse.js":4}],4:[function(require,module,exports){
 /* remove eslint errors to see if there is something really wrong */
 /*eslint quotes: [0]*/
 /*eslint indent: [0]*/
@@ -4905,4 +4909,4 @@ function $ParseProvider() {
 exports.Lexer = Lexer;
 exports.Parser = Parser;
 
-},{}]},{},[1]);
+},{}]},{},[2]);
