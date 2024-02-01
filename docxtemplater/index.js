@@ -52,6 +52,7 @@ async function processFile(url, data, outputFileName) {
       const templater = new window.docxtemplater(new PizZip(content), {
         paragraphLoop: true,
         linebreaks: true,
+        delimiters: { start: "((", end: "))" },
       });
       templater.render(data);
       saveAs(templater.getZip().generate({
