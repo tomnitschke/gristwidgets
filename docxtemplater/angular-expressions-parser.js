@@ -200,9 +200,11 @@ module.exports = exportedValue;
 
 
 },{"angular-expressions":3}],2:[function(require,module,exports){
+(function (global){(function (){
 const AngularExpressionsParser = require("./expressions.js");
+global.window.AngularExpressionsParser = AngularExpressionsParser;
 
-
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./expressions.js":1}],3:[function(require,module,exports){
 "use strict";
 
