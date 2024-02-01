@@ -26,8 +26,11 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     try {
       const attachmentIt = mappedRecord[ATTACHMENTID_COL_NAME];
       const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
-      currentData.url = `${tokenInfo.baseUrl}/attachments/${data.input.attachmentId}/download?auth=${tokenInfo.token}`;
+      currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
       currentData.data = mappedRecord[DATA_COL_NAME];
+      if (currentData.data.constructor != Object) {
+        throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
+      }
       currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
     } catch (err) {
       handleError(err);
@@ -68,7 +71,7 @@ async function processFile(url, data, outputFileName) {
 
 ready(async function(){
   grist.ready({
-    requiredAccess: "read table",
+    requiredAccess: "full",
     columns: [
       { name: ATTACHMENTID_COL_NAME, title: "Attachment ID", description: "ID number of a Grist attachment." },
       { name: DATA_COL_NAME, title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
