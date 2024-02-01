@@ -11,32 +11,46 @@ const DATA_COL_NAME = "data";
 const FILENAME_COL_NAME = "filename";
 const currentData = { url: null, data: null, outputFileName: null, };
 
+function setStatusMessage(msg) {
+  let contentElem = document.querySelector("#content");
+  let statusElem = document.querySelector("#status");
+  if (!statusElem || !contentElem) {
+    return false;
+  }
+  statusElem.innerHTML = msg;
+  contentElem.style.display = "block";
+  return true;
+}
+
 function handleError(err) {
-  let elem = document.querySelector("#status");
-  if (elem) {
-    elem.innerHTML = String(err);
-  } else {
+  let ok = setStatusMessage(msg);
+  let contentElem = document.querySelector("#content");
+  if (contentElem) {
+    contentElem.style.display = "none";
+  }
+  if (!ok) {
     document.body.innerHTML = String(err);
   }
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   const mappedRecord = grist.mapColumnNames(record);
-  if (mappedRecord) {
-    try {
-      const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
-      const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
-      currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
-      currentData.data = mappedRecord[DATA_COL_NAME];
-      if (currentData.data.constructor != Object) {
-        throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
-      }
-      currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
-    } catch (err) {
-      handleError(err);
+  try {
+    if (mappedRecord) {
+        const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
+        const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
+        currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
+        currentData.data = mappedRecord[DATA_COL_NAME];
+        if (currentData.data.constructor != Object) {
+          throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
+        }
+        currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
+        setStatusMessage("Ready. Click OK to process document.");
+    } else {
+      throw new Error("<b>Please map all columns first.</b>");
     }
-  } else {
-    document.body.innerHTML = "<b>Please map all columns first.</b>";
+  } catch (err) {
+    handleError(err);
   }
 }
 
