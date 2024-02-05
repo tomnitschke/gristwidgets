@@ -58,7 +58,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   //const mappedRecord = grist.mapColumnNames(record);
   const mappedRecord = {}
   for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
-    if (record[mappedColName) {
+    if (record[mappedColName]) {
       mappedRecord[mappedColName] = record[realColName];
     }
   }
