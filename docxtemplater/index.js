@@ -85,7 +85,7 @@ function processFile(url, data, outputFileName) {
 
 
 
-ready(async function(){
+ready(function(){
   grist.ready({
     requiredAccess: "full",
     columns: [
