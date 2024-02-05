@@ -78,7 +78,11 @@ function processFile(url, data, outputFileName) {
           compression: "DEFLATE",
         }), outputFileName);
       } catch (e) {
-        handleError(e);
+        if ("name" in e && "properties" in e && "explanation" in e.properties) {
+          handleError(new Error(`${e.name}: ${e.properties.explanation}`));
+        } else {
+          handleError(e);
+        }
       }
     });
   } catch (err) {
