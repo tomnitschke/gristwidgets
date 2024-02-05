@@ -146,7 +146,7 @@ ready(function(){
   grist.ready({
     requiredAccess: "full",
     columns: [
-      { name: ATTACHMENTID_COL_NAME, type: "Attachments", title: "Attachment ID", description: "ID number of a Grist attachment." },
+      { name: ATTACHMENTID_COL_NAME, type: "Int", title: "Attachment ID", description: "ID number of a Grist attachment." },
       { name: DATA_COL_NAME, type: "Any", title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
       { name: FILENAME_COL_NAME, type: "Text", title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
       { name: USEANGULAR_COL_NAME, type: "Bool", optional: true, title: "Use Angular Parser?", description: "Whether to use the Angular expressions parser or not." },
