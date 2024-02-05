@@ -88,7 +88,7 @@ function processFile(url, data, outputFileName) {
           compression: "DEFLATE",
         }), outputFileName);
       } catch (e) {
-        if (e instanceof XTTemplateError) {
+        if (e instanceof docxtemplater.Errors.XTTemplateError) {
           e = e.properties.errors;
         }
         if (0 in e && "name" in e[0] && "message" in e[0]) {
