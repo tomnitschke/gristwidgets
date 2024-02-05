@@ -80,7 +80,7 @@ function processFile(url, data, outputFileName) {
   } catch (err) {
     handleError(err);
   }
-},
+}
 
 
 
