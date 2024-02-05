@@ -58,11 +58,10 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   //const mappedRecord = grist.mapColumnNames(record);
   const mappedRecord = {}
   for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
-    if (record[mappedColName]) {
+    if (realColName in record && record[realColName]) {
       mappedRecord[mappedColName] = record[realColName];
     }
   }
-  console.log("STEVE mappedRecord",mappedRecord);
   try {
     if (ATTACHMENTID_COL_NAME in mappedRecord && DATA_COL_NAME in mappedRecord && FILENAME_COL_NAME in mappedRecord) {
         const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
