@@ -23,13 +23,13 @@ function setStatusMessage(msg) {
 }
 
 function handleError(err) {
-  let ok = setStatusMessage(msg);
+  if (!setStatusMessage(err)) {
+    document.body.innerHTML = String(err);
+    return;
+  }
   let contentElem = document.querySelector("#content");
   if (contentElem) {
     contentElem.style.display = "none";
-  }
-  if (!ok) {
-    document.body.innerHTML = String(err);
   }
 }
 
