@@ -88,6 +88,9 @@ function processFile(url, data, outputFileName) {
           compression: "DEFLATE",
         }), outputFileName);
       } catch (e) {
+        if (e instanceof XTTemplateError) {
+          e = e.properties.errors;
+        }
         if (0 in e && "name" in e[0] && "message" in e[0]) {
           if ("properties" in e[0] && "explanation" in e[0].properties) {
             handleError(new Error(`${e[0].name}: ${e[0].properties.explanation}`));
