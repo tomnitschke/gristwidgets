@@ -23,7 +23,6 @@ function setStatusMessage(msg) {
 }
 
 function handleError(err) {
-  window.alert(err);
   let ok = setStatusMessage(msg);
   let contentElem = document.querySelector("#content");
   if (contentElem) {
@@ -97,6 +96,10 @@ ready(function(){
   });
   grist.onRecord(gristRecordSelected);
   document.querySelector("#button_process").addEventListener("click", function(){
-    processFile(currentData.url, currentData.data, currentData.outputFileName);
+    try{
+      processFile(currentData.url, currentData.data, currentData.outputFileName);
+    } catch (e) {
+      window.alert(e);
+    }
   });
 });
