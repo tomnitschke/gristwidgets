@@ -88,8 +88,12 @@ function processFile(url, data, outputFileName) {
           compression: "DEFLATE",
         }), outputFileName);
       } catch (e) {
-        if ("name" in e && "properties" in e && "explanation" in e.properties) {
-          handleError(new Error(`${e.name}: ${e.properties.explanation}`));
+        if (0 in e && "name" in e[0] && "message" in e[0]) {
+          if ("properties" in e[0] && "explanation" in e[0].properties) {
+            handleError(new Error(`${e[0].name}: ${e[0].properties.explanation}`));
+          } else {
+            handleError(new Error(`${e[0].name}: ${e[0].message}`));
+          }
         } else {
           handleError(e);
         }
