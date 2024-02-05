@@ -75,7 +75,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
           currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
         }
         currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
-        setStatusMessage("Ready. Click OK to process document.");
+        setStatusMessage("Ready. Click 'Process' to generate the document.");
     } else {
       throw new Error("<b>Please map all columns first.</b>");
     }
