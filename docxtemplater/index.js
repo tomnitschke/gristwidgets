@@ -13,13 +13,19 @@ const currentData = { url: null, data: null, outputFileName: null, };
 
 function setStatusMessage(msg) {
   let contentElem = document.querySelector("#content");
-  let statusElem = document.querySelector("#status");
-  if (!statusElem || !contentElem) {
-    return false;
-  }
-  statusElem.innerHTML = msg;
+  let statusMessageElem = document.querySelector("#status_message");
+  if (!contentElem || !statusMessageElem) return false;
+  statusMessageElem.innerHTML = msg;
   contentElem.style.display = "block";
   return true;
+}
+
+function resetStatusMessage() {
+  let contentElem = document.querySelector("#content");
+  let statusResetButtonElem = document.querySelector("#button_status_reset");
+  if (!contentElem || !statusResetButtonElem) return;
+  contentElem.style.display = "block";
+  statusResetButtonElem.style.display = "none";
 }
 
 function handleError(err) {
@@ -29,7 +35,11 @@ function handleError(err) {
   }
   let contentElem = document.querySelector("#content");
   if (contentElem) {
-    contentElem.style.display = "none";
+    let statusResetButtonElem = document.querySelector("#button_status_reset");
+    if (statusResetButtonElem) {
+      statusResetButtonElem.style.display = "block";
+      contentElem.style.display = "none";
+    }
   }
 }
 
@@ -106,5 +116,8 @@ ready(function(){
   grist.onRecord(gristRecordSelected);
   document.querySelector("#button_process").addEventListener("click", function(){
     processFile(currentData.url, currentData.data, currentData.outputFileName);
+  });
+  document.querySelector("#button_status_reset").addEventListener("click", function(){
+    resetStatusMessage();
   });
 });
