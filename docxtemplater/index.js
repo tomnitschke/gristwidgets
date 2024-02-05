@@ -23,6 +23,7 @@ function setStatusMessage(msg) {
 }
 
 function handleError(err) {
+  window.alert(err);
   let ok = setStatusMessage(msg);
   let contentElem = document.querySelector("#content");
   if (contentElem) {
