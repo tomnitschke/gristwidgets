@@ -54,7 +54,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   }
 }
 
-async function processFile(url, data, outputFileName) {
+function processFile(url, data, outputFileName) {
   try {
     if (!url || !data || !outputFileName) {
       throw new Error("Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.");
