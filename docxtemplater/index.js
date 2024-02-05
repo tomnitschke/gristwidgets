@@ -22,10 +22,17 @@ function setStatusMessage(msg) {
 
 function resetStatusMessage() {
   let contentElem = document.querySelector("#content");
+  if (contentElem) {
+    contentElem.style.display = "block";
+  }
   let statusResetButtonElem = document.querySelector("#button_status_reset");
-  if (!contentElem || !statusResetButtonElem) return;
-  contentElem.style.display = "block";
-  statusResetButtonElem.style.display = "none";
+  if (statusResetButtonElem) {
+    statusResetButtonElem.style.display = "none";
+  }
+  let processButtonElem = document.querySelector("#button_process");
+  if (processButtonElem) {
+    processButtonElem.style.display = "inline-block";
+  }
 }
 
 function handleError(err) {
@@ -33,13 +40,14 @@ function handleError(err) {
     document.body.innerHTML = String(err);
     return;
   }
-  let contentElem = document.querySelector("#content");
-  if (contentElem) {
-    let statusResetButtonElem = document.querySelector("#button_status_reset");
-    if (statusResetButtonElem) {
-      statusResetButtonElem.style.display = "block";
-      contentElem.style.display = "none";
-    }
+  let statusResetButtonElem = document.querySelector("#button_status_reset");
+  if (statusResetButtonElem) {
+    statusResetButtonElem.style.display = "inline-block";
+    document.querySelector("#content").style.display = "none";
+  }
+  let processButtonElem = document.querySelector("#button_process");
+  if (processButtonElem) {
+    processButtonElem.style.display = "none";
   }
 }
 
@@ -51,7 +59,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
         currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
         currentData.data = mappedRecord[DATA_COL_NAME];
-        if (currentData.data.constructor != Object) {
+        if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
           throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
         }
         currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
