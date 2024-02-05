@@ -59,7 +59,7 @@ function processFile(url, data, outputFileName) {
     if (!url || !data || !outputFileName) {
       throw new Error("Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.");
     }
-    return PizZipUtils.getBinaryContent(url, function(err, content) {
+    let result = PizZipUtils.getBinaryContent(url, function(err, content) {
       if (err) {
         throw err;
       }
@@ -76,10 +76,11 @@ function processFile(url, data, outputFileName) {
         compression: "DEFLATE",
       }), outputFileName);
     });
+    return result;
   } catch (err) {
     handleError(err);
   }
-}
+},
 
 
 
@@ -96,10 +97,7 @@ ready(function(){
   });
   grist.onRecord(gristRecordSelected);
   document.querySelector("#button_process").addEventListener("click", function(){
-    try{
-      processFile(currentData.url, currentData.data, currentData.outputFileName);
-    } catch (e) {
-      window.alert(e);
-    }
+    throw new Error("JUST A TEST");
+    processFile(currentData.url, currentData.data, currentData.outputFileName);
   });
 });
