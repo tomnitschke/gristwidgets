@@ -64,7 +64,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       }
     }
   }
-  console.log("STEVE",mappedRecord);
   try {
     if (ATTACHMENTID_COL_NAME in mappedRecord && DATA_COL_NAME in mappedRecord && FILENAME_COL_NAME in mappedRecord) {
         const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
