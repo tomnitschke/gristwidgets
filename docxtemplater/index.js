@@ -97,7 +97,6 @@ ready(function(){
   });
   grist.onRecord(gristRecordSelected);
   document.querySelector("#button_process").addEventListener("click", function(){
-    throw new Error("JUST A TEST");
     processFile(currentData.url, currentData.data, currentData.outputFileName);
   });
 });
