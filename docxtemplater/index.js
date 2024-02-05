@@ -57,7 +57,7 @@ function handleError(err) {
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   const mappedRecord = grist.mapColumnNames(record);
   try {
-    if (mappedRecord) {
+    if (ATTACHMENTID_COL_NAME in mappedRecord && DATA_COL_NAME in mappedRecord && FILENAME_COL_NAME in mappedRecord) {
         const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
         const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
         currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
