@@ -9,7 +9,10 @@ function ready(fn) {
 const ATTACHMENTID_COL_NAME = "attachment_id";
 const DATA_COL_NAME = "data";
 const FILENAME_COL_NAME = "filename";
-const currentData = { url: null, data: null, outputFileName: null, };
+const USEANGULAR_COL_NAME = "use_angular_parser";
+const DELIMITERSTART_COL_NAME = "delimiter_start";
+const DELIMITEREND_COL_NAME = "delimiter_end";
+const currentData = { url: null, data: null, outputFileName: null, useAngular: true, delimiterStart: '{', delimiterEnd: '}' };
 
 function setStatusMessage(msg) {
   let contentElem = document.querySelector("#content");
@@ -62,6 +65,15 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
           throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
         }
+        if (USEANGULAR_COL_NAME in mappedRecord) {
+          currentData.useAngular = mappedRecord[USEANGULAR_COL_NAME];
+        }
+        if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
+          currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
+        }
+        if (DELIMITEREND_COL_NAME in mappedRecord && mappedRecord[DELIMITEREND_COL_NAME]) {
+          currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
+        }
         currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
         setStatusMessage("Ready. Click OK to process document.");
     } else {
@@ -83,12 +95,16 @@ function processFile(url, data, outputFileName) {
       }
       try
       {
-        const templater = new window.docxtemplater(new PizZip(content), {
+        const docxtemplaterOptions = {
           paragraphLoop: true,
           linebreaks: true,
-          delimiters: { start: "((", end: "))" },
+          delimiters: { start: currentData.delimiterStart, end: currentData.delimiterEnd },
           parser: AngularExpressionsParser,
-        });
+        };
+        if (!currentData.useAngular) {
+          docxtemplaterOptions.parser = null;
+        }
+        const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         templater.render(data);
         saveAs(templater.getZip().generate({
           type: "blob",
@@ -123,9 +139,12 @@ ready(function(){
   grist.ready({
     requiredAccess: "full",
     columns: [
-      { name: ATTACHMENTID_COL_NAME, title: "Attachment ID", description: "ID number of a Grist attachment." },
-      { name: DATA_COL_NAME, title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
-      { name: FILENAME_COL_NAME, title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
+      { name: ATTACHMENTID_COL_NAME, type: "Attachments", title: "Attachment ID", description: "ID number of a Grist attachment." },
+      { name: DATA_COL_NAME, type: "Any", title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
+      { name: FILENAME_COL_NAME, type: "Text", title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
+      { name: USEANGULAR_COL_NAME, type: "Bool", optional: true, title: "Use Angular Parser?", description: "Whether to use the Angular expressions parser or not." },
+      { name: DELIMITERSTART_COL_NAME, type: "Text", optional: true, title: "Custom Delimiter: Start", description: "Custom delimiter to use for the start of placeholders. The default is '{'." },
+      { name: DELIMITEREND_COL_NAME, type: "Text", optional: true, title: "Custom Delimiter: End", description: "Custom delimiter to use for the end of placeholders. The default is '}'." },
     ],
   });
   grist.onRecord(gristRecordSelected);
