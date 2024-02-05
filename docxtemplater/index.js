@@ -59,24 +59,28 @@ function processFile(url, data, outputFileName) {
     if (!url || !data || !outputFileName) {
       throw new Error("Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.");
     }
-    let result = PizZipUtils.getBinaryContent(url, function(err, content) {
+    return PizZipUtils.getBinaryContent(url, function(err, content) {
       if (err) {
         throw err;
       }
-      const templater = new window.docxtemplater(new PizZip(content), {
-        paragraphLoop: true,
-        linebreaks: true,
-        delimiters: { start: "((", end: "))" },
-        parser: AngularExpressionsParser,
-      });
-      templater.render(data);
-      saveAs(templater.getZip().generate({
-        type: "blob",
-        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        compression: "DEFLATE",
-      }), outputFileName);
+      try
+      {
+        const templater = new window.docxtemplater(new PizZip(content), {
+          paragraphLoop: true,
+          linebreaks: true,
+          delimiters: { start: "((", end: "))" },
+          parser: AngularExpressionsParser,
+        });
+        templater.render(data);
+        saveAs(templater.getZip().generate({
+          type: "blob",
+          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          compression: "DEFLATE",
+        }), outputFileName);
+      } catch (e) {
+        handleError(e);
+      }
     });
-    return result;
   } catch (err) {
     handleError(err);
   }
