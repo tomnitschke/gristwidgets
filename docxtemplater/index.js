@@ -122,7 +122,9 @@ ready(function(){
   });
   grist.onRecord(gristRecordSelected);
   document.querySelector("#button_process").addEventListener("click", function(){
+    setStatusMessage("Working...");
     processFile(currentData.url, currentData.data, currentData.outputFileName);
+    setStatusMessage("Document ready for download.");
   });
   document.querySelector("#button_status_reset").addEventListener("click", function(){
     resetStatusMessage();
