@@ -107,22 +107,30 @@ function processFile(url, data, outputFileName) {
           paragraphLoop: true,
           linebreaks: true,
           delimiters: { start: currentData.delimiterStart, end: currentData.delimiterEnd },
+          // Use the Angular expressions parser by default. Users may override this behaviour, see below.
           parser: AngularExpressionsParser,
           nullGetter: function(part, scope) {
             if (!part.module) {
-              return part;
-            }
-            if (part.module === "rawxml") {
+              // If we've encountered an unknown placeholder, just leave it as is.
+              if ("value" in part) return `${currentData.delimiterStart}${part.value}{$currentData.delimiterEnd}`;
               return "";
             }
+            if (part.module === "rawxml") {
+              // Replace any '@'-prefixed placeholders with nothing. This is docxtemplater's default implementation.
+              return "";
+            }
+            // Replace any known but empty-valued placeholders with nothing. This is docxtemplater's default implementation.
             return "";
           },
         };
         if (!currentData.useAngular) {
+          // Disable the Angular expressions parse if requested by the user.
           docxtemplaterOptions.parser = null;
         }
+        // Initialize docxtemplater and render the document.
         const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         templater.render(data);
+        // Offer the processed document for download.
         saveAs(templater.getZip().generate({
           type: "blob",
           mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -130,20 +138,25 @@ function processFile(url, data, outputFileName) {
         }), outputFileName);
       } catch (e) {
         if (e instanceof docxtemplater.Errors.XTTemplateError) {
+          // If there is an error in the template, make sure to provide useful details to the user.
           e = e.properties.errors;
         }
         if (0 in e && "name" in e[0] && "message" in e[0]) {
           if ("properties" in e[0] && "explanation" in e[0].properties) {
+            // Ditto.
             handleError(new Error(`${e[0].name}: ${e[0].properties.explanation}`));
           } else {
+            // Fallback in case there isn't an 'explanation' field.
             handleError(new Error(`${e[0].name}: ${e[0].message}`));
           }
         } else {
+          // Handle any other errors normally.
           handleError(e);
         }
       }
     });
   } catch (err) {
+    // Handle any other errors apart from what docxtemplater might have thrown.
     handleError(err);
   }
 }
@@ -151,9 +164,11 @@ function processFile(url, data, outputFileName) {
 
 
 
-
+// Start once the DOM is ready.
 ready(function(){
+  // Let Grist know we're ready to talk.
   grist.ready({
+    // We require "full" mode in order to be allowed access to attachments.
     requiredAccess: "full",
     columns: [
       { name: ATTACHMENTID_COL_NAME, type: "Int", title: "Attachment ID", description: "ID number of a Grist attachment." },
@@ -164,7 +179,9 @@ ready(function(){
       { name: DELIMITEREND_COL_NAME, type: "Text", optional: true, title: "Custom Delimiter: End", description: "Custom delimiter to use for the end of placeholders. The default is '}'." },
     ],
   });
+  // Register callback for when the user selects a record in Grist.
   grist.onRecord(gristRecordSelected);
+  // Add actions to our buttons.
   document.querySelector("#button_process").addEventListener("click", function(){
     setStatusMessage("Working...");
     processFile(currentData.url, currentData.data, currentData.outputFileName);
