@@ -108,6 +108,15 @@ function processFile(url, data, outputFileName) {
           linebreaks: true,
           delimiters: { start: currentData.delimiterStart, end: currentData.delimiterEnd },
           parser: AngularExpressionsParser,
+          nullGetter: function(part, scope) {
+            if (!part.module) {
+              return part;
+            }
+            if (part.module === "rawxml") {
+              return "";
+            }
+            return "";
+          },
         };
         if (!currentData.useAngular) {
           docxtemplaterOptions.parser = null;
