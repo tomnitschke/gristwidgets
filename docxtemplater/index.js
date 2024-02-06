@@ -112,7 +112,9 @@ function processFile(url, data, outputFileName) {
           nullGetter: function(part, scope) {
             if (!part.module) {
               // If we've encountered an unknown placeholder, just leave it as is.
-              if ("value" in part) return `${currentData.delimiterStart}${part.value}${currentData.delimiterEnd}`;
+              if ("value" in part) {
+                return `${currentData.delimiterStart}${part.value}${currentData.delimiterEnd}`;
+              }
               return "";
             }
             if (part.module === "rawxml") {
@@ -131,6 +133,7 @@ function processFile(url, data, outputFileName) {
         const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         templater.render(data);
         // Offer the processed document for download.
+        setStatusMessage("Document ready for download.");
         saveAs(templater.getZip().generate({
           type: "blob",
           mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -185,7 +188,6 @@ ready(function(){
   document.querySelector("#button_process").addEventListener("click", function(){
     setStatusMessage("Working...");
     processFile(currentData.url, currentData.data, currentData.outputFileName);
-    setStatusMessage("Document ready for download.");
   });
   document.querySelector("#button_status_reset").addEventListener("click", function(){
     resetStatusMessage();
