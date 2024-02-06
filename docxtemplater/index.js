@@ -112,7 +112,7 @@ function processFile(url, data, outputFileName) {
           nullGetter: function(part, scope) {
             if (!part.module) {
               // If we've encountered an unknown placeholder, just leave it as is.
-              if ("value" in part) return `${currentData.delimiterStart}${part.value}{$currentData.delimiterEnd}`;
+              if ("value" in part) return `${currentData.delimiterStart}${part.value}${currentData.delimiterEnd}`;
               return "";
             }
             if (part.module === "rawxml") {
