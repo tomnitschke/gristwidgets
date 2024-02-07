@@ -14,6 +14,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   if (!mappedRecord) return;
   let url = mappedRecord[URL_COL_NAME];
   if (url != previousUrl) {
+    console.log(`Webframe loading URL ${url} from record`, record);
     previousUrl = url;
     document.querySelector("#the_frame").src = url;
   }
