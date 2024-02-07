@@ -23,7 +23,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
 ready(function(){
   // Let Grist know we're ready to talk.
   grist.ready({
-    requiredAccess: "read",
+    requiredAccess: "read table",
     columns: [
       { name: URL_COL_NAME, type: "Text", title: "URL", description: "The URL of the website to load." },
     ],
