@@ -10,7 +10,7 @@ Once set up as a custom widget, it expects the following columns to be mapped:
 * "Output File Name": Text column giving the name for the resulting file that will be offered for download once docxtemplater is done processing. This should include the ".docx" extension.
 
 The following columns may be mapped optionally:
-* "Use Angular Parser?": Bool column determining whether to enable the [Angular parser for advanced placeholder expressions](https://docxtemplater.com/docs/angular-parse/) or not.
+* "Use Angular Parser?": Bool column determining whether to enable the [Angular parser](https://docxtemplater.com/docs/angular-parse/) for advanced placeholder expressions or not.
 * "Custom Delimiter: Start": Text column defining the starting/opening delimiter for placeholders. The default is `{`. (Note that if this is mapped but empty, the default will be used.)
 * "Custom Delimiter: End": Text column defining the ending/closing delimiter for placeholders. The default is `}`. (Note that if this is mapped but empty, the default will be used.)
 
