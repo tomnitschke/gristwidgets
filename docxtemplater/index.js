@@ -85,7 +85,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
         setStatusMessage("Ready. Click 'Process' to generate the document.");
     } else {
-      throw new Error("<b>Please map all columns first.</b>");
+      throw new Error("<b>Please map all columns first. If you have already mapped them, make sure they're not empty.</b>");
     }
   } catch (err) {
     handleError(err);
