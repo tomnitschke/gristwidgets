@@ -12,11 +12,15 @@ let previousUrl = null;
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   const mappedRecord = grist.mapColumnNames(record);
   if (!mappedRecord) return;
-  let url = mappedRecord[URL_COL_NAME];
-  if (url != previousUrl) {
-    console.log(`Webframe loading URL ${url} from record`, record);
-    previousUrl = url;
-    document.querySelector("#the_frame").src = url;
+  if (URL_COL_NAME in mappedRecord) {
+    let url = mappedRecord[URL_COL_NAME];
+    if (url != previousUrl) {
+      console.log(`Webframe loading URL ${url} from record`, record);
+      previousUrl = url;
+      document.querySelector("#the_frame").src = url;
+    }
+  } else {
+    document.body.innerHTML = "Please map the URL column, then reload.";
   }
 }
 
