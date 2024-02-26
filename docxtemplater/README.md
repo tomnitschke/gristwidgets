@@ -208,6 +208,10 @@ def format_value(table: str, column: str, val: object, decimals_separator: str="
         decimals = max(decimals, col_opts.get("maxDecimals", 0))
         if col_opts["numMode"] == "currency":
           formatted_value = _format_as_decimal(v, num_decimals=decimals, decimals_separator=decimals_separator, thousands_separator=thousands_separator)
+          # Note: We could use col_opts["currency"] to determine the currency symbol rather than rely on a separate argument.
+          # But that field holds a currency code like "USD" or "EUR" rather than the symbol itself, so since Grist unfortunately doesn't give us
+          # access to the 'babel' module, we'd need to mess around with locales instead, or use a huge lookup dictionary. That seems
+          # hugely out of scope here.
           formatted_value = (currency_symbol if currency_prefixed else "") + formatted_value + (currency_symbol if not currency_prefixed else "")
           return formatted_value
         if col_opts["numMode"] == "percent":
