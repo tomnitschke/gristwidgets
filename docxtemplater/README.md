@@ -21,7 +21,7 @@ Additional notes:
 
 ## Creating a placeholder-to-value mapping from a Grist record
 Here's an example implementation on how to create a placeholder-to-value mapping for a given Grist record.  
-First off, make a formula column "A" and copy all of this into it:
+First off, make a formula column "helper" and copy all of this into it:
 ```python
 import grist
 import json
@@ -252,11 +252,11 @@ class Export:
 return Export(locals())
 ```
 
-Now make another formula column "B" and put this inside:
+Now make another formula column "placeholder_mapping" and put this inside:
 ```
 # To make a placeholder mapping for this record itself, do 'record = rec' instead.
 record = SomeTable.lookupOne()
 # Create the mapping and return it.
-return $A.create_placeholder_mapping(record)
+return $helper.create_placeholder_mapping(record)
 ```
-You can now map "B" as the "Placeholder Data" column for docxtemplater.
+You can now map the column "placeholder_mapping" as the "Placeholder Data" column for docxtemplater.
