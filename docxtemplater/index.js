@@ -226,9 +226,30 @@ function processFile(url, data, outputFileName) {
             mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             compression: "DEFLATE",
           }), outputFileName);
+        }).catch(function(renderError) {
+          // If there is an error in the template, make sure to provide useful details to the user.
+          if (renderError instanceof docxtemplater.Errors.XTTemplateError) {
+            renderError = renderError.properties.errors;
+          }
+          if (0 in renderError && "name" in renderError[0] && "message" in renderError[0]) {
+            if ("properties" in renderError[0] && "explanation" in renderError[0].properties) {
+              let msg = `${renderError[0].name}: ${renderError[0].properties.explanation}`;
+              console.warn(`docxtemplater: ${msg}`);
+              handleError(new Error(msg));
+            } else {
+              // Fallback in case there isn't an 'explanation' field.
+              let msg = `${renderError[0].name}: ${renderError[0].message}`;
+              console.warn(`docxtemplater: ${msg}`);
+              handleError(new Error(msg));
+            }
+          } else {
+            // Handle any other errors normally.
+            handleError(renderError);
+          }
         });
       } catch (e) {
-        if (e instanceof docxtemplater.Errors.XTTemplateError) {
+        handleError(e);
+        /*if (e instanceof docxtemplater.Errors.XTTemplateError) {
           // If there is an error in the template, make sure to provide useful details to the user.
           e = e.properties.errors;
         }
@@ -247,7 +268,7 @@ function processFile(url, data, outputFileName) {
         } else {
           // Handle any other errors normally.
           handleError(e);
-        }
+        }*/
       }
     });
   } catch (err) {
