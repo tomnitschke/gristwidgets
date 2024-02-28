@@ -185,9 +185,8 @@ function processFile(url, data, outputFileName) {
           paragraphLoop: true,
           linebreaks: true,
           delimiters: { start: currentData.delimiterStart, end: currentData.delimiterEnd },
-          // Use the Angular expressions parser by default. Users may override this behaviour, see below.
-          parser: AngularExpressionsParser,
           nullGetter: function(part, scope) {
+            // Implement a default nullGetter that doesn't grace users' documents with instances of 'undefined'.
             if (!part.module) {
               // If we've encountered an unknown placeholder, just leave it as is.
               if ("value" in part) {
@@ -203,12 +202,12 @@ function processFile(url, data, outputFileName) {
             return "";
           },
         };
-        if (!currentData.useAngular) {
-          // Disable the Angular expressions parse if requested by the user.
-          docxtemplaterOptions.parser = null;
+        if (currentData.useAngular) {
+          // Enable the Angular expressions parser.
+          docxtemplaterOptions.parser = AngularExpressionsParser;
         }
         //TODO
-        // Enable the image module unless disabled by the user.
+        // Enable the image module.
         if (true) {
           docxtemplaterOptions.modules = [new ImageModule({
             //TODO make this configurable?
