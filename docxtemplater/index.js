@@ -66,17 +66,15 @@ function handleDocxtemplaterError(docxtemplaterError) {
     if ("properties" in docxtemplaterError[0] && "explanation" in docxtemplaterError[0].properties) {
       let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].properties.explanation}`;
       console.warn(`docxtemplater: ${msg}`);
-      handleError(new Error(msg));
-    } else {
-      // Fallback in case there isn't an 'explanation' field.
-      let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].message}`;
-      console.warn(`docxtemplater: ${msg}`);
-      handleError(new Error(msg));
+      return handleError(new Error(msg));
     }
-  } else {
-    // Handle any other errors normally.
-    handleError(renderError);
+    // Fallback in case there isn't an 'explanation' field.
+    let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].message}`;
+    console.warn(`docxtemplater: ${msg}`);
+    return handleError(new Error(msg));
   }
+  // Handle any other errors normally.
+  return handleError(renderError);
 }
 
 async function gristGetAttachmentURL(attachmentId) {
@@ -164,7 +162,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // all that's left to do is to display a ready message and the 'process' button.
     setStatusMessage("Ready. Click 'Process' to generate the document.");
   } catch (err) {
-    handleError(err);
+    return handleError(err);
   }
 }
 
@@ -252,7 +250,7 @@ function processFile(url, data, outputFileName) {
           // Initialize docxtemplater and render the document.
           const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         } catch (docxtemplaterError) {
-          handleDocxtemplaterError(docxtemplaterError);
+          return handleDocxtemplaterError(docxtemplaterError);
         }
         //templater.render(data);
         templater.renderAsync(data).then(function() {
@@ -264,15 +262,15 @@ function processFile(url, data, outputFileName) {
             compression: "DEFLATE",
           }), outputFileName);
         }).catch(function(docxtemplaterError) {
-          handleDocxtemplaterError(docxtemplaterError);
+          return handleDocxtemplaterError(docxtemplaterError);
         });
       } catch (e) {
-        handleError(e);
+        return handleError(e);
       }
     });
   } catch (err) {
     // Handle any other errors apart from what docxtemplater might have thrown.
-    handleError(err);
+    return handleError(err);
   }
 }
 
