@@ -109,6 +109,7 @@ async function getGristImageAttachmentURL(imgAttachmentIdOrUrl) {
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
+  console.log("docxtemplater: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
   try {
     //const mappedRecord = grist.mapColumnNames(record);
     // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
