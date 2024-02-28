@@ -11,12 +11,14 @@ Once set up as a custom widget, it expects the following columns to be mapped:
 
 The following columns may be mapped optionally:
 * "Use Angular Parser?": Bool column determining whether to enable the [Angular parser](https://docxtemplater.com/docs/angular-parse/) for advanced placeholder expressions or not. The default is True.
+* "Use Image Module?": Bool column determining whether to enable the [image module](https://github.com/pwndoc/docxtemplater-image-module-pwndoc). It enables you to use placeholders like '{%some_image}' that insert images either from your Grist attachments or from an external URL. The default is True.
 * "Custom Delimiter: Start": Text column defining the starting/opening delimiter for placeholders. The default is `{`. (Note that if this is mapped but empty, the default will be used.)
 * "Custom Delimiter: End": Text column defining the ending/closing delimiter for placeholders. The default is `}`. (Note that if this is mapped but empty, the default will be used.)
 
 Additional notes:
 * Any placeholders in the template document that aren't in the "Placeholder Data" dictionary (see above) won't be touched and will appear unchanged in the document.
 * Placeholders that are known but for which the current value is 'None' will be replaced by nothing in the document.
+* Inserting images requires the image module to be enabled, see above. Use tags like '{%some_image}' to insert an image, where 'some_image' is the name of a column that holds a) an ID number for a Grist attachment (see below for how to get one) or b) a URL to an external image (in that case however, beware CORS!).
 
 
 ## Creating a placeholder-to-value mapping from a Grist record
@@ -276,3 +278,15 @@ record = SomeTable.lookupOne()
 return $helper.create_placeholder_mapping(record)
 ```
 You can now map the column "placeholder_mapping" as the "Placeholder Data" column for docxtemplater.
+
+
+## Inserting Images from Grist attachments
+To insert an image from your Grist attachments into the document, use a placeholder like '{%some_image}' (note the percent sign), then correspondingly create a formula column 'some_image', set its type to Integer, and put the following in it:
+```
+import grist
+
+def get_attachment_by_filename(filename: str) -> grist.Record or None:
+  return _grist_Attachments.lookupOne(fileName=filename) or None
+
+return get_attachment_by_filename("whichever_image_youre_looking_to_insert.jpg").id
+```
