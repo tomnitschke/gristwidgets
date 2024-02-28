@@ -102,7 +102,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Set up the currentData object.
     currentData.url = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
     currentData.data = mappedRecord[DATA_COL_NAME];
-    console.log(`docxtemplater: Input placeholder data is of type ${typeof currentData.data} and looks like this:`, currentData.data);
+    console.log(`docxtemplater: Input placeholder data is of type '${typeof currentData.data}' and looks like this:`, currentData.data);
     if (typeof currentData.data !== "object") {
       let msg = `<b>Can't read placeholder data.</b><br />The data needs to be a dictionary but seems to be a '${typeof currentData.data}'. Make sure the column holding said data is set to type 'Any'.`;
       console.error(`docxtemplater: ${msg}`);
@@ -123,10 +123,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
     }
     currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
-    //WIP
-    currentData.data.image = function(scope) {
-      console.log(`docxtemplater: image with scope:`, scope);
-    };
     // Now we have all the data nicely validated and present in currentData,
     // all that's left to do is to display a ready message and the 'process' button.
     setStatusMessage("Ready. Click 'Process' to generate the document.");
@@ -191,7 +187,6 @@ function processFile(url, data, outputFileName) {
                     //throw err;
                     let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
                     console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentId}' (URL: '${url}') into placeholder '${tagName}': ${msg}`);
-                    return reject(err);
                     return reject(err);
                   }
                   return resolve(content);
