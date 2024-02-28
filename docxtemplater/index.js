@@ -45,7 +45,7 @@ function handleError(err) {
   }
   let statusResetButtonElem = document.querySelector("#button_status_reset");
   if (statusResetButtonElem) {
-    statusResetButtonElem.style.display = "inline-block";
+    statusResetButtonElem.style.display = "block";
     document.querySelector("#content").style.display = "none";
   }
   let processButtonElem = document.querySelector("#button_process");
@@ -55,42 +55,61 @@ function handleError(err) {
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
-  //const mappedRecord = grist.mapColumnNames(record);
-  const mappedRecord = {}
-  if (mappedColNamesToRealColNames) {
-    for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
-      if (realColName in record && record[realColName]) {
-        mappedRecord[mappedColName] = record[realColName];
+  try {
+    //const mappedRecord = grist.mapColumnNames(record);
+    // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
+    // properly, so we need to map stuff ourselves. Since we're already at it, lets also
+    // facilitate things a bit by mapping only columns that aren't empty/falsy.
+    const mappedRecord = {}
+    if (mappedColNamesToRealColNames) {
+      for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
+        if (realColName in record && record[realColName]) {
+          mappedRecord[mappedColName] = record[realColName];
+          // If we're mapping one of the essential columns but that column is empty/its data is falsy,
+          // display an error message to the user.
+          if ([ATTACHMENTID_COL_NAME, DATA_COL_NAME, FILENAME_COL_NAME].includes(mappedColName) && !(mappedRecord[mappedColName])) {
+            let msg = `<b>Required column '${mappedColName}' is empty. Please make sure it contains valid data.`;
+            console.error(`docxtemplater: ${msg}`);
+            throw new Error(msg);
+          }
+        }
       }
     }
-  }
-  try {
-    if (ATTACHMENTID_COL_NAME in mappedRecord && DATA_COL_NAME in mappedRecord && FILENAME_COL_NAME in mappedRecord) {
-        const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
-        const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
-        currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
-        currentData.data = mappedRecord[DATA_COL_NAME];
-        console.log("###currentData.data:", currentData.data);
-        if (typeof currentData.data !== "object") {
-          throw new Error(`<b>Can't read placeholder data.</b><br />The data needs to be a dictionary but seems to be a '${typeof currentData.data}'. Make sure the column holding said data is set to type 'Any'.`);
-        }
-        if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
-          throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
-        }
-        if (USEANGULAR_COL_NAME in mappedRecord) {
-          currentData.useAngular = mappedRecord[USEANGULAR_COL_NAME];
-        }
-        if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
-          currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
-        }
-        if (DELIMITEREND_COL_NAME in mappedRecord && mappedRecord[DELIMITEREND_COL_NAME]) {
-          currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
-        }
-        currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
-        setStatusMessage("Ready. Click 'Process' to generate the document.");
-    } else {
-      throw new Error("<b>Please map all columns first.</b><br />If you have already mapped them, make sure they're not empty.");
+    // Make sure all required columns have been mapped.
+    if (!(ATTACHMENTID_COL_NAME in mappedRecord || DATA_COL_NAME in mappedRecord || FILENAME_COL_NAME in mappedRecord)) {
+      let msg = "<b>Please map all columns first.</b><br />If you have already mapped them, make sure they're not empty.";
+      console.error(`docxtemplater: ${msg}`);
+      throw new Error(msg);
     }
+    // Set up the currentData object.
+    const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
+    const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
+    currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
+    currentData.data = mappedRecord[DATA_COL_NAME];
+    console.log(`docxtemplater: Input placeholder data is of type ${typeof currentData.data} and looks like this:`, currentData.data);
+    if (typeof currentData.data !== "object") {
+      let msg = `<b>Can't read placeholder data.</b><br />The data needs to be a dictionary but seems to be a '${typeof currentData.data}'. Make sure the column holding said data is set to type 'Any'.`;
+      console.error(`docxtemplater: ${msg}`);
+      throw new Error(msg);
+    }
+    if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
+      let msg = `Supplied data is not a dictionary: '${currentData.data}'`;
+      console.error(`docxtemplater: ${msg}`);
+      throw new Error(msg);
+    }
+    if (USEANGULAR_COL_NAME in mappedRecord) {
+      currentData.useAngular = mappedRecord[USEANGULAR_COL_NAME];
+    }
+    if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
+      currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
+    }
+    if (DELIMITEREND_COL_NAME in mappedRecord && mappedRecord[DELIMITEREND_COL_NAME]) {
+      currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
+    }
+    currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
+    // Now we have all the data nicely validated and present in currentData,
+    // all that's left to do is to display a ready message and the 'process' button.
+    setStatusMessage("Ready. Click 'Process' to generate the document.");
   } catch (err) {
     handleError(err);
   }
@@ -99,11 +118,15 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
 function processFile(url, data, outputFileName) {
   try {
     if (!url || !data || !outputFileName) {
-      throw new Error("Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.");
+      let msg = "Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.";
+      console.error(`docxtemplater: ${msg}`);
+      throw new Error(msg);
     }
     return PizZipUtils.getBinaryContent(url, function(err, content) {
       if (err) {
-        throw err;
+        let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
+        console.error(`docxtemplater: ${msg}`);
+        throw new Error(msg);
       }
       try
       {
@@ -140,10 +163,12 @@ function processFile(url, data, outputFileName) {
             //TODO make this configurable?
             centered: false,
             getImage: async function(url, tagName) {
-              console.log("###getImage! url, tagName:", url, tagName);
+              console.log("docxtemplater: getImage! url, tagName:", url, tagName);
               return new Promise(function(resolve, reject) {
                 PizZipUtils.getBinaryContent(url, function(err, content) {
                   if (err) {
+                    let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
+                    console.warn(`docxtemplater: Couldn't load image '${url}' into placeholder '${tagName}': ${msg}`);
                     return reject(err);
                   }
                   return resolve(content);
@@ -151,7 +176,7 @@ function processFile(url, data, outputFileName) {
               });
             },
             getSize: async function(url, image, tagName) {
-              console.log("###getSize! url, image, tagName:", url, image, tagName);
+              console.log("docxtemplater: getSize! url, image, tagName:", url, image, tagName);
               return new Promise(function(resolve, reject) {
                 const img = new Image();
                 img.src = url;
@@ -159,7 +184,7 @@ function processFile(url, data, outputFileName) {
                   return resolve([img.width, img.height]);
                 };
                 img.onerror = function(e) {
-                  console.log(`docxtemplater couldn't load image '${url}' into placeholder '${tagName}'. Image object: `, image);
+                  console.warn(`docxtemplater: Couldn't load image '${url}' into placeholder '${tagName}'. Image object: `, image);
                   return reject(e);
                 };
               });
@@ -186,10 +211,14 @@ function processFile(url, data, outputFileName) {
         if (0 in e && "name" in e[0] && "message" in e[0]) {
           if ("properties" in e[0] && "explanation" in e[0].properties) {
             // Ditto.
-            handleError(new Error(`${e[0].name}: ${e[0].properties.explanation}`));
+            let msg = `${e[0].name}: ${e[0].properties.explanation}`;
+            console.warn(`docxtemplater: ${msg}`);
+            handleError(new Error(msg));
           } else {
             // Fallback in case there isn't an 'explanation' field.
-            handleError(new Error(`${e[0].name}: ${e[0].message}`));
+            let msg = `${e[0].name}: ${e[0].message}`;
+            console.warn(`docxtemplater: ${msg}`);
+            handleError(new Error(msg));
           }
         } else {
           // Handle any other errors normally.
