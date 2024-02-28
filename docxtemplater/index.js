@@ -71,6 +71,9 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
         currentData.data = mappedRecord[DATA_COL_NAME];
         console.log("###currentData.data:", currentData.data);
+        if (typeof currentData.data !== "object") {
+          throw new Error(`<b>Can't read placeholder data.</b><br />The data needs to be a dictionary but seems to be a '${typeof currentData.data}'. Make sure the column holding said data is set to type 'Any'.`);
+        }
         if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
           throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
         }
@@ -86,7 +89,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
         setStatusMessage("Ready. Click 'Process' to generate the document.");
     } else {
-      throw new Error("<b>Please map all columns first. If you have already mapped them, make sure they're not empty.</b>");
+      throw new Error("<b>Please map all columns first.</b><br />If you have already mapped them, make sure they're not empty.");
     }
   } catch (err) {
     handleError(err);
