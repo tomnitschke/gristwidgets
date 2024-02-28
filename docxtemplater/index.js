@@ -151,17 +151,22 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     if (USEANGULAR_COL_NAME in mappedRecord) {
       currentData.useAngular = mappedRecord[USEANGULAR_COL_NAME];
+      console.log("docxtemplater: Will Angular expressions parser be used:", currentData.useAngular);
     }
     if (USEIMAGEMODULE_COL_NAME in mappedRecord) {
       currentData.useImageModule = mappedRecord[USEIMAGEMODULE_COL_NAME];
+      console.log("docxtemplater: Will image module be used:", currentData.useAngular);
     }
     if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
       currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
+      console.log(`docxtemplater: Custom starting delimiter: '${currentData.delimiterStart}'`);
     }
     if (DELIMITEREND_COL_NAME in mappedRecord && mappedRecord[DELIMITEREND_COL_NAME]) {
       currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
+      console.log(`docxtemplater: Custom ending delimiter: '${currentData.delimiterEnd}'`);
     }
     currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
+    console.log(`docxtemplater: Output file name set to: '${currentData.delimiterStart}'`);
     // Now we have all the data nicely validated and present in currentData,
     // all that's left to do is to display a ready message and the 'process' button.
     setStatusMessage("Ready. Click 'Process' to generate the document.");
@@ -251,14 +256,14 @@ function processFile(url, data, outputFileName) {
         let templater = null;
         try
         {
-          // Initialize docxtemplater and render the document.
-          //const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
+          // Initialize docxtemplater.
           templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         } catch (docxtemplaterError) {
           return handleDocxtemplaterError(docxtemplaterError);
         }
+        // Render the document.
         templater.renderAsync(data).then(function() {
-          // Offer the processed document for download.
+          // When done, offer the final document for download.
           setStatusMessage("Document ready for download.");
           saveAs(templater.getZip().generate({
             type: "blob",
@@ -296,7 +301,7 @@ ready(function(){
       { name: DATA_COL_NAME, type: "Any", title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
       { name: FILENAME_COL_NAME, type: "Text", title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
       { name: USEANGULAR_COL_NAME, type: "Bool", optional: true, title: "Use Angular Parser?", description: "Whether to use the Angular expressions parser or not. The default is 'true'." },
-      { name: USEIMAGEMODULE_COL_NAME, type: "Bool", optional: true, title: "Use Image Module?", description: "Whether to use the image module (allows replacing placeholders with images) or not. The default is 'true'." },
+      { name: USEIMAGEMODULE_COL_NAME, type: "Bool", optional: true, title: "Use Image Module?", description: "Whether to use the image module (allows insertion of images from Grist attachments) or not. The default is 'true'." },
       { name: DELIMITERSTART_COL_NAME, type: "Text", optional: true, title: "Custom Delimiter: Start", description: "Custom delimiter to use for the start of placeholders. The default is '{'." },
       { name: DELIMITEREND_COL_NAME, type: "Text", optional: true, title: "Custom Delimiter: End", description: "Custom delimiter to use for the end of placeholders. The default is '}'." },
     ],
