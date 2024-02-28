@@ -41,6 +41,7 @@ function resetStatusMessage() {
 
 function handleError(err) {
   if (!setStatusMessage(err)) {
+    console.error("docxtemplater: FATAL: ", err);
     document.body.innerHTML = String(err);
     return;
   }
@@ -53,6 +54,7 @@ function handleError(err) {
   if (processButtonElem) {
     processButtonElem.style.display = "none";
   }
+  console.error("docxtemplater: ", err);
 }
 
 async function gristGetAttachmentURL(attachmentId) {
@@ -293,7 +295,6 @@ ready(function(){
   // Set up a global error handler.
   window.addEventListener("error", function(err) {
     handleError(err);
-    console.error("docxtemplater: ", err);
   });
   // Let Grist know we're ready to talk.
   grist.ready({
