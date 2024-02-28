@@ -92,7 +92,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   }
 }
 
-function processFile(url, data, outputFileName) {
+async function processFile(url, data, outputFileName) {
   try {
     if (!url || !data || !outputFileName) {
       throw new Error("Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.");
@@ -129,9 +129,43 @@ function processFile(url, data, outputFileName) {
           // Disable the Angular expressions parse if requested by the user.
           docxtemplaterOptions.parser = null;
         }
+        //TODO
+        // Enable the image module unless disabled by the user.
+        if (true) {
+          docxtemplaterOptions.modules = [new ImageModule({
+            //TODO make this configurable?
+            centered: false,
+            getImage: async function(url, tagName) {
+              console.log("###getImage! url, tagName:", url, tagName);
+              return new Promise(function(resolve, reject) {
+                PizZipUtils.getBinaryContent(url, function(err, content) {
+                  if (err) {
+                    return reject(err);
+                  }
+                  return resolve(content);
+                });
+              });
+            },
+            getSize: async function(url, image, tagName) {
+              console.log("###getSize! url, image, tagName:", url, image, tagName);
+              return new Promise(function(resolve, reject) {
+                const img = new Image();
+                img.src = url;
+                img.onload = function() {
+                  return resolve([img.width, img.height]);
+                };
+                img.onerror = function(e) {
+                  console.log(`docxtemplater couldn't load image '${url}' into placeholder '${tagName}'. Image object: `, image);
+                  return reject(e);
+                };
+              });
+            },
+          })];
+        }
         // Initialize docxtemplater and render the document.
         const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
-        templater.render(data);
+        //templater.render(data);
+        await templater.renderAsync(data);
         // Offer the processed document for download.
         setStatusMessage("Document ready for download.");
         saveAs(templater.getZip().generate({
