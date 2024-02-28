@@ -208,7 +208,7 @@ function processFile(url, data, outputFileName) {
                 });
               });
             },
-            getSize: async function(imgAttachmentIdOrUrl, image, tagName) {
+            getSize: async function(image, imgAttachmentIdOrUrl, tagName) {
               console.log("docxtemplater: getSize! imgAttachmentIdOrUrl, image, tagName:", imgAttachmentIdOrUrl, image, tagName);
               let url = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
               return new Promise(function(resolve, reject) {
