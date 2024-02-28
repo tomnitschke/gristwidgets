@@ -13,6 +13,7 @@ const USEANGULAR_COL_NAME = "use_angular_parser";
 const DELIMITERSTART_COL_NAME = "delimiter_start";
 const DELIMITEREND_COL_NAME = "delimiter_end";
 const currentData = { url: null, data: null, outputFileName: null, useAngular: true, delimiterStart: '{', delimiterEnd: '}' };
+let gristAccessToken = null;
 
 function setStatusMessage(msg) {
   let contentElem = document.querySelector("#content");
@@ -83,8 +84,13 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     // Set up the currentData object.
     const attachmentId = mappedRecord[ATTACHMENTID_COL_NAME];
-    const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
-    currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
+    // Get a Grist access token if we don't already have one.
+    if (!gristAccessToken) {
+      gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+    }
+    // Use the token to get a URL to the attachment.
+    currentData.url = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
+    // This is the actual placeholder data.
     currentData.data = mappedRecord[DATA_COL_NAME];
     console.log(`docxtemplater: Input placeholder data is of type ${typeof currentData.data} and looks like this:`, currentData.data);
     if (typeof currentData.data !== "object") {
@@ -162,37 +168,39 @@ function processFile(url, data, outputFileName) {
           docxtemplaterOptions.modules = [new ImageModule({
             //TODO make this configurable?
             centered: false,
-            getImage: async function(url, tagName) {
-              console.log("docxtemplater: getImage! url, tagName:", url, tagName);
-              try {
-                return new Promise(function(resolve, reject) {
-                  try {
-                    PizZipUtils.getBinaryContent(url, function(err, content) {
-                      if (err) {
-                        throw err;
-                      }
-                      return resolve(content);
-                    });
-                  } catch (e) {
-                    let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-                    console.warn(`docxtemplater: Couldn't load image '${url}' into placeholder '${tagName}': ${msg}`);
-                    return reject(err);
-                  }
-                });
-              } catch (pe) {
-                console.warn(`docxtemplater: `, pe);
-              }
+            getImage: async function(imgAttachmentId, tagName) {
+              console.log("docxtemplater: getImage! imgAttachmentId, tagName:", imgAttachmentId, tagName);
+              return new Promise(function(resolve, reject) {
+                try {
+                  PizZipUtils.getBinaryContent(imgAttachmentId, function(err, content) {
+                    if (err) {
+                      throw err;
+                    }
+                    return resolve(content);
+                  });
+                } catch (e) {
+                  let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
+                  console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentId}' into placeholder '${tagName}': ${msg}`);
+                  return reject(err);
+                }
+              });
             },
-            getSize: async function(url, image, tagName) {
-              console.log("docxtemplater: getSize! url, image, tagName:", url, image, tagName);
+            getSize: async function(imgAttachmentId, image, tagName) {
+              console.log("docxtemplater: getSize! imgAttachmentId, image, tagName:", imgAttachmentId, image, tagName);
               return new Promise(function(resolve, reject) {
                 const img = new Image();
-                img.src = url;
+                //img.src = url;
+                // Get a Grist access token if we don't already have one.
+                if (!gristAccessToken) {
+                  gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+                }
+                // Use the token to get a URL to the attachment.
+                img.src = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
                 img.onload = function() {
                   return resolve([img.width, img.height]);
                 };
                 img.onerror = function(e) {
-                  console.warn(`docxtemplater: Couldn't load image '${url}' into placeholder '${tagName}'. Image object: `, image);
+                  console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentId}' into placeholder '${tagName}'. Image object: `, image);
                   return reject(e);
                 };
               });
