@@ -57,6 +57,28 @@ function handleError(err) {
   console.error("docxtemplater: ", err);
 }
 
+function handleDocxtemplaterError(docxtemplaterError) {
+  // If there is an error in the template, make sure to provide useful details to the user.
+  if (docxtemplaterError instanceof docxtemplater.Errors.XTTemplateError) {
+    docxtemplaterError = docxtemplaterError.properties.errors;
+  }
+  if (0 in docxtemplaterError && "name" in docxtemplaterError[0] && "message" in docxtemplaterError[0]) {
+    if ("properties" in docxtemplaterError[0] && "explanation" in docxtemplaterError[0].properties) {
+      let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].properties.explanation}`;
+      console.warn(`docxtemplater: ${msg}`);
+      handleError(new Error(msg));
+    } else {
+      // Fallback in case there isn't an 'explanation' field.
+      let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].message}`;
+      console.warn(`docxtemplater: ${msg}`);
+      handleError(new Error(msg));
+    }
+  } else {
+    // Handle any other errors normally.
+    handleError(renderError);
+  }
+}
+
 async function gristGetAttachmentURL(attachmentId) {
   if (!(/^\d+$/.test(attachmentId))) {
     let msg = `Invalid Grist attachment id '${attachmentId}'. It should be a number but is of type '${typeof attachmentId}'.`;
@@ -225,8 +247,13 @@ function processFile(url, data, outputFileName) {
             },
           })];
         }
-        // Initialize docxtemplater and render the document.
-        const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
+        try
+        {
+          // Initialize docxtemplater and render the document.
+          const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
+        } catch (docxtemplaterError) {
+          handleDocxtemplaterError(docxtemplaterError);
+        }
         //templater.render(data);
         templater.renderAsync(data).then(function() {
           // Offer the processed document for download.
@@ -236,49 +263,11 @@ function processFile(url, data, outputFileName) {
             mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             compression: "DEFLATE",
           }), outputFileName);
-        }).catch(function(renderError) {
-          // If there is an error in the template, make sure to provide useful details to the user.
-          if (renderError instanceof docxtemplater.Errors.XTTemplateError) {
-            renderError = renderError.properties.errors;
-          }
-          if (0 in renderError && "name" in renderError[0] && "message" in renderError[0]) {
-            if ("properties" in renderError[0] && "explanation" in renderError[0].properties) {
-              let msg = `${renderError[0].name}: ${renderError[0].properties.explanation}`;
-              console.warn(`docxtemplater: ${msg}`);
-              handleError(new Error(msg));
-            } else {
-              // Fallback in case there isn't an 'explanation' field.
-              let msg = `${renderError[0].name}: ${renderError[0].message}`;
-              console.warn(`docxtemplater: ${msg}`);
-              handleError(new Error(msg));
-            }
-          } else {
-            // Handle any other errors normally.
-            handleError(renderError);
-          }
+        }).catch(function(docxtemplaterError) {
+          handleDocxtemplaterError(docxtemplaterError);
         });
       } catch (e) {
         handleError(e);
-        /*if (e instanceof docxtemplater.Errors.XTTemplateError) {
-          // If there is an error in the template, make sure to provide useful details to the user.
-          e = e.properties.errors;
-        }
-        if (0 in e && "name" in e[0] && "message" in e[0]) {
-          if ("properties" in e[0] && "explanation" in e[0].properties) {
-            // Ditto.
-            let msg = `${e[0].name}: ${e[0].properties.explanation}`;
-            console.warn(`docxtemplater: ${msg}`);
-            handleError(new Error(msg));
-          } else {
-            // Fallback in case there isn't an 'explanation' field.
-            let msg = `${e[0].name}: ${e[0].message}`;
-            console.warn(`docxtemplater: ${msg}`);
-            handleError(new Error(msg));
-          }
-        } else {
-          // Handle any other errors normally.
-          handleError(e);
-        }*/
       }
     });
   } catch (err) {
