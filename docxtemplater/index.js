@@ -164,20 +164,24 @@ function processFile(url, data, outputFileName) {
             centered: false,
             getImage: async function(url, tagName) {
               console.log("docxtemplater: getImage! url, tagName:", url, tagName);
-              return new Promise(function(resolve, reject) {
-                try {
-                  PizZipUtils.getBinaryContent(url, function(err, content) {
-                    if (err) {
-                      throw err;
-                    }
-                    return resolve(content);
-                  });
-                } catch (e) {
-                  let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-                  console.warn(`docxtemplater: Couldn't load image '${url}' into placeholder '${tagName}': ${msg}`);
-                  return reject(err);
-                }
-              });
+              try {
+                return new Promise(function(resolve, reject) {
+                  try {
+                    PizZipUtils.getBinaryContent(url, function(err, content) {
+                      if (err) {
+                        throw err;
+                      }
+                      return resolve(content);
+                    });
+                  } catch (e) {
+                    let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
+                    console.warn(`docxtemplater: Couldn't load image '${url}' into placeholder '${tagName}': ${msg}`);
+                    return reject(err);
+                  }
+                });
+              } catch (pe) {
+                console.warn(`docxtemplater: `, pe);
+              }
             },
             getSize: async function(url, image, tagName) {
               console.log("docxtemplater: getSize! url, image, tagName:", url, image, tagName);
