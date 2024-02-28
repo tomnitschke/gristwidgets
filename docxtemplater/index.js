@@ -257,6 +257,10 @@ function processFile(url, data, outputFileName) {
 
 // Start once the DOM is ready.
 ready(function(){
+  // Set up a global error handler.
+  window.addEventListener("error", function(err) {
+    handleError(err);
+  });
   // Let Grist know we're ready to talk.
   grist.ready({
     // We require "full" mode in order to be allowed access to attachments.
