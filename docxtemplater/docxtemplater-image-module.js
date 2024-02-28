@@ -112,7 +112,7 @@ module.exports = function () {
 			}
 			var types = contentTypeDoc.getElementsByTagName("Types")[0];
 			var newTag = contentTypeDoc.createElement("Default");
-			newTag.namespaceURI = null;
+			//newTag.namespaceURI = null;
 			newTag.setAttribute("ContentType", contentType);
 			newTag.setAttribute("Extension", extension);
 			types.appendChild(newTag);
@@ -142,7 +142,7 @@ module.exports = function () {
 			this.addExtensionRels("image/" + extension, extension);
 			var relationships = this.relsDoc.getElementsByTagName("Relationships")[0];
 			var newTag = this.relsDoc.createElement("Relationship");
-			newTag.namespaceURI = null;
+			//newTag.namespaceURI = null;
 			var maxRid = this.loadImageRels() + 1;
 			newTag.setAttribute("Id", "rId" + maxRid);
 			newTag.setAttribute("Type", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image");
@@ -4712,7 +4712,7 @@ Document.prototype = {
 		node.ownerDocument = this;
 		node.nodeName = qualifiedName;
 		node.tagName = qualifiedName;
-		node.namespaceURI = namespaceURI;
+		//node.namespaceURI = namespaceURI;
 		if(pl.length == 2){
 			node.prefix = pl[0];
 			node.localName = pl[1];
