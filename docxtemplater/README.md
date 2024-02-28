@@ -258,8 +258,17 @@ return Export(locals())
 
 Now make another formula column "placeholder_mapping" and put this inside:
 ```
+# First off, you might want to make sure the placeholder data gets updated whenever
+# the user makes changes to the template. To do this, reference the template
+# attachment column explicitly:
+depend = [
+  $the_template_attachment_column,
+  # You could add more columns here.
+]
+
 # To make a placeholder mapping for this record itself, do 'record = rec' instead.
 record = SomeTable.lookupOne()
+
 # Create the mapping and return it.
 return $helper.create_placeholder_mapping(record)
 ```
