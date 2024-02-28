@@ -70,6 +70,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         const tokenInfo = await grist.docApi.getAccessToken({ readOnly: true });
         currentData.url = `${tokenInfo.baseUrl}/attachments/${attachmentId}/download?auth=${tokenInfo.token}`;
         currentData.data = mappedRecord[DATA_COL_NAME];
+        console.log("###currentData.data:", currentData.data);
         if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
           throw new Error(`Supplied data is not a dictionary: '${currentData.data}'`);
         }
