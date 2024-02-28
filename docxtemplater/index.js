@@ -192,7 +192,7 @@ function processFile(url, data, outputFileName) {
             //TODO make this configurable?
             centered: false,
             getImage: async function(imgAttachmentIdOrUrl, tagName) {
-              console.log("docxtemplater: getImage! imgAttachmentIdOrUrl, tagName:", imgAttachmentId, tagName);
+              console.log("docxtemplater: getImage! imgAttachmentIdOrUrl, tagName:", imgAttachmentIdOrUrl, tagName);
               let url = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
               return new Promise(function(resolve, reject) {
                 PizZipUtils.getBinaryContent(url, function(err, content) {
