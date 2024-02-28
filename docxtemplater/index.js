@@ -251,6 +251,12 @@ function processFile(url, data, outputFileName) {
         } catch (docxtemplaterError) {
           return handleDocxtemplaterError(docxtemplaterError);
         }
+        try
+        {
+          let x = templater;
+        } catch(e) {
+          throw new Error(e);
+        }
         //templater.render(data);
         templater.renderAsync(data).then(function() {
           // Offer the processed document for download.
