@@ -155,7 +155,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     if (USEIMAGEMODULE_COL_NAME in mappedRecord) {
       currentData.useImageModule = mappedRecord[USEIMAGEMODULE_COL_NAME];
-      console.log("docxtemplater: Will image module be used:", currentData.useAngular);
+      console.log("docxtemplater: Will image module be used:", currentData.useImageModule);
     }
     if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
       currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
@@ -166,7 +166,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       console.log(`docxtemplater: Custom ending delimiter: '${currentData.delimiterEnd}'`);
     }
     currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
-    console.log(`docxtemplater: Output file name set to: '${currentData.delimiterStart}'`);
+    console.log(`docxtemplater: Output file name set to: '${currentData.outputFileName}'`);
     // Now we have all the data nicely validated and present in currentData,
     // all that's left to do is to display a ready message and the 'process' button.
     setStatusMessage("Ready. Click 'Process' to generate the document.");
