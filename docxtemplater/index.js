@@ -92,7 +92,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   }
 }
 
-async function processFile(url, data, outputFileName) {
+function processFile(url, data, outputFileName) {
   try {
     if (!url || !data || !outputFileName) {
       throw new Error("Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.");
@@ -165,14 +165,15 @@ async function processFile(url, data, outputFileName) {
         // Initialize docxtemplater and render the document.
         const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         //templater.render(data);
-        await templater.renderAsync(data);
-        // Offer the processed document for download.
-        setStatusMessage("Document ready for download.");
-        saveAs(templater.getZip().generate({
-          type: "blob",
-          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          compression: "DEFLATE",
-        }), outputFileName);
+        templater.renderAsync(data).then(function() {
+          // Offer the processed document for download.
+          setStatusMessage("Document ready for download.");
+          saveAs(templater.getZip().generate({
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            compression: "DEFLATE",
+          }), outputFileName);
+        });
       } catch (e) {
         if (e instanceof docxtemplater.Errors.XTTemplateError) {
           // If there is an error in the template, make sure to provide useful details to the user.
