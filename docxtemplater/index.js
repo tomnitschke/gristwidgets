@@ -123,6 +123,10 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
     }
     currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
+    //WIP
+    currentData.data.image = function(scope) {
+      console.log(`docxtemplater: image with scope:`, scope);
+    };
     // Now we have all the data nicely validated and present in currentData,
     // all that's left to do is to display a ready message and the 'process' button.
     setStatusMessage("Ready. Click 'Process' to generate the document.");
