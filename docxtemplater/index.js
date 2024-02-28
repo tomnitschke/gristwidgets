@@ -248,20 +248,15 @@ function processFile(url, data, outputFileName) {
             },
           })];
         }
+        let templater = null;
         try
         {
           // Initialize docxtemplater and render the document.
-          const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
+          //const templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
+          templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
         } catch (docxtemplaterError) {
           return handleDocxtemplaterError(docxtemplaterError);
         }
-        try
-        {
-          let x = templater;
-        } catch(e) {
-          throw new Error(e);
-        }
-        //templater.render(data);
         templater.renderAsync(data).then(function() {
           // Offer the processed document for download.
           setStatusMessage("Document ready for download.");
