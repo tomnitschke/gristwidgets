@@ -65,7 +65,7 @@ async function gristGetAttachmentURL(attachmentId) {
   // Get a Grist access token if we don't already have one.
   if (!gristAccessToken) {
     console.log(`docxtemplater: Getting new Grist access token.`);
-    gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+    window.gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
   }
   // Use the token to get a URL to the attachment.
   let url = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
@@ -293,6 +293,7 @@ ready(function(){
   // Set up a global error handler.
   window.addEventListener("error", function(err) {
     handleError(err);
+    console.error("docxtemplater: ", err);
   });
   // Let Grist know we're ready to talk.
   grist.ready({
