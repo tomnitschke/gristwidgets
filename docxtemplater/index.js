@@ -73,6 +73,18 @@ async function gristGetAttachmentURL(attachmentId) {
   return url;
 }
 
+async function getGristImageAttachmentURL(imgAttachmentIdOrUrl) {
+  if (/(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(imgAttachmentIdOrUrl))
+  {
+    // This looks like a URL.
+    return imgAttachmentIdOrUrl;
+  } else {
+    // Otherwise assume it is an attachment id. Note that gristGetAttachmentURL() will throw
+    // if the value can't be cast to Number.
+    return await gristGetAttachmentURL(imgAttachmentIdOrUrl);
+  }
+}
+
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   try {
     //const mappedRecord = grist.mapColumnNames(record);
@@ -179,24 +191,24 @@ function processFile(url, data, outputFileName) {
           docxtemplaterOptions.modules = [new ImageModule({
             //TODO make this configurable?
             centered: false,
-            getImage: async function(imgAttachmentId, tagName) {
-              console.log("docxtemplater: getImage! imgAttachmentId, tagName:", imgAttachmentId, tagName);
-              let url = await gristGetAttachmentURL(imgAttachmentId);
+            getImage: async function(imgAttachmentIdOrUrl, tagName) {
+              console.log("docxtemplater: getImage! imgAttachmentIdOrUrl, tagName:", imgAttachmentId, tagName);
+              let url = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
               return new Promise(function(resolve, reject) {
                 PizZipUtils.getBinaryContent(url, function(err, content) {
                   if (err) {
                     //throw err;
                     let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-                    console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentId}' (URL: '${url}') into placeholder '${tagName}': ${msg}`);
+                    console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentIdOrUrl}' (URL: '${url}') into placeholder '${tagName}': ${msg}`);
                     return reject(err);
                   }
                   return resolve(content);
                 });
               });
             },
-            getSize: async function(imgAttachmentId, image, tagName) {
-              console.log("docxtemplater: getSize! imgAttachmentId, image, tagName:", imgAttachmentId, image, tagName);
-              let url = await gristGetAttachmentURL(imgAttachmentId);
+            getSize: async function(imgAttachmentIdOrUrl, image, tagName) {
+              console.log("docxtemplater: getSize! imgAttachmentIdOrUrl, image, tagName:", imgAttachmentIdOrUrl, image, tagName);
+              let url = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
               return new Promise(function(resolve, reject) {
                 const img = new Image();
                 img.src = url;
@@ -204,7 +216,7 @@ function processFile(url, data, outputFileName) {
                   return resolve([img.width, img.height]);
                 };
                 img.onerror = function(e) {
-                  console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentId}' (URL: '${url}') into placeholder '${tagName}'. Image object: `, image);
+                  console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentIdOrUrl}' (URL: '${url}') into placeholder '${tagName}'. Image object: `, image);
                   return reject(e);
                 };
               });
