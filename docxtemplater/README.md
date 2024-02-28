@@ -263,7 +263,10 @@ Now make another formula column "placeholder_mapping" and put this inside:
 # attachment column explicitly:
 depend = [
   $the_template_attachment_column,
-  # You could add more columns here.
+  # You could add more columns here. Note in particular that the placeholder
+  # mapping will *not* get updated automatically if you change a column in the
+  # source record. This is because the formula in $helper uses PEEK() to get
+  # the column values, and therefore doesn't set up any dependencies.
 ]
 
 # To make a placeholder mapping for this record itself, do 'record = rec' instead.
