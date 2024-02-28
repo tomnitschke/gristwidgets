@@ -187,14 +187,14 @@ function processFile(url, data, outputFileName) {
             },
             getSize: async function(imgAttachmentId, image, tagName) {
               console.log("docxtemplater: getSize! imgAttachmentId, image, tagName:", imgAttachmentId, image, tagName);
+              // Get a Grist access token if we don't already have one.
+              if (!gristAccessToken) {
+                gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+              }
               return new Promise(function(resolve, reject) {
                 const img = new Image();
                 //img.src = url;
-                // Get a Grist access token if we don't already have one.
-                if (!gristAccessToken) {
-                  gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
-                }
-                // Use the token to get a URL to the attachment.
+                // Use the Grist access token from above to get a URL to the attachment.
                 img.src = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
                 img.onload = function() {
                   return resolve([img.width, img.height]);
