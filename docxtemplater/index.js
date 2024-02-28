@@ -10,9 +10,10 @@ const ATTACHMENTID_COL_NAME = "attachment_id";
 const DATA_COL_NAME = "data";
 const FILENAME_COL_NAME = "filename";
 const USEANGULAR_COL_NAME = "use_angular_parser";
+const USEIMAGEMODULE_COL_NAME = "use_image_module";
 const DELIMITERSTART_COL_NAME = "delimiter_start";
 const DELIMITEREND_COL_NAME = "delimiter_end";
-const currentData = { url: null, data: null, outputFileName: null, useAngular: true, delimiterStart: '{', delimiterEnd: '}' };
+const currentData = { url: null, data: null, outputFileName: null, useAngular: true, useImageModule: true, delimiterStart: '{', delimiterEnd: '}' };
 let gristAccessToken = null;
 
 function setStatusMessage(msg) {
@@ -130,7 +131,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     // Make sure all required columns have been mapped.
     if (!(ATTACHMENTID_COL_NAME in mappedRecord || DATA_COL_NAME in mappedRecord || FILENAME_COL_NAME in mappedRecord)) {
-      let msg = "<b>Please map all columns first.</b><br />If you have already mapped them, make sure they're not empty.";
+      let msg = "<b>Please map all columns first.</b>";
       console.error(`docxtemplater: ${msg}`);
       throw new Error(msg);
     }
@@ -150,6 +151,9 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     if (USEANGULAR_COL_NAME in mappedRecord) {
       currentData.useAngular = mappedRecord[USEANGULAR_COL_NAME];
+    }
+    if (USEIMAGEMODULE_COL_NAME in mappedRecord) {
+      currentData.useImageModule = mappedRecord[USEIMAGEMODULE_COL_NAME];
     }
     if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
       currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
@@ -208,7 +212,7 @@ function processFile(url, data, outputFileName) {
         }
         //TODO
         // Enable the image module.
-        if (true) {
+        if (currentData.useImageModule) {
           docxtemplaterOptions.modules = [new ImageModule({
             //TODO make this configurable?
             centered: false,
@@ -237,7 +241,7 @@ function processFile(url, data, outputFileName) {
                   return resolve([img.width, img.height]);
                 };
                 img.onerror = function(e) {
-                  console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentIdOrUrl}' (URL: '${url}') into placeholder '${tagName}'. Image object: `, image);
+                  console.warn(`docxtemplater: Couldn't fetch image from '${url}' for placeholder '${tagName}'. Maybe it's a CORS issue?`);
                   return reject(e);
                 };
               });
