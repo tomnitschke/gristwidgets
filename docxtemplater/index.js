@@ -56,11 +56,12 @@ function handleError(err) {
 }
 
 async function gristGetAttachmentURL(attachmentId) {
-  if (typeof attachmentId !== "number") {
+  if (!(/^\d+$/.test(attachmentId)) {
     let msg = `Invalid Grist attachment id '${attachmentId}'. It should be a number but is of type '${typeof attachmentId}'.`;
     console.error(`docxtemplater: ${msg}`);
     throw new Error(msg);
   }
+  attachmentId = Number(attachmentId);
   // Get a Grist access token if we don't already have one.
   if (!gristAccessToken) {
     console.log(`docxtemplater: Getting new Grist access token.`);
