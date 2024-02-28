@@ -113,12 +113,11 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   try {
     //const mappedRecord = grist.mapColumnNames(record);
     // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
-    // properly, so we need to map stuff ourselves. Since we're already at it, lets also
-    // facilitate things a bit by mapping only columns that aren't empty/falsy.
+    // properly, so we need to map stuff ourselves.
     const mappedRecord = {}
     if (mappedColNamesToRealColNames) {
       for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
-        if (realColName in record && record[realColName]) {
+        if (realColName in record) {
           mappedRecord[mappedColName] = record[realColName];
           // If we're mapping one of the essential columns but that column is empty/its data is falsy,
           // display an error message to the user.
