@@ -65,12 +65,12 @@ async function gristGetAttachmentURL(attachmentId) {
   }
   attachmentId = Number(attachmentId);
   // Get a Grist access token if we don't already have one.
-  if (!window.gristAccessToken) {
+  if (!gristAccessToken) {
     console.log(`docxtemplater: Getting new Grist access token.`);
-    window.gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+    gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
   }
   // Use the token to get a URL to the attachment.
-  let url = `${window.gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${window.gristAccessToken.token}`;
+  let url = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
   console.log(`docxtemplater: Obtained Grist attachment URL: '${url}'`);
   return url;
 }
@@ -319,4 +319,5 @@ ready(function(){
   document.querySelector("#button_status_reset").addEventListener("click", function(){
     resetStatusMessage();
   });
+  console.log("docxtemplater: Ready.");
 });
