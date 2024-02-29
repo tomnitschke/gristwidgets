@@ -99,14 +99,17 @@ def get_column_type(table: str, column: str) -> str or None:
     return None
   return col_obj.type_obj.typename()
 
-def create_placeholder_mapping(record: grist.Record, disable_nested_placeholders: bool=False) -> dict:
+def create_placeholder_mapping(record: grist.Record, decimals_separator: str=".", thousands_separator: str=",", default_num_decimals: int=2, bool_representation: tuple=("No", "Yes"), list_concatenator: str=", ", currency_symbol: str="$ ", currency_prefixed: bool=True, percent_symbol: str=" %", disable_formatting: bool=False, disable_nested_placeholders: bool=False) -> dict:
   """
     Creates a placeholder-to-value mapping of the form '{placeholderName: valueToReplaceBy}' for the given record.
     Values will all be returned as string or None; this is safe for use with the docxtemplater widget.
-    If possible, values will be formatted nicely according to the respective column settings in Grist.
+    If possible, values will be formatted nicely according to the respective column settings in Grist (unless you
+    pass True for the argument 'disable_formatting').
     If the record contains reference columns, these will be expanded to (one level deep) nested placeholders, such
     that a column referencing a record of "RefedTable" will result in placeholders like these getting generated
-    (according to the columns of "RefedTable"): 'RefedTable.A', 'RefedTable.B', ...
+    (according to the columns of "RefedTable"): 'RefedTable.A', 'RefedTable.B', ... You can disable this behaviour
+    by providing 'disable_nested_placeholders' as True.
+    All other arguments get passed directly to 'format_value()', see below.
   """
   mapping = {}
   # Get all columns of this record's table.
@@ -131,14 +134,29 @@ def create_placeholder_mapping(record: grist.Record, disable_nested_placeholders
       # Create the mapping for this column using the raw value just obtained. We will apply additional
       # formatting to the value below if possible.
       mapping[col] = val
+      if disable_formatting:
+        # If no further formatting is required, we're done here.
+        continue
       if type(val) in (str, int, float, bool, list, tuple, datetime.datetime, datetime.date):
         # For column types we can handle, format the value accordingly.
-        mapping[col] = format_value(record._table.table_id, col, val)
+        mapping[col] = format_value(
+            record._table.table_id,
+            col,
+            val,
+            decimals_separator=decimals_separator,
+            thousands_separator=thousands_separator,
+            default_num_decimals=default_num_decimals,
+            bool_representation=bool_representation,
+            list_concatenator=list_concatenator,
+            currency_symbol=currency_symbol,
+            currency_prefixed=currency_prefixed,
+            percent_symbol=percent_symbol
+          )
         continue
       if isinstance(val, (grist.Record, grist.RecordSet)):
         # For reference columns, create nested placeholders (like this: {column_name.referenced_column_name: referenced_column_value})
-        # The reference column itself gets a placeholder that just uses repr().
-        mapping[col] = repr(val)
+        # The reference column itself gets a placeholder that just uses str(grist.Record), so it'll look like 'Table[1]'.
+        mapping[col] = str(val)
         # If so requested, don't create nested placeholders.
         if disable_nested_placeholders:
           continue
@@ -204,11 +222,20 @@ def format_value(table: str, column: str, val: object, decimals_separator: str="
       col_opts = get_column_options(table, column)
       col_type = get_column_type(table, column)
       if not col_type:
-        return repr(val)
-      if col_type in ("Int", "Numeric") and "numMode" in col_opts:
+        # If we can't determine the column type for some reason, there's no way
+        # to know how to format the value, so don't.
+        return str(val)
+      if col_type in ("Int", "Numeric"):
+        # Handle number type columns.
         decimals = max(default_num_decimals, col_opts.get("decimals", 0))
         decimals = max(decimals, col_opts.get("maxDecimals", 0))
+        if not "numMode" in col_opts:
+          # If there is no 'numMode' key, afaik this usually indicates an 'Int'
+          # type column with no other options set. This means we don't have to
+          # apply any formatting and can simple return the value as a string.
+          return str(v)
         if col_opts["numMode"] == "currency":
+          # Format currency values.
           formatted_value = _format_as_decimal(v, num_decimals=decimals, decimals_separator=decimals_separator, thousands_separator=thousands_separator)
           # Note: We could use col_opts["currency"] to determine the currency symbol rather than rely on a separate argument.
           # But that field holds a currency code like "USD" or "EUR" rather than the symbol itself, so since Grist unfortunately doesn't give us
@@ -217,34 +244,56 @@ def format_value(table: str, column: str, val: object, decimals_separator: str="
           formatted_value = (currency_symbol if currency_prefixed else "") + formatted_value + (currency_symbol if not currency_prefixed else "")
           return formatted_value
         if col_opts["numMode"] == "percent":
+          # Format percent values.
           return _format_as_decimal(v, num_decimals=decimals, decimals_separator=decimals_separator, thousands_separator=thousands_separator) + percent_symbol
         if col_opts["numMode"] == "decimal":
+          # Format decimals.
           return _format_as_decimal(v, num_decimals=decimals, decimals_separator=decimals_separator, thousands_separator=thousands_separator)
+        # For simple integers, we don't need to apply any formatting.
         return str(v)
       if col_type in ("Date", "DateTime") and "dateFormat" in col_opts:
-        # Note the following doesn't support Date/DateTime fields that are set up to use the "name of week day" format.
-        formatstring = col_opts["dateFormat"].replace("DD", "%d").replace("MM", "%m").replace("YYYY", "%Y")
-        if "timeFormat" in col_opts and col_type == "DateTime":
-          formatstring2 = col_opts["timeFormat"].replace("HH", "%H").replace("mm", "%M").replace("ss", "%S")
+        # Handle Date and DateTime columns.
+        # Note the following doesn't support Date/DateTime fields that are set up to use
+        # the "name of week day" format (such that it includes, e.g., "Tue" for Tuesday).
+        formatstring_date = col_opts["dateFormat"].replace("DD", "%d").replace("MM", "%m").replace("YYYY", "%Y")
+        if col_type == "DateTime":
+          # If it's a DateTime column, it should have a 'timeFormat' key. If for
+          # some reason it doesn't, let's fall back to a sane default.
+          formatstring_time = "%H:%M:%S"
+          if "timeFormat" in col_opts:
+            formatstring_time = col_opts["timeFormat"].replace("HH", "%H").replace("mm", "%M").replace("ss", "%S")
           try:
-            return _format_as_datetime(val, formatstring=formatstring + " " + formatstring2)
+            return _format_as_datetime(val, formatstring=formatstring_date + " " + formatstring_time)
           except:
+            # In case the format string compiled above causes an error for some reason, it's still
+            # preferable to fall back to the (ugly) default formatting rather than fail completely.
             return _format_as_datetime(val)
         try:
-          return _format_as_date(val, formatstring=formatstring)
+          return _format_as_date(val, formatstring=formatstring_date)
         except:
+          # See comment above, but for 'Date' type columns.
           return _format_as_date(val)
       if col_type == "Bool":
+        # Handle bool columns. Note that if you need to use a bool for a conditional tag in your
+        # docx template, a 'False' bool represented as 'No' won't do the trick. In that case, you
+        # can either set the bool to 'None' in Grist, or pass the 'bool_representation' argument
+        # as 'tuple("Yes", None)' or 'tuple("Yes", "")'. Of course, you could also disable
+        # representation entirely by passing 'tuple(True, False)'.
         return bool_representation[int(bool(val))]
       return str(v)
     except:
-      return repr(v)
+      # If any of the above formatting attempts failed completely for some reason,
+      # there's nothing more to do about it. We'll just return the unformatted value.
+      return str(v)
 
   if isinstance(val, (list, tuple)):
+    # If the value is a list or tuple, we format each element, then concatenate
+    # the whole thing to string using 'list_concatenator'.
     result = []
     for v in val:
       result.append(doFormat(v))
     return list_concatenator.join(result)
+  # Otherwise, we format the value directly and return it.
   return doFormat(val)
 
 
