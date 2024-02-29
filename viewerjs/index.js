@@ -8,6 +8,7 @@ function ready(fn) {
 
 const ATTACHMENTID_COL_NAME = "attachment_id";
 let gristAccessToken = null;
+let previousUrl = null;
 
 function setStatusMessage(msg) {
   let statusMessageElem = document.querySelector("#status");
@@ -58,9 +59,14 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Get the URL we want to view.
     let documentUrl = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
     let fullUrl = `${window.location.origin + window.location.pathname.slice(0, window.location.pathname.lastIndexOf('/'))}/ViewerJS/#${documentUrl}`;
-    console.log(`viewerjs: Attachment found. Redirecting to '${fullUrl}' now...`);
-    // Redirect to ViewerJS to view the file.
-    window.location.replace(fullUrl);
+    if (fullUrl != previousUrl) {
+      previousUrl = fullUrl;
+      console.log(`viewerjs: Setting viewer URL to '${fullUrl}'.`);
+      // Load the viewer iframe.
+      document.querySelector("#viewer").src = fullUrl;
+    } else {
+      console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
+    }
   } catch(err) {
     return handleError(err);
   }
