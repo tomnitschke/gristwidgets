@@ -37,6 +37,7 @@ function hideStatusMessage() {
 }
 
 function handleError(err) {
+  previousUrl = null;
   if (!setStatusMessage(err)) {
     console.error("viewerjs: FATAL: ", err);
     document.body.innerHTML = String(err);
