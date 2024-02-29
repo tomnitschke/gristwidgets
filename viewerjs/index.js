@@ -77,10 +77,13 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     if (fullUrl != previousUrl) {
       previousUrl = fullUrl;
       console.log(`viewerjs: Setting viewer URL to '${fullUrl}'.`);
-      // Load the viewer iframe and force it to reload.
-      let iframeElem = document.querySelector("#viewer");
+      let viewerElem = document.querySelector("#viewer");
+      // Wipe the content element clean.
+      viewerElem.innerHTML = "";
+      // Build a new iframe with the URL computed above.
+      let iframeElem = document.createElement("iframe");
       iframeElem.src = fullUrl;
-      iframeElem.contentWindow.location.href = fullUrl;
+      viewerElem.appendChild(iframeElem);
       hideStatusMessage();
     } else {
       console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
