@@ -84,6 +84,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       let iframeElem = document.createElement("iframe");
       iframeElem.src = fullUrl;
       viewerElem.appendChild(iframeElem);
+      iframeElem.className = "viewer-frame";
       hideStatusMessage();
     } else {
       console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
