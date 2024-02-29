@@ -5,7 +5,7 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="index.js"></script>
     <style>
-      html, body, #viewer {
+      html, body, iframe {
         height: 100%;
         width: 100%;
         padding: 0px;
@@ -13,13 +13,13 @@
         margin: 0px;
         overflow: hidden;
       }
-      #viewer {
+      iframe {
         display: block;
       }
     </style>
   </head>
   <body>
     <div id="status"></div>
-    <iframe id="viewer" src="about:blank"></iframe>
+    <div id="viewer" style="display:none"></div>
   </body>
 </html>
