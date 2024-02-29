@@ -75,6 +75,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       iframeElem.src = fullUrl;
       viewerElem.appendChild(iframeElem);
       iframeElem.className = "viewer-frame";
+      iframeElem.setAttribute('allowFullScreen', '');
     } else {
       console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
     }
