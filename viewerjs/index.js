@@ -12,13 +12,28 @@ let previousUrl = null;
 
 function setStatusMessage(msg) {
   let statusMessageElem = document.querySelector("#status");
+  let viewerElem = document.querySelector("#viewer");
   if (!statusMessageElem) return false;
+  statusMessageElem.style.display = "block";
   statusMessageElem.innerHTML = msg;
+  if (viewerElem) {
+    viewerElem.style.display = "none";
+  }
   return true;
 }
 
 function resetStatusMessage() {
   return setStatusMessage("Loading...");
+}
+
+function hideStatusMessage() {
+  let statusMessageElem = document.querySelector("#status");
+  let viewerElem = document.querySelector("#viewer");
+  if (!statusMessageElem) return;
+  statusMessageElem.style.display = "None";
+  if (viewerElem) {
+    viewerElem.style.display = "block";
+  }
 }
 
 function handleError(err) {
@@ -64,6 +79,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       console.log(`viewerjs: Setting viewer URL to '${fullUrl}'.`);
       // Load the viewer iframe.
       document.querySelector("#viewer").src = fullUrl;
+      hideStatusMessage();
     } else {
       console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
     }
