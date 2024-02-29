@@ -80,7 +80,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       // Load the viewer iframe and force it to reload.
       let iframeElem = document.querySelector("#viewer");
       iframeElem.src = fullUrl;
-      iframeElem.contentDocument.location.reload(true);
+      iframeElem.contentDocument.location.reload();
       hideStatusMessage();
     } else {
       console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
