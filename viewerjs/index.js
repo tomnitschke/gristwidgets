@@ -135,8 +135,8 @@ ready(function(){
     requiredAccess: "full",
     columns: [
       { name: ATTACHMENTID_COL_NAME, type: "Int", title: "Attachment ID", description: "ID number of a Grist attachment." },
-      { name: DEFAULTZOOM_COL_NAME, type: "Text", optional: true, title: "Default Zoom", description: `Default zoom mode. Valid values are ${DEFAULTZOOM_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}. The default is 'auto'.` },
-      { name: DOCTITLE_COL_NAME, type: "Text", optional: true, title: "Document Title", description: "Document title to display in the header. If not provided, the URL will be shown instead." },
+      { name: DEFAULTZOOM_COL_NAME, type: "Text,Choice", optional: true, title: "Default Zoom", description: `Default zoom mode. Valid values are ${DEFAULTZOOM_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}. The default is 'auto'.` },
+      { name: DOCTITLE_COL_NAME, type: "Text,Choice", optional: true, title: "Document Title", description: "Document title to display in the header. If not provided, the URL will be shown instead." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
