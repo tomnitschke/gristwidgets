@@ -1,6 +1,6 @@
 # Grist webframe widget
 
-A Grist widget that will load any URL into an iframe.  
+A [Grist](https://www.getgrist.com/) widget that will load any URL into an iframe.  
 
 _Note that many websites disallow getting loaded into an iframe, unfortunately there's nothing this widget can do about that when it happens._  
 
