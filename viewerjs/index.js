@@ -7,6 +7,10 @@ function ready(fn) {
 }
 
 const ATTACHMENTID_COL_NAME = "attachment_id";
+const DEFAULTZOOM_COL_NAME = "default_zoom";
+const DOCTITLE_COL_NAME = "doc_title";
+
+const DEFAULTZOOM_ALLOWED_VALUES = ["auto", "page-actual", "page-width"];
 let gristAccessToken = null;
 let previousUrl = null;
 
@@ -57,22 +61,55 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   setStatus("Loading...");
   setVisible("#viewer", false);
   try {
-    const mappedRecord = grist.mapColumnNames(record);
-    if (!mappedRecord) {
-      throw new Error("Please map all required columns first.");
+    //const mappedRecord = grist.mapColumnNames(record);
+    //if (!mappedRecord) {
+    //  throw new Error("Please map all required columns first.");
+    //}
+    // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
+    // properly, so we need to map stuff ourselves.
+    const mappedRecord = {}
+    if (mappedColNamesToRealColNames) {
+      for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
+        if (realColName in record) {
+          mappedRecord[mappedColName] = record[realColName];
+        }
+      }
+    }
+    // Make sure all required columns have been mapped.
+    if (!(ATTACHMENTID_COL_NAME in mappedRecord)) {
+      let msg = "<b>Please map all columns first.</b>";
+      console.error(`viewerjs: ${msg}`);
+      throw new Error(msg);
     }
     // Get the URL we want to view.
     let documentUrl = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
-    let fullUrl = `${window.location.origin + window.location.pathname.slice(0, window.location.pathname.lastIndexOf('/'))}/ViewerJS/#${documentUrl}`;
-    if (fullUrl != previousUrl) {
-      previousUrl = fullUrl;
-      console.log(`viewerjs: Setting viewer URL to '${fullUrl}'.`);
+    let viewerBaseUrl = `${window.location.origin + window.location.pathname.slice(0, window.location.pathname.lastIndexOf('/'))}/ViewerJS/`;
+    let viewerParams = [];
+
+    // Add extra parameters to the iframe URL if the corresponding columns have been mapped.
+    if (DEFAULTZOOM_COL_NAME in mappedRecord) {
+      let defaultZoomSetting = mappedRecord[DEFAULTZOOM_COL_NAME];
+      if (!DEFAULTZOOM_ALLOWED_VALUES.includes(defaultZoomSetting)) {
+        console.warn(`viewerjs: Supplied default zoom setting '${defaultZoomSetting}' is not valid. Valid values are:`, DEFAULTZOOM_ALLOWED_VALUES);
+      } else {
+        viewerParams.push(`zoom=${encodeURIComponent(defaultZoomSetting)}`);
+      }
+    }
+    if (DOCTITLE_COL_NAME in mappedRecord) {
+      viewerParams.push(`title=${encodeURIComponent(mappedRecord[DOCTITLE_COL_NAME])}`);
+    }
+
+    let viewerFullUrl = `${viewerBaseUrl}?${viewerParams.join("&")}#${documentUrl}`;
+    if (viewerFullUrl != previousUrl) {
+      previousUrl = viewerFullUrl;
+      console.log(`viewerjs: Setting viewer URL to '${viewerFullUrl}'.`);
       let viewerElem = document.querySelector("#viewer");
       // Wipe the content element clean.
       viewerElem.innerHTML = "";
-      // Build a new iframe with the URL computed above.
+      // Build a new iframe.
       let iframeElem = document.createElement("iframe");
-      iframeElem.src = fullUrl;
+      // Set up the iframe and attach it to the '#viewer' container.
+      iframeElem.src = viewerFullUrl;
       viewerElem.appendChild(iframeElem);
       iframeElem.className = "viewer-frame";
       iframeElem.setAttribute('allowFullScreen', '');
@@ -98,6 +135,8 @@ ready(function(){
     requiredAccess: "full",
     columns: [
       { name: ATTACHMENTID_COL_NAME, type: "Int", title: "Attachment ID", description: "ID number of a Grist attachment." },
+      { name: DEFAULTZOOM_COL_NAME, type: "Text", optional: true, title: "Default Zoom", description: `Default zoom mode. Valid values are ${DEFAULTZOOM_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}. The default is 'auto'.` },
+      { name: DOCTITLE_COL_NAME, type: "Text", optional: true, title: "Document Title", description: "Document title to display in the header. If not provided, the URL will be shown instead." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
