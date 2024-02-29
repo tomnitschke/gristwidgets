@@ -57,7 +57,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     // Get the URL we want to view.
     let documentUrl = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
-    let fullUrl = `${window.location.href}/ViewerJS/#${url}`;
+    let fullUrl = `${window.location.href}/ViewerJS/#${documentUrl}`;
     console.log(`viewerjs: Attachment found. Redirecting to '${fullUrl}' now...`);
     // Redirect to ViewerJS to view the file.
     window.location.replace(fullUrl);
