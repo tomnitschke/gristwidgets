@@ -30,7 +30,7 @@ ready(function(){
   grist.ready({
     requiredAccess: "read table",
     columns: [
-      { name: URL_COL_NAME, type: "Text", title: "URL", description: "The URL of the website to load." },
+      { name: URL_COL_NAME, type: "Text,Choice", title: "URL", description: "The URL of the website to load." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
