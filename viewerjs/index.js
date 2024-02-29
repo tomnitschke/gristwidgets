@@ -56,9 +56,11 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       throw new Error("Please map all required columns first.");
     }
     // Get the URL we want to view.
-    let url = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
+    let documentUrl = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
+    let fullUrl = `${window.location.href}/ViewerJS/#${url}`;
+    console.log(`viewerjs: Attachment found. Redirecting to '${fullUrl}' now...`);
     // Redirect to ViewerJS to view the file.
-    window.location.replace(`${window.location.href}/ViewerJS/#${url}`);
+    window.location.replace(fullUrl);
   } catch(err) {
     return handleError(err);
   }
