@@ -10,30 +10,18 @@ const ATTACHMENTID_COL_NAME = "attachment_id";
 let gristAccessToken = null;
 let previousUrl = null;
 
-function setStatusMessage(msg) {
-  let statusMessageElem = document.querySelector("#status");
-  let viewerElem = document.querySelector("#viewer");
-  if (!statusMessageElem) return false;
-  statusMessageElem.style.display = "block";
-  statusMessageElem.innerHTML = msg;
-  if (viewerElem) {
-    viewerElem.style.display = "none";
-  }
+function setStatus(msg) {
+  let statusElem = document.querySelector("#status");
+  if (!statusElem) return false;
+  statusElem.innerHTML = msg;
+  setVisible("#status", true);
   return true;
 }
 
-function resetStatusMessage() {
-  return setStatusMessage("Loading...");
-}
-
-function hideStatusMessage() {
-  let statusMessageElem = document.querySelector("#status");
-  let viewerElem = document.querySelector("#viewer");
-  if (!statusMessageElem) return;
-  statusMessageElem.style.display = "None";
-  if (viewerElem) {
-    viewerElem.style.display = "block";
-  }
+function setVisible(querySelector, isVisible) {
+  let elem = document.querySelector(querySelector);
+  if (!elem) return false;
+  elem.style.display = isVisible ? "block" : "none";
 }
 
 function handleError(err) {
@@ -66,7 +54,8 @@ async function gristGetAttachmentURL(attachmentId) {
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   console.log("viewerjs: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
-  resetStatusMessage();
+  setStatus("Loading...");
+  setVisible("#viewer", false);
   try {
     const mappedRecord = grist.mapColumnNames(record);
     if (!mappedRecord) {
@@ -86,10 +75,11 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       iframeElem.src = fullUrl;
       viewerElem.appendChild(iframeElem);
       iframeElem.className = "viewer-frame";
-      hideStatusMessage();
     } else {
       console.log(`viewerjs: Not reloading the viewer as its URL hasn't changed.`);
     }
+    setVisible("#viewer", true);
+    setVisible("#status", false);
   } catch(err) {
     return handleError(err);
   }
