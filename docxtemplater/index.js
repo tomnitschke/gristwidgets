@@ -298,7 +298,7 @@ ready(function(){
     requiredAccess: "full",
     columns: [
       { name: ATTACHMENTID_COL_NAME, type: "Int", title: "Attachment ID", description: "ID number of a Grist attachment." },
-      { name: DATA_COL_NAME, type: "Any", title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
+      { name: DATA_COL_NAME, type: "Any", strictType: true, title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}" },
       { name: FILENAME_COL_NAME, type: "Text,Choice", title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension." },
       { name: USEANGULAR_COL_NAME, type: "Bool", optional: true, title: "Use Angular Parser?", description: "Whether to use the Angular expressions parser or not. The default is 'true'." },
       { name: USEIMAGEMODULE_COL_NAME, type: "Bool", optional: true, title: "Use Image Module?", description: "Whether to use the image module (allows insertion of images from Grist attachments) or not. The default is 'true'." },
