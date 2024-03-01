@@ -30,7 +30,7 @@ function setVisible(querySelector, isVisible) {
 
 function handleError(err) {
   previousUrl = null;
-  if (!setStatusMessage(err)) {
+  if (!setStatus(err)) {
     console.error("viewerjs: FATAL: ", err);
     document.body.innerHTML = String(err);
     return;
