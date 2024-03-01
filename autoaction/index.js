@@ -25,7 +25,7 @@ function setVisible(querySelector, isVisible) {
 }
 
 function handleError(err) {
-  if (!setStatusMessage(err)) {
+  if (!setStatus(err)) {
     console.error("autoaction: FATAL: ", err);
     document.body.innerHTML = String(err);
     return;
@@ -49,7 +49,12 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Apply the user actions.
     // Set 'isDone' to true *first*, so we're safe even if the applyUserActions() call somehow screws up.
     isDone = true;
-    await grist.docApi.applyUserActions(mappedRecord[ACTIONS_COL_NAME]);
+    setStatus("Applying actions...");
+    let actions = mappedRecord[[ACTIONS_COL_NAME];
+    console.log("autoaction: Applying actions:", actions);
+    await grist.docApi.applyUserActions(actions);
+    setStatus("Done.");
+    console.log("autoaction: Done.");
   } catch(err) {
     return handleError(err);
   }
