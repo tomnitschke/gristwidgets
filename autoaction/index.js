@@ -12,9 +12,12 @@ let isDoneForRecord = [];
 const ACTIONS_FORMAT_EXAMPLE_FORMULA = `<pre>return [
   # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
   [ "UpdateRecord", "TableName", 1, { "my_column": "the_value_to_update_to" } ],
+
   # 'AddRecord' is similar, but instead of a record id we pass 'None'
   [ "AddRecord", "TableName", None, { "my_column": "the_value_to_put_into_the_new_record" } ],
+
   # Add more actions here as you see fit.
+
   # For more information, see:
   # https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents
   # and
