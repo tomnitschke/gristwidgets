@@ -35,8 +35,30 @@ function handleError(err) {
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   console.log("autoaction: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
+  let actions = mappedRecord[ACTIONS_COL_NAME];
+  try
+  {
+    // Try to show what actions we're executing by collapsing the list of lists into a readable string.
+    // As a side effect, if this fails, we can certainly say that the actions list provided by the user
+    // somehow doesn't have the right format, and let them know about it.
+    setStatus(`Applying actions: ${actions.map((x) => x.join(":")).join(",<br />")}`);
+  } catch (e) {
+    setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />
+<pre>return [
+# The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
+[ "UpdateRecord", "TableName", 1, { "my_column": "the_value_to_update_to" } ],
+# 'AddRecord' is similar, but instead of a record id we pass 'None'
+[ "AddRecord", "TableName", None, { "my_column": "the_value_to_put_into_the_new_record" } ],
+# Add more actions here as you see fit.
+# For more information, see:
+# https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents
+# and
+# https://github.com/gristlabs/grist-core/blob/main/sandbox/grist/useractions.py
+]</pre>`);
+    return;
+  }
   if (isDoneForRecord.includes(record.id)) {
-    console.log(`autoaction: Already executed actions for this record (ID ${record.id}. Exiting.`);
+    console.log(`autoaction: Already executed actions for this record (ID ${record.id}). Exiting.`);
     return;
   }
   try {
@@ -52,8 +74,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Apply the user actions.
     // Set 'isDone' for this record *first*, so we're safe even if the applyUserActions() call somehow screws up.
     isDoneForRecord.push(record.id);
-    setStatus("Applying actions...");
-    let actions = mappedRecord[ACTIONS_COL_NAME];
     console.log("autoaction: Applying actions:", actions);
     await grist.docApi.applyUserActions(actions);
     setStatus("Done.");
