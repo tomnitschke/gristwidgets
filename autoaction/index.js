@@ -50,7 +50,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Set 'isDone' to true *first*, so we're safe even if the applyUserActions() call somehow screws up.
     isDone = true;
     setStatus("Applying actions...");
-    let actions = mappedRecord[[ACTIONS_COL_NAME];
+    let actions = mappedRecord[ACTIONS_COL_NAME];
     console.log("autoaction: Applying actions:", actions);
     await grist.docApi.applyUserActions(actions);
     setStatus("Done.");
