@@ -9,6 +9,17 @@ function ready(fn) {
 const ACTIONS_COL_NAME = "actions";
 const ISENABLED_COL_NAME = "isenabled";
 let isDoneForRecord = [];
+const ACTIONS_FORMAT_EXAMPLE_FORMULA = `<pre>return [
+  # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
+  [ "UpdateRecord", "TableName", 1, { "my_column": "the_value_to_update_to" } ],
+  # 'AddRecord' is similar, but instead of a record id we pass 'None'
+  [ "AddRecord", "TableName", None, { "my_column": "the_value_to_put_into_the_new_record" } ],
+  # Add more actions here as you see fit.
+  # For more information, see:
+  # https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents
+  # and
+  # https://github.com/gristlabs/grist-core/blob/main/sandbox/grist/useractions.py
+]</pre>`
 
 function setStatus(msg) {
   let statusElem = document.querySelector("#status");
@@ -48,18 +59,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       // somehow doesn't have the right format, and let them know about it.
       setStatus(`Applying actions: ${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`);
     } catch (e) {
-      setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />
-  <pre>return [
-  # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
-  [ "UpdateRecord", "TableName", 1, { "my_column": "the_value_to_update_to" } ],
-  # 'AddRecord' is similar, but instead of a record id we pass 'None'
-  [ "AddRecord", "TableName", None, { "my_column": "the_value_to_put_into_the_new_record" } ],
-  # Add more actions here as you see fit.
-  # For more information, see:
-  # https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents
-  # and
-  # https://github.com/gristlabs/grist-core/blob/main/sandbox/grist/useractions.py
-  ]</pre>`);
+      setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_FORMAT_EXAMPLE_FORMULA}`);
       return;
     }
     if (isDoneForRecord.includes(record.id)) {
@@ -82,6 +82,9 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     setStatus("Done.");
     console.log("autoaction: Done.");
   } catch(err) {
+    if (err.message.startsWith("[Sandbox]")) {
+      err.message += `<br />Most likely the actions list you provided isn't valid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_FORMAT_EXAMPLE_FORMULA}`;
+    }
     return handleError(err);
   }
 }
