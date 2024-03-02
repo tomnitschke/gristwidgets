@@ -8,7 +8,7 @@ function ready(fn) {
 
 const ACTIONS_COL_NAME = "actions";
 const ISENABLED_COL_NAME = "isenabled";
-let isDone = false;
+let isDoneForRecord = [];
 
 function setStatus(msg) {
   let statusElem = document.querySelector("#status");
@@ -34,8 +34,11 @@ function handleError(err) {
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
-  if (isDone) return;
   console.log("autoaction: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
+  if (isDoneForRecord.includes(record.id)) {
+    console.log(`autoaction: Already executed actions for this record (ID ${record.id}. Exiting.`);
+    return;
+  }
   try {
     const mappedRecord = grist.mapColumnNames(record);
     if (!mappedRecord) {
@@ -47,8 +50,8 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       return;
     }
     // Apply the user actions.
-    // Set 'isDone' to true *first*, so we're safe even if the applyUserActions() call somehow screws up.
-    isDone = true;
+    // Set 'isDone' for this record *first*, so we're safe even if the applyUserActions() call somehow screws up.
+    isDoneForRecord.push(record.id);
     setStatus("Applying actions...");
     let actions = mappedRecord[ACTIONS_COL_NAME];
     console.log("autoaction: Applying actions:", actions);
