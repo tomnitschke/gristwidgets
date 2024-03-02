@@ -46,7 +46,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       // Try to show what actions we're executing by collapsing the list of lists into a readable string.
       // As a side effect, if this fails, we can certainly say that the actions list provided by the user
       // somehow doesn't have the right format, and let them know about it.
-      setStatus(`Applying actions: ${actions.map((x) => x.join(":")).join(",<br />")}`);
+      setStatus(`Applying actions: ${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`);
     } catch (e) {
       setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />
   <pre>return [
@@ -64,7 +64,9 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     if (isDoneForRecord.includes(record.id)) {
       // If we've already executed actions for this record, provide a message to that extent and quit.
-      console.log(`autoaction: Already executed actions for this record (ID ${record.id}). Exiting.`);
+      let msg = `Already executed actions for this record (ID ${record.id}), won't do it again until the page gets reloaded.`;
+      setStatus(msg);
+      console.log(`autoaction: ${msg}`);
       return;
     }
     if (!mappedRecord[ISENABLED_COL_NAME]) {
