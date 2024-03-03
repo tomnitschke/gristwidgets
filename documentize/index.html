@@ -21,11 +21,14 @@
         width: 90%;
         margin: auto;
       }
-      #document {
+      #document-box {
         margin-top: 5pt;
         padding-top: 5pt;
         border: solid 2pt #000000;
         box-sizing: border-box;
+      }
+      #document {
+        all: initial;
       }
     </style>
   </head>
@@ -34,6 +37,8 @@
       <input id="button_process" type="button" value="Process!" />
     </div>
     <div>Document Preview:</div>
-    <div id="document"></div>
+    <div id="document-box">
+      <div id="document"></div>
+    </div>
   </body>
 </html>
