@@ -80,7 +80,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     let imgElements = docElem.getElementsByTagName("img");
     for (const imgElem of imgElements) {
       if (/^\s*attachment:\s*\d+$/.test(imgElem.src)) {
-        let attachmentId = imgElem.src.replace(/[^\d]/, "");
+        let attachmentId = imgElem.src.replace(/[^\d]*/, "");
         let url = await gristGetAttachmentURL(attachmentId);
         console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${attachmentId}': Set its 'src' to '${url}'`);
         imgElem.src = url;
