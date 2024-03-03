@@ -14,9 +14,6 @@
         display: inline-block;
         flex: 0 0 50%;
       }
-      #controls {
-        flex: 1;
-      }
       #button_process {
         width: 90%;
         margin: auto;
@@ -33,8 +30,11 @@
     </style>
   </head>
   <body>
-    <div id="status"></div><div id="controls">
-      <input id="button_process" type="button" value="Process!" />
+    <div class="twocolumns">
+      <div id="status"></div>
+      <div id="controls">
+        <input id="button_process" type="button" value="Process!" />
+      </div>
     </div>
     <div>Document Preview:</div>
     <div id="document-box">
