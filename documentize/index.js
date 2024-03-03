@@ -7,7 +7,11 @@ function ready(fn) {
 }
 
 const SOURCE_COL_NAME = "source";
+const SOURCETYPE_COL_NAME = "sourcetype";
 const FILENAME_COL_NAME = "filename";
+
+const SOURCETYPE_ALLOWED_VALUES = ["html", "markdown"];
+
 let currentData = { data: "", filename: "", };
 let gristAccessToken = null;
 
@@ -73,10 +77,28 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       console.error(`documentize: ${msg}`);
       throw new Error(msg);
     }
+
+    // Get the source data directly by default, otherwise convert to HMTL (see below).
     currentData.data = mappedRecord[SOURCE_COL_NAME];
+    // Get sourcedata type. Assume HMTL by default.
+    let sourceType = "html";
+    if (SOURCETYPE_COL_NAME in mappedRecord) {
+      sourceType = mappedRecord[SOURCETYPE_COL_NAME];
+    }
+    if (sourceType == "markdown") {
+      // Convert from Markdown to HTML.
+      let markdownConverter = new showdown.Converter();
+      currentData.data = markdownConverter.makeHtml(currentData.data);
+    }
+    // Get output filename.
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
+
+    // Build the document preview.
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
+
+    // Scan for image elements that have "attachment:n" as their "src" attribute.
+    // For these, get an access token and compute and actual attachment URL.
     let imgElements = docElem.getElementsByTagName("img");
     for (const imgElem of imgElements) {
       if (/^\s*attachment:\s*\d+$/.test(imgElem.src)) {
@@ -123,8 +145,9 @@ ready(function(){
     // We require "full" mode in order to be allowed access to attachments.
     requiredAccess: "full",
     columns: [
-      { name: SOURCE_COL_NAME, type: "Text,Choice", title: "Source", description: "Text to be converted into Word document. Currently, only plain text or HTML is supported." },
+      { name: SOURCE_COL_NAME, type: "Text,Choice", title: "Source", description: "Source data to be converted into Word document. Currently, HTML and Markdown are supported." },
       { name: FILENAME_COL_NAME, type: "Text,Choice", title: "Filename", description: "Name of the generated file. Should include '.docx' extension." },
+      { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x "'").join(", ")}` },
     ],
   });
   // Register callback for when the user selects a record in Grist.
