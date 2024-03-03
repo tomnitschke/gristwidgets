@@ -86,6 +86,28 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Get output filename.
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
 
+    // Show or hide the document preview depending on user config.
+    // This is done before we actually build the document to prevent it from
+    // flickering into view briefly even when preview is disabled.
+    let docBoxElem = document.querySelector("#document-box");
+    let docBoxHeaderElem = document.querySelector("#document-box-header");
+    if (PREVIEWENABLED_COL_NAME in mappedRecord && !mappedRecord[PREVIEWENABLED_COL_NAME])
+    {
+      // If document preview disabled by user, hide it.
+      docBoxElem.style.visibility = "hidden";
+      docBoxElem.style.height = "1pt";
+      docBoxElem.style.overflow = "hidden";
+      docBoxHeaderElem.style.display = "none";
+    } else {
+      // Otherwise, show it.
+      let docBoxElem = document.querySelector("#document-box");
+      let docBoxHeaderElem = document.querySelector("#document-box-header");
+      docBoxElem.style.visibility = "visible";
+      docBoxElem.style.height = "initial";
+      docBoxElem.style.overflow = "auto";
+      docBoxHeaderElem.style.display = "block";
+    }
+
     // Build the document.
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
@@ -100,22 +122,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${attachmentId}': Set its 'src' to '${url}'`);
         imgElem.src = url;
       }
-    }
-
-    // By default, show a document preview.
-    let docBoxElem = document.querySelector("#document-box");
-    let docBoxHeaderElem = document.querySelector("#document-box-header");
-    docBoxElem.style.visibility = "visible";
-    docBoxElem.style.height = "initial";
-    docBoxElem.style.overflow = "auto";
-    docBoxHeaderElem.style.display = "block";
-    if (PREVIEWENABLED_COL_NAME in mappedRecord && !mappedRecord[PREVIEWENABLED_COL_NAME])
-    {
-      // If preview disabled by user, hide it.
-      docBoxElem.style.visibility = "hidden";
-      docBoxElem.style.height = "1pt";
-      docBoxElem.style.overflow = "hidden";
-      docBoxHeaderElem.style.display = "none";
     }
     setStatus("Ready.");
   } catch(err) {
