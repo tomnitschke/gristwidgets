@@ -9,6 +9,7 @@ function ready(fn) {
 const SOURCE_COL_NAME = "source";
 const FILENAME_COL_NAME = "filename";
 let currentData = { data: "", filename: "", };
+let gristAccessToken = null;
 
 function setStatus(msg) {
   let statusElem = document.querySelector("#status");
@@ -32,6 +33,24 @@ function handleError(err) {
     return;
   }
   console.error("documentize: ", err);
+}
+
+async function gristGetAttachmentURL(attachmentId) {
+  if (!(/^\d+$/.test(attachmentId))) {
+    let msg = `Invalid Grist attachment id '${attachmentId}'. It should be an integer but is of type '${typeof attachmentId}'.`;
+    console.error(`documentize: ${msg}`);
+    throw new Error(msg);
+  }
+  attachmentId = Number(attachmentId);
+  // Get a Grist access token if we don't already have one.
+  if (!gristAccessToken) {
+    console.log(`documentize: Getting new Grist access token.`);
+    gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+  }
+  // Use the token to get a URL to the attachment.
+  let url = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
+  console.log(`documentize: Obtained Grist attachment URL: '${url}'`);
+  return url;
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
@@ -58,6 +77,14 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
+    let imgElements = docElem.querySelectorAll("img");
+    for (const imgElem of imgElements) {
+      if (/^\d+$/.test(imgElem.src)) {
+        let url = await gristGetAttachmentURL(imgElem.src);
+        console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${imgElem.src}': Set its 'src' to '${url}'`);
+        imgElem.src = url;
+      }
+    }
     setStatus("Ready.");
   } catch(err) {
     return handleError(err);
