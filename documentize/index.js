@@ -9,6 +9,7 @@ function ready(fn) {
 const SOURCE_COL_NAME = "source";
 const SOURCETYPE_COL_NAME = "sourcetype";
 const FILENAME_COL_NAME = "filename";
+const PREVIEWENABLED_COL_NAME = "previewenabled";
 
 const SOURCETYPE_ALLOWED_VALUES = ["html", "markdown"];
 
@@ -93,7 +94,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Get output filename.
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
 
-    // Build the document preview.
+    // Build the document.
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
 
@@ -107,6 +108,12 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${attachmentId}': Set its 'src' to '${url}'`);
         imgElem.src = url;
       }
+    }
+    
+    if (PREVIEWENABLED_COL_NAME in mappedRecord && !mappedRecord[PREVIEWENABLED_COL_NAME])
+    {
+      // If preview disabled by user, hide it.
+      docElem.style.visibility = "hidden";
     }
     setStatus("Ready.");
   } catch(err) {
@@ -148,6 +155,7 @@ ready(function(){
       { name: SOURCE_COL_NAME, type: "Text,Choice", title: "Source", description: "Source data to be converted into Word document. Currently, HTML and Markdown are supported." },
       { name: FILENAME_COL_NAME, type: "Text,Choice", title: "Filename", description: "Name of the generated file. Should include '.docx' extension." },
       { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
+      { name: PREVIEWENABLED_COL_NAME, type: "Bool", optional: true, title: "Preview Enabled?", description: "Whether to show a document preview (which is the default if you don't map this column) or not." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
