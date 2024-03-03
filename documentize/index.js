@@ -20,14 +20,6 @@ function setStatus(msg) {
   let statusElem = document.querySelector("#status");
   if (!statusElem) return false;
   statusElem.innerHTML = msg;
-  setVisible("#status", true);
-  return true;
-}
-
-function setVisible(querySelector, isVisible) {
-  let elem = document.querySelector(querySelector);
-  if (!elem) return false;
-  elem.style.display = isVisible ? "block" : "none";
   return true;
 }
 
