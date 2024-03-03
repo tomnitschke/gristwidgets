@@ -6,10 +6,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/aadel112/googoose@master/jquery.googoose.js"></script>
     <script src="index.js"></script>
+    <style>
+      #status, #controls{
+        display: inline-block;
+        width: 49%;
+      }
+      #document {
+        margin-top: 5pt;
+        padding-top: 5pt;
+        border: solid 2pt #000000;
+        box-sizing: border-box;
+      }
+    </style>
   </head>
   <body>
     <div id="status"></div>
-    <input id="button_process" type="button" value="Process!" />
+    <div id="controls">
+      <input id="button_process" type="button" value="Process!" />
+    </div>
     <div id="document"></div>
   </body>
 </html>
