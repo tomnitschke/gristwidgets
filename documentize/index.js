@@ -123,6 +123,13 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         imgElem.src = url;
       }
     }
+
+    // Regardless of whether the preview is really visible (see above),
+    // we need to set the document container to "display: block" so that
+    // Googoose doesn't conclude we don't actually want it rendered in
+    // the final document.
+    docBoxElem.style.display = "block";
+
     setStatus("Ready.");
   } catch(err) {
     return handleError(err);
