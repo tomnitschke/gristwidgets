@@ -40,7 +40,7 @@ function handleError(err) {
 
 async function gristGetAttachmentURL(attachmentId) {
   if (!(/^\d+$/.test(attachmentId))) {
-    let msg = `Invalid Grist attachment id '${attachmentId}'. It should be a number but is of type '${typeof attachmentId}'.`;
+    let msg = `Invalid Grist attachment id '${attachmentId}'. It should be an integer but is of type '${typeof attachmentId}'.`;
     console.error(`viewerjs: ${msg}`);
     throw new Error(msg);
   }
