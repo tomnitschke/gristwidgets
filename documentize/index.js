@@ -53,6 +53,8 @@ async function gristGetAttachmentURL(attachmentId) {
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   console.log("documentize: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
   setStatus("Loading...");
+  let processButtonElem = document.querySelector("#button_process");
+  processButtonElem.disabled = true;
   try {
     // Unfortunately, Grist's mapColumnNames() function doesn't handle optional column mappings
     // properly, so we need to map stuff ourselves.
@@ -130,6 +132,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // the final document.
     docBoxElem.style.display = "block";
 
+    processButtonElem.disabled = false;
     setStatus("Ready.");
   } catch(err) {
     return handleError(err);
