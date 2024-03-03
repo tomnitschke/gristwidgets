@@ -109,11 +109,14 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
         imgElem.src = url;
       }
     }
-    
+
+    // By default, show a document preview.
+    let docBoxElem = document.querySelector("#document-box");
+    docBoxElem.style.visibility = "visible";
     if (PREVIEWENABLED_COL_NAME in mappedRecord && !mappedRecord[PREVIEWENABLED_COL_NAME])
     {
       // If preview disabled by user, hide it.
-      docElem.style.visibility = "hidden";
+      docBoxElem.style.visibility = "hidden";
     }
     setStatus("Ready.");
   } catch(err) {
