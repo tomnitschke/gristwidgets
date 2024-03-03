@@ -8,6 +8,7 @@ function ready(fn) {
 
 const SOURCE_COL_NAME = "source";
 const FILENAME_COL_NAME = "filename";
+let currentData = { data: "", filename: "", };
 
 function setStatus(msg) {
   let statusElem = document.querySelector("#status");
@@ -35,7 +36,7 @@ function handleError(err) {
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   console.log("documentize: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
-  setStatus("Ready.");
+  setStatus("Loading...");
   try {
     // Unfortunately, Grist's mapColumnNames() function doesn't handle optional column mappings
     // properly, so we need to map stuff ourselves.
@@ -53,10 +54,20 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       console.error(`documentize: ${msg}`);
       throw new Error(msg);
     }
+    currentData.data = mappedRecord[SOURCE_COL_NAME];
+    currentData.filename = mappedRecord[FILENAME_COL_NAME];
+    setStatus("Ready.");
+  } catch(err) {
+    return handleError(err);
+  }
+
+  function processData() {
+    console.log("documentize: processData()...");
+    try {
     let docElem = document.querySelector("#document");
-    docElem.innerHTML = mappedRecord[SOURCE_COL_NAME];
+    docElem.innerHTML = currentData.data;
     $(document).googoose({
-      filename: mappedRecord[FILENAME_COL_NAME],
+      filename: currentData.filename,
       area: "div#document",
       headerarea: ".header",
       footerarea: ".footer",
@@ -65,8 +76,11 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       currentpage: ".page",
       totalpage: ".numpages",
     });
-  } catch(err) {
-    return handleError(err);
+    console.log("documentize: Processing done. Offering up the file for download!");
+    } catch (err) {
+      setStatus(`Processing error: ${err.message}`);
+      console.error("documentize: Processing error:", err);
+    }
   }
 }
 
@@ -87,5 +101,8 @@ ready(function(){
   });
   // Register callback for when the user selects a record in Grist.
   grist.onRecord(gristRecordSelected);
+  document.querySelector("#button_process").addEventListener("click", function(evt) {
+    processData();
+  });
   console.log("documentize: Ready.");
 });
