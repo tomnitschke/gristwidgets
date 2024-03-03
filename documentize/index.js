@@ -113,10 +113,12 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // By default, show a document preview.
     let docBoxElem = document.querySelector("#document-box");
     docBoxElem.style.visibility = "visible";
+    docBoxElem.style.overflow = "auto";
     if (PREVIEWENABLED_COL_NAME in mappedRecord && !mappedRecord[PREVIEWENABLED_COL_NAME])
     {
       // If preview disabled by user, hide it.
       docBoxElem.style.visibility = "hidden";
+      docBoxElem.style.overflow = "hidden";
     }
     setStatus("Ready.");
   } catch(err) {
