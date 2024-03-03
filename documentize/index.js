@@ -56,6 +56,8 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     currentData.data = mappedRecord[SOURCE_COL_NAME];
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
+    let docElem = document.querySelector("#document");
+    docElem.innerHTML = currentData.data;
     setStatus("Ready.");
   } catch(err) {
     return handleError(err);
@@ -65,19 +67,17 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
 function processData() {
   console.log("documentize: processData()...");
   try {
-  let docElem = document.querySelector("#document");
-  docElem.innerHTML = currentData.data;
-  $(document).googoose({
-    filename: currentData.filename,
-    area: "div#document",
-    headerarea: ".header",
-    footerarea: ".footer",
-    toc: ".toc",
-    pagebreak: ".pagebreak",
-    currentpage: ".page",
-    totalpage: ".numpages",
-  });
-  console.log("documentize: Processing done. Offering up the file for download!");
+    $(document).googoose({
+      filename: currentData.filename,
+      area: "div#document",
+      headerarea: ".header",
+      footerarea: ".footer",
+      toc: ".toc",
+      pagebreak: ".pagebreak",
+      currentpage: ".page",
+      totalpage: ".numpages",
+    });
+    console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
     setStatus(`Processing error: ${err.message}`);
     console.error("documentize: Processing error:", err);
