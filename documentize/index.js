@@ -77,11 +77,12 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
-    let imgElements = docElem.querySelectorAll("img");
+    let imgElements = docElem.getElementsByTagName("img");
     for (const imgElem of imgElements) {
-      if (/^\d+$/.test(imgElem.src)) {
-        let url = await gristGetAttachmentURL(imgElem.src);
-        console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${imgElem.src}': Set its 'src' to '${url}'`);
+      if (/^\s*attachment:\s*\d+$/.test(imgElem.src)) {
+        let attachmentId = imgElem.src.replace(/[^\d]/, "");
+        let url = await gristGetAttachmentURL(attachmentId);
+        console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${attachmentId}': Set its 'src' to '${url}'`);
         imgElem.src = url;
       }
     }
