@@ -147,7 +147,7 @@ ready(function(){
     columns: [
       { name: SOURCE_COL_NAME, type: "Text,Choice", title: "Source", description: "Source data to be converted into Word document. Currently, HTML and Markdown are supported." },
       { name: FILENAME_COL_NAME, type: "Text,Choice", title: "Filename", description: "Name of the generated file. Should include '.docx' extension." },
-      { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x "'").join(", ")}` },
+      { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
     ],
   });
   // Register callback for when the user selects a record in Grist.
