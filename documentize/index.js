@@ -223,9 +223,10 @@ function processData() {
       for (const pagebreakElem of pagebreakElements) {
         pagebreakElem.style.display = "none";
       }
-      html2pdf(document.querySelector("#document"), currentData.config_pdf);
-      for (const pagebreakElem of pagebreakElements) {
-        pagebreakElem.style.display = "revert";
+      html2pdf(document.querySelector("#document"), currentData.config_pdf).then(function() {
+        for (const pagebreakElem of pagebreakElements) {
+          pagebreakElem.style.display = "revert";
+        }
       }
     }
     console.log("documentize: Processing done. Offering up the file for download!");
