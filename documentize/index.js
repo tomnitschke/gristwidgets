@@ -11,8 +11,10 @@ const SOURCETYPE_COL_NAME = "sourcetype";
 const FILENAME_COL_NAME = "filename";
 const PREVIEWENABLED_COL_NAME = "previewenabled";
 const CUSTOMCONFIG_COL_NAME = "config";
+const OUTFORMAT_COL_NAME = "outformat";
 
 const SOURCETYPE_ALLOWED_VALUES = ["html", "markdown"];
+const OUTFORMAT_ALLOWED_VALUES = ["docx", "pdf"];
 
 let currentData = { data: "", filename: "", };
 let gristAccessToken = null;
@@ -106,7 +108,18 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       currentData.data = markdownConverter.makeHtml(currentData.data);
     }
     // Get output filename.
-    currentData.filename = mappedRecord[FILENAME_COL_NAME];
+    currentData.filename = "";
+    if (FILENAME_COL_NAME in mappedRecord) {
+      mappedRecord[FILENAME_COL_NAME];
+    }
+    // If output format is specified by a mapped column, lock down the format choice box.
+    let outformatElem = document.querySelector("#select_outformat");
+    if (OUTFORMAT_COL_NAME in mappedRecord && outformatElem.options.includes(mappedRecord[OUTFORMAT_COL_NAME])) {
+      outformatElem.readonly = true;
+      outformatElem.value = mappedRecord[OUTFORMAT_COL_NAME];
+    } else {
+      outformatElem.readonly = false;
+    }
     // Set up the config for Googoose. If the corresponding column was mapped,
     // use the user-supplied config in there, otherwise the default below.
     currentData.config = {
@@ -177,8 +190,15 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
 
 function processData() {
   console.log("documentize: processData()...");
+  // Get the output format. Depending on that, run either Googoose or html2pdf.
+  let outformatElem = document.querySelector("#select_outformat");
+  let format = outformatElem.value;
   try {
-    $(document).googoose(currentData.config);
+    if (format == "docx") {
+      $(document).googoose(currentData.config);
+    } else {
+      html2pdf(document.querySelector("#document"));
+    }
     console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
     setStatus(`Processing error: ${err.message}`);
@@ -202,6 +222,7 @@ ready(function(){
       { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
       { name: PREVIEWENABLED_COL_NAME, type: "Bool", optional: true, title: "Preview Enabled?", description: "Whether to show a document preview (which is the default if you don't map this column) or not." },
       { name: CUSTOMCONFIG_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config", description: "Custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. Note that the 'area' setting cannot be customized." },
+      { name: OUTFORMAT_COL_NAME, type: "Text,Choice", optional: true, title: "Output Format", description: `Determines what type of file to generate. Allowable values are ${OUTFORMAT_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
     ],
   });
   // Register callback for when the user selects a record in Grist.
