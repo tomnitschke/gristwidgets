@@ -67,7 +67,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       }
     }
     // Make sure all required columns have been mapped.
-    if (!(SOURCE_COL_NAME in mappedRecord) || !(FILENAME_COL_NAME in mappedRecord)) {
+    if (!(SOURCE_COL_NAME in mappedRecord)) {
       let msg = "<b>Please map all columns first.</b>";
       console.error(`documentize: ${msg}`);
       throw new Error(msg);
@@ -87,7 +87,23 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     // Get output filename.
     currentData.filename = mappedRecord[FILENAME_COL_NAME];
-
+    // Set up the config for Googoose. If the corresponding column was mapped,
+    // use the user-supplied config in there, otherwise the default below.
+    currentData.config = {
+      filename: currentData.filename,
+      headerarea: ".header",
+      footerarea: ".footer",
+      toc: ".toc",
+      pagebreak: ".pagebreak",
+      currentpage: ".page",
+      totalpage: ".numpages",
+    };
+    if (CUSTOMCONFIG_COL_NAME in mappedRecord) {
+      currentData.config = mappedRecord[CUSTOMCONFIG_COL_NAME];
+    }
+    // Irrespectively of any user config, always set the "area" property
+    // programmatically, so as not to break things further down below.
+    currentData.config.area = "#document";
     // Show or hide the document preview depending on user config.
     // This is done before we actually build the document to prevent it from
     // flickering into view briefly even when preview is disabled.
@@ -142,16 +158,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
 function processData() {
   console.log("documentize: processData()...");
   try {
-    $(document).googoose({
-      filename: currentData.filename,
-      area: "div#document",
-      headerarea: ".header",
-      footerarea: ".footer",
-      toc: ".toc",
-      pagebreak: ".pagebreak",
-      currentpage: ".page",
-      totalpage: ".numpages",
-    });
+    $(document).googoose(currentData.config);
     console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
     setStatus(`Processing error: ${err.message}`);
@@ -171,9 +178,10 @@ ready(function(){
     requiredAccess: "full",
     columns: [
       { name: SOURCE_COL_NAME, type: "Text,Choice", title: "Source", description: "Source data to be converted into Word document. Currently, HTML and Markdown are supported." },
-      { name: FILENAME_COL_NAME, type: "Text,Choice", title: "Filename", description: "Name of the generated file. Should include '.docx' extension." },
+      { name: FILENAME_COL_NAME, type: "Text,Choice", optional: true, title: "Filename", description: "Name of the generated file. Should include '.docx' extension. If not specified, a random name will be generated." },
       { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
       { name: PREVIEWENABLED_COL_NAME, type: "Bool", optional: true, title: "Preview Enabled?", description: "Whether to show a document preview (which is the default if you don't map this column) or not." },
+      { name: CUSTOMCONFIG_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config", description: "Custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. Note that the 'area' setting cannot be customized." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
