@@ -135,28 +135,29 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     };
     if (CONFIGDOCX_COL_NAME in mappedRecord) {
       currentData.config_docx = mappedRecord[CONFIGDOCX_COL_NAME];
-      // Irrespective of any user config, always set some properties to
-      // predefined values so as not to break things further down below.
-      currentData.config_docx.area = "#document";
-      if (!("pagebreak" in currentData.config_docx)) {
-        currentData.config_docx.pagebreak = ".pagebreak";
-      }
+    }
+    // Irrespective of any user config, always set some properties to
+    // predefined values so as not to break things further down below.
+    currentData.config_docx.area = "#document";
+    if (!("pagebreak" in currentData.config_docx)) {
+      currentData.config_docx.pagebreak = ".pagebreak";
     }
     // html2pdf config:
     currentData.config_pdf = {
       filename: currentData.filename,
-      // Note: This property isn't actually supported by html2pdf, but below we'll
-      // turn it into something that is.
-      pagebreak: currentData.config_docx.pagebreak,
+      pagebreak: { after: ".pagebreak" },
       //TODO
     };
     if (CONFIGPDF_COL_NAME in mappedRecord) {
       currentData.config_pdf = mappedRecord[CONFIGPDF_COL_NAME];
-      // Irrespective of any user config, always set some properties to
-      // predefined values so as not to break things further down below.
-      if (!("pagebreak" in currentData.config_pdf)) {
-        currentData.config_pdf.pagebreak = ".pagebreak";
-      }
+    }
+    // Irrespective of any user config, always set some properties to
+    // predefined values so as not to break things further down below.
+    if (!("pagebreak" in currentData.config_pdf)) {
+      currentData.config_pdf.pagebreak = { after: ".pagebreak" };
+    }
+    if (!("after" in currentData.config_pdf.pagebreak)) {
+      currentData.config_pdf.pagebreak.after = ".pagebreak";
     }
     // Show or hide the document preview depending on user config.
     // This is done before we actually build the document to prevent it from
@@ -183,13 +184,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Build the document.
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
-    // Add the special "html2pdf__page-break" class to any elements that already
-    // have the class defined in currentData.config_pdf.pagebreak.
-    //TODO
-    let pagebreakElements = docElem.querySelectorAll(currentData.config_pdf.pagebreak);
-    for (const pagebreakElem of pagebreakElements) {
-      pagebreakElem.classList.add("html2pdf__page-break");
-    }
     // Scan for image elements that have "attachment:n" as their "src" attribute.
     // For these, get an access token and compute and actual attachment URL.
     let imgElements = docElem.getElementsByTagName("img");
@@ -224,7 +218,12 @@ function processData() {
     if (format == "docx") {
       $(document).googoose(currentData.config_docx);
     } else {
-      //TODO config
+      //TODO
+      let docElem = document.querySelector("#document");
+      let pagebreakElements = docElem.querySelectorAll(currentData.config_pdf.pagebreak.after);
+      for (const pagebreakElem of pagebreakElements) {
+        pagebreakElem.style.display = "none";
+      }
       html2pdf(document.querySelector("#document"), currentData.config_pdf);
     }
     console.log("documentize: Processing done. Offering up the file for download!");
