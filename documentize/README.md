@@ -10,7 +10,9 @@ Additionally, these optional columns may be mapped:
 * "Filename": "Text" or "Choice" type column defining the name of the output file. Should include the ".docx" extension. If you don't map this column, a random name will be generated.
 * "Source Type": "Text"/"Choice" column specifying whether the input is HMTL or Markdown. Correspondingly, allowable values are: "html", "markdown". Any illegal value will be interpreted as "html".
 * "Preview Enabled?": "Bool" column defining whether to show a document preview to the user (which is the default). If this is false, users will only see a status message and the "Process!" button on the widget.
-* "Custom Config": "Any" column providing custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. See https://github.com/aadel112/googoose?tab=readme-ov-file#options for more information.
+* "Custom Config for Googoose": "Any" column providing custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. See https://github.com/aadel112/googoose?tab=readme-ov-file#options for more information.
+* "Custom Config for html2pdf": As above, but for the html2pdf library.
+* "Output Format": "Text" or "Choice" type column defining the output file format. Allowed values are "docx" or "pdf". If this is empty or not mapped, users will be able to select which format they want.
 
 ## Inserting Images from Attachments
 The widget supports inserting images from external URLs as well as from your Grist attachments. For the latter, just provide `attachment:n` instead of a URL for the image, where "n" is a valid attachment ID. See [here](https://github.com/tomnitschke/gristwidgets/blob/main/viewerjs/README.md) for examples of how to obtain one.
