@@ -192,7 +192,10 @@
                 if( proto.test( src ) ) {
                 } else if( ab.test( src ) ) {
                     src = t + src; 
+                } else if ( src.startsWith("data:") ) {
+                    // Just leave the src as is for data urls.
                 } else {
+                    // Fixed below from 'l.path', which came out as undefined.
                    var p = l.pathname.replace('/\/[^\/.]+$/', '/' );
                    src = t + p + src;
                 }
