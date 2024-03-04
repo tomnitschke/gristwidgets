@@ -18,7 +18,12 @@
         flex: 0 0 50%;
       }
       #button_process {
-        width: 90%;
+        width: 70%;
+        margin: auto;
+      }
+      #select_outformat {
+        display: inline-block;
+        width: 25%;
         margin: auto;
       }
       #document-box-header {
@@ -66,6 +71,10 @@
     <div class="twocolumns">
       <div id="status"></div>
       <div id="controls">
+        <select id="select_outformat">
+          <option value="docx" selected="true">DOCX</option>
+          <option value="pdf">PDF</option>
+        </select>
         <input id="button_process" type="button" value="Process!" disabled="true" />
       </div>
     </div>
