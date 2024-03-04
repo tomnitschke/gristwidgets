@@ -249,8 +249,8 @@ ready(function(){
       { name: FILENAME_COL_NAME, type: "Text,Choice", optional: true, title: "Filename", description: "Name of the generated file. Should include '.docx' extension. If not specified, a random name will be generated." },
       { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
       { name: PREVIEWENABLED_COL_NAME, type: "Bool", optional: true, title: "Preview Enabled?", description: "Whether to show a document preview (which is the default if you don't map this column) or not." },
-      { name: CONFIGDOCX_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config", description: "Custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. Note that the 'area' setting cannot be customized." },
-      //TODO:CONFIGPDF_COL_NAME
+      { name: CONFIGDOCX_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config for Googoose", description: "Custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. Note that the 'area' setting cannot be customized." },
+      { name: CONFIGPDF_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config for html2pdf", description: "Custom configuration for the html2pdf library. Must be provided as a dictionary like '{ optionName: optionValue }'." },
       { name: OUTFORMAT_COL_NAME, type: "Text,Choice", optional: true, title: "Output Format", description: `Determines what type of file to generate. Allowable values are ${OUTFORMAT_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
     ],
   });
