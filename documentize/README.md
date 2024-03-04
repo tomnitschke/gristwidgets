@@ -11,7 +11,7 @@ Additionally, these optional columns may be mapped:
 * "Source Type": "Text"/"Choice" column specifying whether the input is HMTL or Markdown. Correspondingly, allowable values are: "html", "markdown". Any illegal value will be interpreted as "html".
 * "Preview Enabled?": "Bool" column defining whether to show a document preview to the user (which is the default). If this is false, users will only see a status message and the "Process!" button on the widget.
 * "Custom Config for Googoose": "Any" column providing custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. See https://github.com/aadel112/googoose?tab=readme-ov-file#options for more information.
-* "Custom Config for html2pdf": As above, but for the html2pdf library.
+* "Custom Config for html2pdf": As above, but for the html2pdf library. See https://github.com/eKoopmans/html2pdf.js?tab=readme-ov-file#options for more information.
 * "Output Format": "Text" or "Choice" type column defining the output file format. Allowed values are "docx" or "pdf". If this is empty or not mapped, users will be able to select which format they want.
 
 ## Inserting Images from Attachments
