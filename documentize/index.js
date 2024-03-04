@@ -114,7 +114,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     // If output format is specified by a mapped column, lock down the format choice box.
     let outformatElem = document.querySelector("#select_outformat");
-    if (OUTFORMAT_COL_NAME in mappedRecord && outformatElem.options.includes(mappedRecord[OUTFORMAT_COL_NAME])) {
+    if (OUTFORMAT_COL_NAME in mappedRecord && OUTFORMAT_ALLOWED_VALUES.includes(mappedRecord[OUTFORMAT_COL_NAME])) {
       outformatElem.readonly = true;
       outformatElem.value = mappedRecord[OUTFORMAT_COL_NAME];
     } else {
