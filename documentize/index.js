@@ -10,6 +10,7 @@ const SOURCE_COL_NAME = "source";
 const SOURCETYPE_COL_NAME = "sourcetype";
 const FILENAME_COL_NAME = "filename";
 const PREVIEWENABLED_COL_NAME = "previewenabled";
+const CUSTOMCONFIG_COL_NAME = "config";
 
 const SOURCETYPE_ALLOWED_VALUES = ["html", "markdown"];
 
