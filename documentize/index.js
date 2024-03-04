@@ -10,13 +10,14 @@ const SOURCE_COL_NAME = "source";
 const SOURCETYPE_COL_NAME = "sourcetype";
 const FILENAME_COL_NAME = "filename";
 const PREVIEWENABLED_COL_NAME = "previewenabled";
-const CUSTOMCONFIG_COL_NAME = "config";
+const CONFIGDOCX_COL_NAME = "config_docx";
+const CONFIGPDF_COL_NAME = "config_pdf";
 const OUTFORMAT_COL_NAME = "outformat";
 
 const SOURCETYPE_ALLOWED_VALUES = ["html", "markdown"];
 const OUTFORMAT_ALLOWED_VALUES = ["docx", "pdf"];
 
-let currentData = { data: "", filename: "", config: {} };
+let currentData = { data: "", filename: "", config_docx: {}, config_pdf: {}, };
 let gristAccessToken = null;
 
 function setStatus(msg) {
@@ -115,14 +116,15 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // If output format is specified by a mapped column, lock down the format choice box.
     let outformatElem = document.querySelector("#select_outformat");
     if (OUTFORMAT_COL_NAME in mappedRecord && OUTFORMAT_ALLOWED_VALUES.includes(mappedRecord[OUTFORMAT_COL_NAME])) {
-      outformatElem.readonly = true;
+      outformatElem.disabled = true;
       outformatElem.value = mappedRecord[OUTFORMAT_COL_NAME];
     } else {
-      outformatElem.readonly = false;
+      outformatElem.disabled = false;
     }
-    // Set up the config for Googoose. If the corresponding column was mapped,
-    // use the user-supplied config in there, otherwise the default below.
-    currentData.config = {
+    // Set up the config for Googoose and html2pdf. If the corresponding columns were
+    // mapped, use the user-supplied configs in there, otherwise the defaults below.
+    // Googoose config:
+    currentData.config_docx = {
       filename: currentData.filename,
       headerarea: ".header",
       footerarea: ".footer",
@@ -131,12 +133,31 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       currentpage: ".page",
       totalpage: ".numpages",
     };
-    if (CUSTOMCONFIG_COL_NAME in mappedRecord) {
-      currentData.config = mappedRecord[CUSTOMCONFIG_COL_NAME];
+    if (CONFIGDOCX_COL_NAME in mappedRecord) {
+      currentData.config_docx = mappedRecord[CONFIGDOCX_COL_NAME];
+      // Irrespective of any user config, always set some properties to
+      // predefined values so as not to break things further down below.
+      currentData.config_docx.area = "#document";
+      if (!("pagebreak" in currentData.config_docx)) {
+        currentData.config_docx.pagebreak = ".pagebreak";
+      }
     }
-    // Irrespectively of any user config, always set the "area" property
-    // programmatically, so as not to break things further down below.
-    currentData.config.area = "#document";
+    // html2pdf config:
+    currentData.config_pdf = {
+      filename: currentData.filename,
+      // Note: This property isn't actually supported by html2pdf, but below we'll
+      // turn it into something that is.
+      pagebreak: currentData.config_docx.pagebreak,
+      //TODO
+    };
+    if (CONFIGPDF_COL_NAME in mappedRecord) {
+      currentData.config_pdf = mappedRecord[CONFIGPDF_COL_NAME];
+      // Irrespective of any user config, always set some properties to
+      // predefined values so as not to break things further down below.
+      if (!("pagebreak" in currentData.config_pdf)) {
+        currentData.config_pdf.pagebreak = ".pagebreak";
+      }
+    }
     // Show or hide the document preview depending on user config.
     // This is done before we actually build the document to prevent it from
     // flickering into view briefly even when preview is disabled.
@@ -162,7 +183,13 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Build the document.
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
-
+    // Add the special "html2pdf__page-break" class to any elements that already
+    // have the currentData.config_pdf.pagebreak class set.
+    //TODO
+    let pagebreakElements = docElem.querySelectorAll(currentData.config_pdf.pagebreak);
+    for (const pagebreakElem of pagebreakElements) {
+      pagebreakElem.classList.add("html2pdf__page-break");
+    }
     // Scan for image elements that have "attachment:n" as their "src" attribute.
     // For these, get an access token and compute and actual attachment URL.
     let imgElements = docElem.getElementsByTagName("img");
@@ -195,9 +222,10 @@ function processData() {
   let format = outformatElem.value;
   try {
     if (format == "docx") {
-      $(document).googoose(currentData.config);
+      $(document).googoose(currentData.config_docx);
     } else {
-      html2pdf(document.querySelector("#document"));
+      //TODO config
+      html2pdf(document.querySelector("#document"), currentData.config_pdf);
     }
     console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
@@ -221,7 +249,8 @@ ready(function(){
       { name: FILENAME_COL_NAME, type: "Text,Choice", optional: true, title: "Filename", description: "Name of the generated file. Should include '.docx' extension. If not specified, a random name will be generated." },
       { name: SOURCETYPE_COL_NAME, type: "Text,Choice", optional: true, title: "Source Type", description: `Gives the type of the source data. Valid values are ${SOURCETYPE_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
       { name: PREVIEWENABLED_COL_NAME, type: "Bool", optional: true, title: "Preview Enabled?", description: "Whether to show a document preview (which is the default if you don't map this column) or not." },
-      { name: CUSTOMCONFIG_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config", description: "Custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. Note that the 'area' setting cannot be customized." },
+      { name: CONFIGDOCX_COL_NAME, type: "Any", strictType: true, optional: true, title: "Custom Config", description: "Custom configuration for the Googoose library. Must be provided as a dictionary like '{ optionName: optionValue }'. Note that the 'area' setting cannot be customized." },
+      //TODO:CONFIGPDF_COL_NAME
       { name: OUTFORMAT_COL_NAME, type: "Text,Choice", optional: true, title: "Output Format", description: `Determines what type of file to generate. Allowable values are ${OUTFORMAT_ALLOWED_VALUES.map((x) => "'" + x + "'").join(", ")}` },
     ],
   });
