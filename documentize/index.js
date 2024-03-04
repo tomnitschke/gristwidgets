@@ -184,7 +184,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     let docElem = document.querySelector("#document");
     docElem.innerHTML = currentData.data;
     // Add the special "html2pdf__page-break" class to any elements that already
-    // have the currentData.config_pdf.pagebreak class set.
+    // have the class defined in currentData.config_pdf.pagebreak.
     //TODO
     let pagebreakElements = docElem.querySelectorAll(currentData.config_pdf.pagebreak);
     for (const pagebreakElem of pagebreakElements) {
