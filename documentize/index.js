@@ -51,7 +51,7 @@ async function gristGetAttachmentURL(attachmentId) {
   return url;
 }
 
-async function convertImageToBase64(url) {
+async function imageGetBase64Url(url) {
   let response = await fetch(url);
   let blob = await response.blob();
   const reader = new FileReader();
@@ -62,6 +62,12 @@ async function convertImageToBase64(url) {
     };
     reader.readAsDataURL(blob);
   });
+}
+
+async function imageGetBlobUrl(url) {
+  let response = await fetch(url);
+  let blob = await response.blob();
+  return URL.createObjectURL(blob);
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
@@ -151,7 +157,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       if (/^\s*attachment:\s*\d+$/.test(imgElem.src)) {
         let attachmentId = imgElem.src.replace(/[^\d]*/, "");
         let url = await gristGetAttachmentURL(attachmentId);
-        imgElem.src = await convertImageToBase64(url);
+        imgElem.src = await imageGetBlobUrl(url);
         console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${attachmentId}'.`);
       }
     }
