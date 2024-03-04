@@ -64,11 +64,11 @@ async function imageGetBase64Url(url) {
   });
 }
 
-async function imageGetBlobUrl(url) {
+/*async function imageGetBlobUrl(url) {
   let response = await fetch(url);
   let blob = await response.blob();
   return URL.createObjectURL(blob);
-}
+}*/
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   console.log("documentize: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
@@ -157,7 +157,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       if (/^\s*attachment:\s*\d+$/.test(imgElem.src)) {
         let attachmentId = imgElem.src.replace(/[^\d]*/, "");
         let url = await gristGetAttachmentURL(attachmentId);
-        imgElem.src = await imageGetBlobUrl(url);
+        imgElem.src = await imageGetBase64Url(url);
         console.log(`documentize: Processed image tag '${imgElem}' pointing to attachment ID '${attachmentId}'.`);
       }
     }
