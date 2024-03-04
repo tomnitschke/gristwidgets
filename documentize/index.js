@@ -227,7 +227,7 @@ function processData() {
         for (const pagebreakElem of pagebreakElements) {
           pagebreakElem.style.display = "revert";
         }
-      }
+      });
     }
     console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
