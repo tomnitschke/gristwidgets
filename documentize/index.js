@@ -53,13 +53,14 @@ async function gristGetAttachmentURL(attachmentId) {
 
 async function convertImageToBase64(url) {
   let response = await fetch(url);
+  let blob = await response.blob();
   const reader = new FileReader();
   return new Promise(function(resolve, reject) {
     reader.onerror = reject;
     reader.onloadend = function() {
       resolve(reader.result);
     };
-    reader.readAsDataURL(response.blob());
+    reader.readAsDataURL(blob);
   });
 }
 
