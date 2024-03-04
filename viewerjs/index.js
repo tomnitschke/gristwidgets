@@ -26,6 +26,7 @@ function setVisible(querySelector, isVisible) {
   let elem = document.querySelector(querySelector);
   if (!elem) return false;
   elem.style.display = isVisible ? "block" : "none";
+  return true;
 }
 
 function handleError(err) {
