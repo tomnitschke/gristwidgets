@@ -146,7 +146,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     currentData.config_pdf = {
       filename: currentData.filename,
       pagebreak: { after: ".pagebreak" },
-      //TODO
+      jsPDF: { compress: true },
     };
     if (CONFIGPDF_COL_NAME in mappedRecord) {
       currentData.config_pdf = mappedRecord[CONFIGPDF_COL_NAME];
@@ -218,13 +218,15 @@ function processData() {
     if (format == "docx") {
       $(document).googoose(currentData.config_docx);
     } else {
-      //TODO
       let docElem = document.querySelector("#document");
       let pagebreakElements = docElem.querySelectorAll(currentData.config_pdf.pagebreak.after);
       for (const pagebreakElem of pagebreakElements) {
         pagebreakElem.style.display = "none";
       }
       html2pdf(document.querySelector("#document"), currentData.config_pdf);
+      for (const pagebreakElem of pagebreakElements) {
+        pagebreakElem.style.display = "revert";
+      }
     }
     console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
