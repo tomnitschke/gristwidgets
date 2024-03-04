@@ -16,7 +16,7 @@ const OUTFORMAT_COL_NAME = "outformat";
 const SOURCETYPE_ALLOWED_VALUES = ["html", "markdown"];
 const OUTFORMAT_ALLOWED_VALUES = ["docx", "pdf"];
 
-let currentData = { data: "", filename: "", };
+let currentData = { data: "", filename: "", config: {} };
 let gristAccessToken = null;
 
 function setStatus(msg) {
@@ -110,7 +110,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // Get output filename.
     currentData.filename = "";
     if (FILENAME_COL_NAME in mappedRecord) {
-      mappedRecord[FILENAME_COL_NAME];
+      currentData.filename = mappedRecord[FILENAME_COL_NAME];
     }
     // If output format is specified by a mapped column, lock down the format choice box.
     let outformatElem = document.querySelector("#select_outformat");
