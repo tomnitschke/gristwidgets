@@ -331,7 +331,7 @@
             // adding the standard mso header 
             var html = '<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o=\'urn:schemas-microsoft-com:office:office\' xmlns:w=\'urn:schemas-microsoft-com:office:word\' xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" xmlns=\'http://www.w3.org/TR/REC-html40\'>\n';
             html += '<head>\n';
-            html += '<meta charset=\'utf-8\'\n';
+            html += '<meta charset=\'utf-8\'>\n';
             html += '<!--[if gte mso 9]>\n';
             html += '<xml>\n';
             html += '<w:WordDocument>\n';
