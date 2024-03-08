@@ -232,7 +232,7 @@
         GG.get_pagebreak = function() {
             if( options.debug ) 
                 GG.debug_fn('GG.get_pagebreak');
-            return '<br clear=all style=\'mso-special-character:line-break;page-break-before:always\'>';
+            return '<br clear=\'all\' style=\'mso-special-character:line-break;page-break-before:always\'>';
         }
 
         GG.headerstart = function() {
@@ -264,21 +264,21 @@
         GG.get_page_number = function() {
             if( options.debug )
                 GG.debug_fn('GG.get_page_number');
-            var html = '<!--[if supportFields]><span\n';
-            html += 'class=MsoPageNumber><span style=\'mso-element:field-begin\'></span><span\n';
-            html += 'style=\'mso-spacerun:yes\'> </span>PAGE <span style=\'mso-element:field-separator\'></span></span><![endif]--><span\n';
-            html += 'class=MsoPageNumber><span style=\'mso-no-proof:yes\'>1</span></span><!--[if supportFields]><span\n';
-            html += 'class=MsoPageNumber><span style=\'mso-element:field-end\'></span></span><![endif]-->';   
+            var html = '<!--[if supportFields]><span \n';
+            html += 'class=\'MsoPageNumber\'><span style=\'mso-element:field-begin\'></span><span \n';
+            html += 'style=\'mso-spacerun:yes\'> </span>PAGE <span style=\'mso-element:field-separator\'></span></span><![endif]--><span \n';
+            html += 'class=\'MsoPageNumber\'><span style=\'mso-no-proof:yes\'>1</span></span><!--[if supportFields]><span \n';
+            html += 'class=\'MsoPageNumber\'><span style=\'mso-element:field-end\'></span></span><![endif]-->';   
             return html;
         }
 
         GG.get_total_page_number = function() {
             if( options.debug )
                 GG.debug_fn('GG.get_total_page_number');
-            var html = '<!--[if supportFields]><span class=MsoPageNumber><span \n';
+            var html = '<!--[if supportFields]><span class=\'MsoPageNumber\'><span \n';
             html += ' style=\'mso-element:field-begin\'></span> NUMPAGES <span style=\'mso-element:field-separator\'></span></span><![endif]--><span \n';
-            html += ' class=MsoPageNumber><span style=\'mso-no-proof:yes\'>1</span></span><!--[if supportFields]><span \n'
-                html += ' class=MsoPageNumber><span style=\'mso-element:field-end\'></span></span><![endif]-->\n';
+            html += ' class=\'MsoPageNumber\'><span style=\'mso-no-proof:yes\'>1</span></span><!--[if supportFields]><span \n'
+                html += ' class=\'MsoPageNumber\'><span style=\'mso-element:field-end\'></span></span><![endif]-->\n';
             return html;
         }
 
@@ -291,7 +291,7 @@
             toc += 'TOC \o "1-3" \\u \n';
             toc += '<span style=\'mso-element:field-separator\'></span>\n';
             toc += '<![endif]-->\n';
-            toc += '<span style=\'mso-no-proof:yes\'>Table of content - Please right-click and choose "Update fields".</span>\n';
+            toc += '<span style=\'mso-no-proof:yes\'>Table of contents - Please right-click and choose "Update fields".</span>\n';
             toc += '<!--[if supportFields]>\n';
             toc += '<span style=\'mso-element:field-end\'></span>\n';
             toc += '<![endif]-->\n';
@@ -371,7 +371,7 @@
             html += '</head>\n';
 
             //start body
-            html += ('<body lang=' + options.lang + '>\n<div class=Container>');
+            html += ('<body lang=\'' + options.lang + '\'>\n<div class=\'Container\'>');
 
             //add area content
             if($(options.initobj).is(options.area)) {
@@ -398,6 +398,7 @@
         if( options.debug )
             GG.debug_fn('googoose exec');
         options.html = GG.html();
+        console.log("googoose: html:", options.html);
         if( options.html && options.finishaction ) {
             options.finishaction();  
 //             console.log(options.html)
