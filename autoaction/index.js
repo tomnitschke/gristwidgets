@@ -53,7 +53,28 @@ function handleError(err) {
   console.error("autoaction: ", err);
 }
 
-async function applyActions(mappedRecord, previousMappedRecord9 {
+async function applyActions(mappedRecord, previousMappedRecord) {
+}
+
+function mapGristRecord(record, colMap, requiredTruthyCols) {
+  //const mappedRecord = grist.mapColumnNames(record);
+  // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
+  // properly, so we need to map stuff ourselves.
+  const mappedRecord = {}
+  if (colMap) {
+    for (const[mappedColName, realColName] of Object.entries(colMap)) {
+      if (realColName in record) {
+        mappedRecord[mappedColName] = record[realColName];
+        // If we're mapping one of the essential columns but that column is empty/its data is falsy,
+        // display an error message to the user.
+        if(requiredTruthyCols.includes(mappedColName) && !(mappedRecord[mappedColName])) {
+          let msg = `<b>Required column '${mappedColName}' is empty/falsy. Please make sure it contains valid (truthy) data.`;
+          console.error(`autoaction: ${msg}`);
+          throw new Error(msg);
+        }
+      }
+    }
+  }
 }
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
