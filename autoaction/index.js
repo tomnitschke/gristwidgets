@@ -95,10 +95,6 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       let msg = `Already executed actions for this record (ID ${record.id}), won't do it again until the page gets reloaded.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
-      window.setTimeout(function() {
-        console.log(`autoaction: re-firing gristRecordSelected for record with ID ${record.id}!`);
-        gristRecordSelected(record, mappedColNamesToRealColNames);
-      });
       return;
     } else if (lastRunTimeToNowDelta != 0 && lastRunTimeToNowDelta < (actionsInterval*1000)) {
       // If we're not in "one-shot" mode but actions were last executed fewer
@@ -108,6 +104,10 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       let msg = `Actions for this record (ID ${record.id}) will be executed again in ${intervalTimeLeft/1000} seconds.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
+      window.setTimeout(function() {
+        console.log(`autoaction: re-firing gristRecordSelected for record with ID ${record.id}!`);
+        gristRecordSelected(record, mappedColNamesToRealColNames);
+      });
       return;
     }
 
