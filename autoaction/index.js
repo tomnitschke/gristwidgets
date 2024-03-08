@@ -112,7 +112,7 @@ ready(function(){
     columns: [
       { name: ACTIONS_COL_NAME, type: "Any", strictType: true, title: "Actions", description: "List of user actions to execute. As each user action definition is a list, this column must hold a list of lists. See https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents" },
       { name: ISENABLED_COL_NAME, type: "Bool", title: "Enabled?", description: "If this column's value is False, the widget won't do anything." },
-      { name: ISONESHOT_COL_NAME, type: "bool", title: "One-shot?", optional: true, description: "If this is True, actions will be executed just once per record (until the page gets reloaded). The default is True." },
+      { name: ISONESHOT_COL_NAME, type: "Bool", title: "One-shot?", optional: true, description: "If this is True, actions will be executed just once per record (until the page gets reloaded). The default is True." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
