@@ -12,7 +12,7 @@ const ISONESHOT_COL_NAME = "isoneshot";
 const ACTIONSINTERVAL_COL_NAME = "actionsinterval";
 
 let isDoneForRecord = [];
-let lastRunTimeForRecord = [];
+let lastRunTimeForRecord = {};
 
 const ACTIONS_FORMAT_EXAMPLE_FORMULA = `<pre>return [
   # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
@@ -80,14 +80,15 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       isOneShot = mappedRecord[ISONESHOT_COL_NAME];
     }
     let now = new Date();
-    if (!lastRunTimeForRecord.includes(record.id)) {
-      lastRunTimeForRecord.push(record.id);
+    let lastRunTimeForThisRecord = now;
+    if (record.id in lastRunTimeForRecord) {
+      lastRunTimeForThisRecord = lastRunTimeForRecord[record.id];
     }
     let actionsInterval = 1;
     if (ACTIONSINTERVAL_COL_NAME in mappedRecord && mappedRecord[ACTIONSINTERVAL_COL_NAME] > 0) {
       actionsInterval = mappedRecord[ACTIONSINTERVAL_COL_NAME];
     }
-    let lastRunTimeToNowDelta = now - lastRunTimeForRecord;
+    let lastRunTimeToNowDelta = now - lastRunTimeForThisRecord;
     if (isOneShot && isDoneForRecord.includes(record.id)) {
       // If "one-shot" mode is on (which is the default) and we've already executed
       // actions for this record, provide a message to that extent and quit.
