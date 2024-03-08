@@ -96,11 +96,11 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
       return;
-    } else if (lastRunTimeToNowDelta < (actionsInterval*1000)) {
+    } else if (lastRunTimeToNowDelta != 0 && lastRunTimeToNowDelta < (actionsInterval*1000)) {
       // If we're not in "one-shot" mode but actions were last executed fewer
       // than 'actionsInterval' seconds ago for this record, hold off executing
       // them again for now.
-      let intervalTimeLeft = (lastRunTimeToNowDelta - (actionsInterval*1000)) * (-1);
+      let intervalTimeLeft = (lastRunTimeToNowDelta - actionsInterval) * (-1);
       let msg = `Actions for this record (ID ${record.id}) will be executed again in ${intervalTimeLeft} seconds.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
