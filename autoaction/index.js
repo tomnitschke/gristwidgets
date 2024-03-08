@@ -107,7 +107,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       window.setTimeout(function() {
         console.log(`autoaction: re-firing gristRecordSelected for record with ID ${record.id}!`);
         gristRecordSelected(record, mappedColNamesToRealColNames);
-      });
+      }, 1000);
       return;
     }
 
