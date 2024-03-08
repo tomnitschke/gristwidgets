@@ -13,6 +13,7 @@ const ACTIONSINTERVAL_COL_NAME = "actionsinterval";
 
 let isDoneForRecord = [];
 let lastRunTimeForRecord = {};
+let nextRunTimeoutId = null;
 
 const ACTIONS_FORMAT_EXAMPLE_FORMULA = `<pre>return [
   # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
@@ -104,7 +105,8 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       let msg = `Actions for this record (ID ${record.id}) will be executed again in ${intervalTimeLeft/1000} seconds.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
-      window.setTimeout(function() {
+      window.clearTimeout(nextRunTimeoutId);
+      nextRunTimeoutId = window.setTimeout(function() {
         console.log(`autoaction: re-firing gristRecordSelected for record with ID ${record.id}!`);
         gristRecordSelected(record, mappedColNamesToRealColNames);
       }, 1000);
