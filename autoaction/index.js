@@ -70,9 +70,8 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     let isOneShot = false;
     if (ISONESHOT_COL_NAME in mappedRecord) {
       isOneShot = mappedRecord[ISONESHOT_COL_NAME];
-      console.log("autoaction: isOneShot? ", isOneShot);
     }
-    if (!isOneShot && isDoneForRecord.includes(record.id)) {
+    if (isOneShot && isDoneForRecord.includes(record.id)) {
       // If we've already executed actions for this record, provide a message to that extent and quit.
       let msg = `Already executed actions for this record (ID ${record.id}), won't do it again until the page gets reloaded.`;
       setStatus(msg);
