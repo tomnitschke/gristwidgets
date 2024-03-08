@@ -53,6 +53,9 @@ function handleError(err) {
   console.error("autoaction: ", err);
 }
 
+async function applyActions(mappedRecord, previousMappedRecord9 {
+}
+
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   try {
     const mappedRecord = grist.mapColumnNames(record);
