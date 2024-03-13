@@ -1,8 +1,5 @@
-
-
-
-//let currentRecord = {};
-let doneExecs = {}; //record id: {num: ..., timeOfLast: ...}
+let currentTimeout = null;
+let numRuns = {}; //record id: num
 
 const REQUIRED_COLUMNS = ["actions", "isEnabled"];
 const ACTIONS_EXAMPLE_FORMULA = `<pre>return [
@@ -22,29 +19,28 @@ const ACTIONS_EXAMPLE_FORMULA = `<pre>return [
 
 
 
-
-async function run(mappedRecord) {
-    let actions = mappedRecord.actions;
-    try
-    {
-      // Try to show what actions we're executing by collapsing the list of lists into a readable string.
-      // As a side effect, if this fails, we can certainly say that the actions list provided by the user
-      // somehow doesn't have the right format, and let them know about it.
-      setStatus(`Applying actions: ${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`);
-    } catch (e) {
-      setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`);
-      return;
-    }
-    if (!mappedRecord.isEnabled) {
-      // If the 'enabled' switch is off, don't do anything.
-      setStatus(`'Enabled' switch (column '${mappedColNamesToRealColNames.isEnabled}') for this record (ID ${mappedRecord.id}) is turned off, won't run actions.`);
-      return;
-    }
-    doneExecs[mappedRecord.id] ??= {num: 0, timeOfLast: null};
-  } catch (err) {
-    handleError(err)
-  }
-}
+// Start once the DOM is ready.
+ready(function(){
+  // Set up a global error handler.
+  window.addEventListener("error", function(err) {
+    handleError(err);
+  });
+  // Let Grist know we're ready to talk.
+  grist.ready({
+    // We require "full" mode for obvious reasons.
+    requiredAccess: "full",
+    columns: [
+      { name: "actions", type: "Any", strictType: true, title: "Actions", description: "List of user actions to execute. As each user action definition is a list, this column must hold a list of lists. See https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents" },
+      { name: "isEnabled", type: "Bool", title: "Enabled?", description: "If this column's value is False, the widget won't do anything." },
+      { name: "initDelay", type: "Int", title: "Delay", optional: true, description: "Sets the number of milliseconds to wait, once a record gets selected, before executing the actions for it." },
+      { name: "maxReps", type: "Int", title: "Repetitions", optional: true, description: "Sets the maximum number of times actions for the current record will be run. The default is 1. Note that the execution cycle get reset each time you reload the page." },
+      { name: "repInterval", type: "Int", title: "Repetition Interval", optional: true, description: "Sets the number of milliseconds to wait between subsequent executions of actions for the currently selected record." },
+    ],
+  });
+  // Register callback for when the user selects a record in Grist.
+  grist.onRecord(gristRecordSelected);
+  console.log("autoaction: Ready.");
+});
 
 async function gristRecordSelected(record, mappedColNamesToRealColNames) {
   try {
@@ -54,120 +50,9 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     }
     console.log("autoaction: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
     return run(mappedRecord);
-    
-    let isOneShot = false;
-    if (ISONESHOT_COL_NAME in mappedRecord) {
-      isOneShot = mappedRecord[ISONESHOT_COL_NAME];
-    }
-    let now = new Date();
-    let lastRunTimeForThisRecord = now;
-    if (record.id in lastRunTimeForRecord) {
-      lastRunTimeForThisRecord = lastRunTimeForRecord[record.id];
-    }
-    let actionsInterval = 1;
-    if (ACTIONSINTERVAL_COL_NAME in mappedRecord && mappedRecord[ACTIONSINTERVAL_COL_NAME] > 0) {
-      actionsInterval = mappedRecord[ACTIONSINTERVAL_COL_NAME];
-    }
-    let lastRunTimeToNowDelta = now - lastRunTimeForThisRecord;
-    if (isOneShot && isDoneForRecord.includes(record.id)) {
-      // If "one-shot" mode is on (which is the default) and we've already executed
-      // actions for this record, provide a message to that extent and quit.
-      let msg = `Already executed actions for this record (ID ${record.id}), won't do it again until the page gets reloaded.`;
-      setStatus(msg);
-      console.log(`autoaction: ${msg}`);
-      return;
-    } else if (lastRunTimeToNowDelta != 0 && lastRunTimeToNowDelta < (actionsInterval*1000)) {
-      // If we're not in "one-shot" mode but actions were last executed fewer
-      // than 'actionsInterval' seconds ago for this record, hold off executing
-      // them again for now.
-      let intervalTimeLeft = (lastRunTimeToNowDelta - (actionsInterval*1000)) * (-1);
-      let msg = `Actions for this record (ID ${record.id}) will be executed again in ${intervalTimeLeft/1000} seconds.`;
-      setStatus(msg);
-      console.log(`autoaction: ${msg}`);
-      window.clearTimeout(nextRunTimeoutId);
-      nextRunTimeoutId = window.setTimeout(function() {
-        console.log(`autoaction: re-firing gristRecordSelected for record with ID ${record.id}!`);
-        gristRecordSelected(record, mappedColNamesToRealColNames);
-      }, actionsInterval*1000);
-      return;
-    }
-
-    // Apply the user actions.
-    // Set 'isDone' and 'lastRunTimeForRecord' for this record *first*, so we're safe
-    // even if the applyUserActions() call somehow screws up.
-    isDoneForRecord.push(record.id);
-    lastRunTimeForRecord[record.id] = now;
-    console.log("autoaction: Applying actions:", actions);
-    await grist.docApi.applyUserActions(actions);
-    setStatus("Done.");
-    console.log("autoaction: Done.");
-  } catch(err) {
-    if (err.message.startsWith("[Sandbox]")) {
-      err.message += `<br />Most likely the actions list you provided isn't valid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_FORMAT_EXAMPLE_FORMULA}`;
-    }
-    return handleError(err);
+  } catch (err) {
+    handleError(err);
   }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function ready(fn) {
-  if (document.readyState !== "loading") {
-    fn();
-  } else {
-    document.addEventListener("DOMContentLoaded", fn);
-  }
-}
-
-
-
-
-
-
-
-
-
-let isDoneForRecord = [];
-let lastRunTimeForRecord = {};
-let nextRunTimeoutId = null;
-
-
-
-function setStatus(msg) {
-  let statusElem = document.querySelector("#status");
-  if (!statusElem) return false;
-  statusElem.innerHTML = msg;
-  setVisible("#status", true);
-  return true;
-}
-
-function setVisible(querySelector, isVisible) {
-  let elem = document.querySelector(querySelector);
-  if (!elem) return false;
-  elem.style.display = isVisible ? "block" : "none";
-}
-
-function handleError(err) {
-  if (!setStatus(err)) {
-    console.error("autoaction: FATAL: ", err);
-    document.body.innerHTML = String(err);
-    return;
-  }
-  console.error("autoaction: ", err);
-}
-
-async function applyActions(mappedRecord, previousMappedRecord) {
 }
 
 function mapGristRecord(record, colMap, requiredTruthyCols) {
@@ -192,26 +77,98 @@ function mapGristRecord(record, colMap, requiredTruthyCols) {
   return mappedRecord;
 }
 
+async function run(mappedRecord) {
+  let actions = mappedRecord.actions;
+  try { 
+    try {
+      // Try to show what actions we're executing by collapsing the list of lists into a readable string.
+      // As a side effect, if this fails, we can certainly say that the actions list provided by the user
+      // somehow doesn't have the right format, and let them know about it.
+      setStatus(`Applying actions: ${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`);
+    } catch (e) {
+      setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`);
+      return;
+    }
+    if (!mappedRecord.isEnabled) {
+      // If the 'enabled' switch is off, don't do anything.
+      setStatus(`'Enabled' switch (column '${mappedColNamesToRealColNames.isEnabled}') for this record (ID ${mappedRecord.id}) is turned off, won't run actions.`);
+      return;
+    }
+    // Set 'some defaults if no user-supplied values are available.
+    mappedRecord.maxReps ??= 1;
+    mappedRecord.initDelay ??= 0;
+    mappedRecord.repInterval ??= 1000;
+    // If there is no entry for this record yet in 'numRuns', add one.
+    numRuns[mappedRecord.id] ??= 0;
+    // If actions for this record have already run the configured number of times,
+    // do nothing now and let the user know as much.
+    if (numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
+      let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
+      setStatus(msg);
+      console.log(`autoaction: ${msg}`);
+    }
+    // If actions for this record aren't due to run again just now (i.e.: either
+    // this is the first run and the configured 'initDelay' hasn't passed yet
+    // or this is a subsequent run and 'repInterval' isn't over yet), don't do
+    // anything now but schedule a run for when it actually is due.
+    
+    // Schedule actions for this record for when they're first/next due to run.
+    // Because we reset the timeout each time Grist fires an 'on record' event,
+    // actions will only ever run for the currently selected record.
+    let timeoutValue = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
+    window.clearTimeout(currentTimeout);
+    currentTimeout = window.setTimeout(function() {
+      // Increase the 'numRuns' counter for this record, then execute actions.
+      console.log(`autoaction: Applying actions for record ${mappedRecord.id}:`, actions);
+      numRuns[mappedRecord.id] += 1;
+      applyActions(actions);
+    }, timeoutValue);
+    // Provide a status message as to when actions will be run next.
+    let msg = `Actions for the current record (ID ${mappedRecord.id}) will run${numRuns[mappedRecord.id] > 0 ? " again" : ""} in ${timeoutValue / 1000} seconds.`;
+    console.log(`autoaction: ${msg}`);
+  } catch (err) {
+    handleError(err)
+  }
+}
 
+async function applyActions(actions) {
+  try {
+    await grist.docApi.applyUserActions(actions);
+  } catch(err) {
+    if (err.message.startsWith("[Sandbox]")) {
+      err.message += `<br />Most likely the actions list you provided isn't valid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_FORMAT_EXAMPLE_FORMULA}`;
+    }
+    return handleError(err);
+  }
+}
 
-// Start once the DOM is ready.
-ready(function(){
-  // Set up a global error handler.
-  window.addEventListener("error", function(err) {
-    handleError(err);
-  });
-  // Let Grist know we're ready to talk.
-  grist.ready({
-    // We require "full" mode for obvious reasons.
-    requiredAccess: "full",
-    columns: [
-      { name: ACTIONS_COL_NAME, type: "Any", strictType: true, title: "Actions", description: "List of user actions to execute. As each user action definition is a list, this column must hold a list of lists. See https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents" },
-      { name: ISENABLED_COL_NAME, type: "Bool", title: "Enabled?", description: "If this column's value is False, the widget won't do anything." },
-      { name: ISONESHOT_COL_NAME, type: "Bool", title: "One-shot?", optional: true, description: "If this is True, actions will be executed just once per record (until the page gets reloaded). The default is True." },
-      { name: ACTIONSINTERVAL_COL_NAME, type: "Int", title: "Interval", optional: true, description: "If 'One-shot' column is False, this sets the interval in seconds at which actions will get re-executed." },
-    ],
-  });
-  // Register callback for when the user selects a record in Grist.
-  grist.onRecord(gristRecordSelected);
-  console.log("autoaction: Ready.");
-});
+function setStatus(msg) {
+  let statusElem = document.querySelector("#status");
+  if (!statusElem) return false;
+  statusElem.innerHTML = msg;
+  setVisible("#status", true);
+  return true;
+}
+
+function setVisible(querySelector, isVisible) {
+  let elem = document.querySelector(querySelector);
+  if (!elem) return false;
+  elem.style.display = isVisible ? "block" : "none";
+}
+
+function handleError(err) {
+  if (!setStatus(err)) {
+    console.error("autoaction: FATAL: ", err);
+    document.body.innerHTML = String(err);
+    return;
+  }
+  console.error("autoaction: ", err);
+}
+
+function ready(fn) {
+  if (document.readyState !== "loading") {
+    fn();
+  } else {
+    document.addEventListener("DOMContentLoaded", fn);
+  }
+}
