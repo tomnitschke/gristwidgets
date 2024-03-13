@@ -105,6 +105,9 @@ async function run(mappedRecord) {
     mappedRecord.repInterval ??= 1000;
     // If there is no entry for this record yet in 'numRuns', add one.
     numRuns[mappedRecord.id] ??= 0;
+    // Likewise for the 'lastRunTime' dictionary.
+    let now = new Date();
+    lastRunTime[mappedRecord.id] ??= now;
     // If actions for this record have already run the configured number of times,
     // do nothing now and let the user know as much.
     // Allow unlimited runs if this value is set to < 0.
@@ -116,12 +119,12 @@ async function run(mappedRecord) {
     }  
     // Schedule actions for this record for when they're next (or first) due to run.
     let timeout = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
-    if (lastRunTime[mappedRecord.id]) {
-      // Stick to the configured interval by adjusting timeout by 'lastRunTime'.
-      let lastRunMillisecondsAgo = (new Date() - lastRunTime[mappedRecord.id]);
-      timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
-    }
-    console.log("autoaction: setTimeout at ", new Date());
+    // Stick to the configured interval by adjusting timeout by 'lastRunTime'.
+    // For the first run, the line below will evaluate 'now - now', thus 0 seconds
+    // to be subtracted from the configured timeout value.
+    let lastRunMillisecondsAgo = (now - lastRunTime[mappedRecord.id]);
+    timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
+    console.log(`autoaction: lastRun for record ${mappedRecord.id} was ${lastRunMillisecondsAgo/1000} ago, so set new timeout now! now is: `, new Date());
     currentTimeout = window.setTimeout(function() {
       // Increase the 'numRuns' counter for this record, then execute actions.
       let msg = `Applying actions for record ${mappedRecord.id}.`;
