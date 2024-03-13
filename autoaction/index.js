@@ -78,6 +78,10 @@ function mapGristRecord(record, colMap, requiredTruthyCols) {
 }
 
 async function run(mappedRecord) {
+  // Reset the timeout each time Grist fires an 'on record' event, so that
+  // actions will only ever run for the currently selected record.
+  window.clearTimeout(currentTimeout);
+  // Get the actions for the current record.
   let actions = mappedRecord.actions;
   try { 
     try {
@@ -113,10 +117,7 @@ async function run(mappedRecord) {
     // anything now but schedule a run for when it actually is due.
     
     // Schedule actions for this record for when they're first/next due to run.
-    // Because we reset the timeout each time Grist fires an 'on record' event,
-    // actions will only ever run for the currently selected record.
     let timeoutValue = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
-    window.clearTimeout(currentTimeout);
     currentTimeout = window.setTimeout(function() {
       // Increase the 'numRuns' counter for this record, then execute actions.
       console.log(`autoaction: Applying actions for record ${mappedRecord.id}:`, actions);
