@@ -111,12 +111,8 @@ async function run(mappedRecord) {
       let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
-    }
-    // If actions for this record aren't due to run again just now (i.e.: either
-    // this is the first run and the configured 'initDelay' hasn't passed yet
-    // or this is a subsequent run and 'repInterval' isn't over yet), don't do
-    // anything now but schedule a run for when it actually is due.
-    
+      return;
+    }  
     // Schedule actions for this record for when they're first/next due to run.
     let timeoutValue = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
     currentTimeout = window.setTimeout(function() {
