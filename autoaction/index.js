@@ -33,7 +33,7 @@ ready(function(){
       { name: "actions", type: "Any", strictType: true, title: "Actions", description: "List of user actions to execute. As each user action definition is a list, this column must hold a list of lists. See https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents" },
       { name: "isEnabled", type: "Bool", title: "Enabled?", description: "If this column's value is False, the widget won't do anything." },
       { name: "initDelay", type: "Int", title: "Delay", optional: true, description: "Sets the number of milliseconds to wait, once a record gets selected, before executing the actions for it." },
-      { name: "maxReps", type: "Int", title: "Repetitions", optional: true, description: "Sets the maximum number of times actions for the current record will be run. The default is 1. Note that the execution cycle get reset each time you reload the page." },
+      { name: "maxReps", type: "Int", title: "Repetitions", optional: true, description: "Sets the maximum number of times actions for the current record will be run. The default is 1. Values < 0 mean unlimited runs. Note that the execution cycle gets reset each time you reload the page." },
       { name: "repInterval", type: "Int", title: "Repetition Interval", optional: true, description: "Sets the number of milliseconds to wait between subsequent executions of actions for the currently selected record." },
     ],
   });
@@ -106,7 +106,8 @@ async function run(mappedRecord) {
     numRuns[mappedRecord.id] ??= 0;
     // If actions for this record have already run the configured number of times,
     // do nothing now and let the user know as much.
-    if (numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
+    // Allow unlimited runs if this value is set to < 0.
+    if (mappedRecord.maxReps >= 0 && numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
       let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
