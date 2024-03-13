@@ -121,6 +121,7 @@ async function run(mappedRecord) {
       let lastRunMillisecondsAgo = (new Date() - lastRunTime[mappedRecord.id]);
       timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
     }
+    console.log("autoaction: setTimeout at ", new Date());
     currentTimeout = window.setTimeout(function() {
       // Increase the 'numRuns' counter for this record, then execute actions.
       let msg = `Applying actions for record ${mappedRecord.id}.`;
