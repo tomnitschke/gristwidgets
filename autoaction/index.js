@@ -143,6 +143,7 @@ async function run(mappedRecord) {
 
 async function applyActions(actions) {
   try {
+    window.clearTimeout(currentTimeout);
     await grist.docApi.applyUserActions(actions);
   } catch(err) {
     if (err.message.startsWith("[Sandbox]")) {
