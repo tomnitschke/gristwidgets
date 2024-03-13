@@ -1,21 +1,11 @@
-function ready(fn) {
-  if (document.readyState !== "loading") {
-    fn();
-  } else {
-    document.addEventListener("DOMContentLoaded", fn);
-  }
-}
 
-const ACTIONS_COL_NAME = "actions";
-const ISENABLED_COL_NAME = "isenabled";
-const ISONESHOT_COL_NAME = "isoneshot";
-const ACTIONSINTERVAL_COL_NAME = "actionsinterval";
 
-let isDoneForRecord = [];
-let lastRunTimeForRecord = {};
-let nextRunTimeoutId = null;
 
-const ACTIONS_FORMAT_EXAMPLE_FORMULA = `<pre>return [
+//let currentRecord = {};
+let doneExecs = {}; //record id: {num: ..., timeOfLast: ...}
+
+const REQUIRED_COLUMNS = ["actions", "isEnabled"];
+const ACTIONS_EXAMPLE_FORMULA = `<pre>return [
   # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
   [ "UpdateRecord", "TableName", 1, { "my_column": "the_value_to_update_to" } ],
 
@@ -28,63 +18,13 @@ const ACTIONS_FORMAT_EXAMPLE_FORMULA = `<pre>return [
   # https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents
   # and
   # https://github.com/gristlabs/grist-core/blob/main/sandbox/grist/useractions.py
-]</pre>`
+]</pre>`;
 
-function setStatus(msg) {
-  let statusElem = document.querySelector("#status");
-  if (!statusElem) return false;
-  statusElem.innerHTML = msg;
-  setVisible("#status", true);
-  return true;
-}
 
-function setVisible(querySelector, isVisible) {
-  let elem = document.querySelector(querySelector);
-  if (!elem) return false;
-  elem.style.display = isVisible ? "block" : "none";
-}
 
-function handleError(err) {
-  if (!setStatus(err)) {
-    console.error("autoaction: FATAL: ", err);
-    document.body.innerHTML = String(err);
-    return;
-  }
-  console.error("autoaction: ", err);
-}
 
-async function applyActions(mappedRecord, previousMappedRecord) {
-}
-
-function mapGristRecord(record, colMap, requiredTruthyCols) {
-  //const mappedRecord = grist.mapColumnNames(record);
-  // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
-  // properly, so we need to map stuff ourselves.
-  const mappedRecord = {}
-  if (colMap) {
-    for (const[mappedColName, realColName] of Object.entries(colMap)) {
-      if (realColName in record) {
-        mappedRecord[mappedColName] = record[realColName];
-        // If we're mapping one of the essential columns but that column is empty/its data is falsy,
-        // display an error message to the user.
-        if(requiredTruthyCols.includes(mappedColName) && !(mappedRecord[mappedColName])) {
-          let msg = `<b>Required column '${mappedColName}' is empty/falsy. Please make sure it contains valid (truthy) data.`;
-          console.error(`autoaction: ${msg}`);
-          throw new Error(msg);
-        }
-      }
-    }
-  }
-}
-
-async function gristRecordSelected(record, mappedColNamesToRealColNames) {
-  try {
-    const mappedRecord = grist.mapColumnNames(record);
-    if (!mappedRecord) {
-      throw new Error("Please map all required columns first.");
-    }
-    console.log("autoaction: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
-    let actions = mappedRecord[ACTIONS_COL_NAME];
+async function run(mappedRecord) {
+    let actions = mappedRecord.actions;
     try
     {
       // Try to show what actions we're executing by collapsing the list of lists into a readable string.
@@ -92,14 +32,29 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       // somehow doesn't have the right format, and let them know about it.
       setStatus(`Applying actions: ${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`);
     } catch (e) {
-      setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_FORMAT_EXAMPLE_FORMULA}`);
+      setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`);
       return;
     }
-    if (!mappedRecord[ISENABLED_COL_NAME]) {
+    if (!mappedRecord.isEnabled) {
       // If the 'enabled' switch is off, don't do anything.
-      setStatus(`'Enabled' switch (column '${mappedColNamesToRealColNames[ISENABLED_COL_NAME]}') is turned off, won't run actions.`);
+      setStatus(`'Enabled' switch (column '${mappedColNamesToRealColNames.isEnabled}') for this record (ID ${mappedRecord.id}) is turned off, won't run actions.`);
       return;
     }
+    doneExecs[mappedRecord.id] ??= {num: 0, timeOfLast: null};
+  } catch (err) {
+    handleError(err)
+  }
+}
+
+async function gristRecordSelected(record, mappedColNamesToRealColNames) {
+  try {
+    const mappedRecord = mapGristRecord(record, mappedColNamesToRealColNames, REQUIRED_COLUMNS);
+    if (!mappedRecord) {
+      throw new Error("Please map all required columns first.");
+    }
+    console.log("autoaction: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
+    return run(mappedRecord);
+    
     let isOneShot = false;
     if (ISONESHOT_COL_NAME in mappedRecord) {
       isOneShot = mappedRecord[ISONESHOT_COL_NAME];
@@ -153,6 +108,91 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     return handleError(err);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function ready(fn) {
+  if (document.readyState !== "loading") {
+    fn();
+  } else {
+    document.addEventListener("DOMContentLoaded", fn);
+  }
+}
+
+
+
+
+
+
+
+
+
+let isDoneForRecord = [];
+let lastRunTimeForRecord = {};
+let nextRunTimeoutId = null;
+
+
+
+function setStatus(msg) {
+  let statusElem = document.querySelector("#status");
+  if (!statusElem) return false;
+  statusElem.innerHTML = msg;
+  setVisible("#status", true);
+  return true;
+}
+
+function setVisible(querySelector, isVisible) {
+  let elem = document.querySelector(querySelector);
+  if (!elem) return false;
+  elem.style.display = isVisible ? "block" : "none";
+}
+
+function handleError(err) {
+  if (!setStatus(err)) {
+    console.error("autoaction: FATAL: ", err);
+    document.body.innerHTML = String(err);
+    return;
+  }
+  console.error("autoaction: ", err);
+}
+
+async function applyActions(mappedRecord, previousMappedRecord) {
+}
+
+function mapGristRecord(record, colMap, requiredTruthyCols) {
+  //const mappedRecord = grist.mapColumnNames(record);
+  // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
+  // properly, so we need to map stuff ourselves.
+  const mappedRecord = { id: record.id };
+  if (colMap) {
+    for (const[mappedColName, realColName] of Object.entries(colMap)) {
+      if (realColName in record) {
+        mappedRecord[mappedColName] = record[realColName];
+        // If we're mapping one of the essential columns but that column is empty/its data is falsy,
+        // display an error message to the user.
+        if(requiredTruthyCols.includes(mappedColName) && !(mappedRecord[mappedColName])) {
+          let msg = `<b>Required column '${mappedColName}' is empty/falsy. Please make sure it contains valid (truthy) data.`;
+          console.error(`autoaction: ${msg}`);
+          throw new Error(msg);
+        }
+      }
+    }
+  }
+  return mappedRecord;
+}
+
+
 
 // Start once the DOM is ready.
 ready(function(){
