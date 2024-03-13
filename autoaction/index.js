@@ -131,7 +131,7 @@ async function run(mappedRecord) {
       console.log(`autoaction: ${msg}`, actions);
       setStatus(msg);
       numRuns[mappedRecord.id] += 1;
-      lastRunTime[mappedRecord.id] = new Date();
+      lastRunTime[mappedRecord.id] = now;
       applyActions(actions);
       console.log("autoaction: Done applying actions.");
       setStatus("Done.");
