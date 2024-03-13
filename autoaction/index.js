@@ -1,6 +1,7 @@
 let currentTimeout = null;
 let numRuns = {}; //record id: num
 let lastRunTime = {}; //record id: time
+let currentRecordID = null;
 
 const REQUIRED_COLUMNS = ["actions", "isEnabled"];
 const ACTIONS_EXAMPLE_FORMULA = `<pre>return [
@@ -49,6 +50,12 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     if (!mappedRecord) {
       throw new Error("Please map all required columns first.");
     }
+    if (mappedRecord.id == currentRecordID) {
+      // Guard against undesirable Grist behaviour (the 'on record' event gets fired twice
+      // for the same record sometimes).
+      return;
+    }
+    currentRecordID = mappedRecord.id;
     console.log("autoaction: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
     return run(mappedRecord);
   } catch (err) {
@@ -124,7 +131,8 @@ async function run(mappedRecord) {
     // to be subtracted from the configured timeout value.
     let lastRunMillisecondsAgo = (now - lastRunTime[mappedRecord.id]);
     timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
-    console.log(`autoaction: lastRun for record ${mappedRecord.id} was ${lastRunMillisecondsAgo/1000} ago, so set new timeout now! now is: `, new Date());
+/////////////////
+    console.log(`autoaction: lastRun for record ${mappedRecord.id} was ${lastRunMillisecondsAgo/1000} ago, so set new timeout now to run again in ${timeout/1000}! now is: `, new Date());
     currentTimeout = window.setTimeout(function() {
       // Increase the 'numRuns' counter for this record, then execute actions.
       let msg = `Applying actions for record ${mappedRecord.id}.`;
