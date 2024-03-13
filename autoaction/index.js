@@ -1,5 +1,6 @@
 let currentTimeout = null;
 let numRuns = {}; //record id: num
+let lastRunTime = {}; //record id: time
 
 const REQUIRED_COLUMNS = ["actions", "isEnabled"];
 const ACTIONS_EXAMPLE_FORMULA = `<pre>return [
@@ -113,16 +114,27 @@ async function run(mappedRecord) {
       console.log(`autoaction: ${msg}`);
       return;
     }  
-    // Schedule actions for this record for when they're first/next due to run.
-    let timeoutValue = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
+    // Schedule actions for this record for when they're next (or first) due to run.
+    let timeout = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
+    if (lastRunTime[mappedRecord.id]) {
+      // Stick to the configured interval by adjusting timeout by 'lastRunTime'.
+      let lastRunMillisecondsAgo = (new Date() - lastRunTime[mappedRecord.id]);
+      timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
+    }
     currentTimeout = window.setTimeout(function() {
       // Increase the 'numRuns' counter for this record, then execute actions.
-      console.log(`autoaction: Applying actions for record ${mappedRecord.id}:`, actions);
+      let msg = `Applying actions for record ${mappedRecord.id}.`;
+      console.log(`autoaction: ${msg}`, actions);
+      setStatus(msg);
       numRuns[mappedRecord.id] += 1;
+      lastRunTime[mappedRecord.id] = new Date();
       applyActions(actions);
-    }, timeoutValue);
-    // Provide a status message as to when actions will be run next.
-    let msg = `Actions for the current record (ID ${mappedRecord.id}) will run${numRuns[mappedRecord.id] > 0 ? " again" : ""} in ${timeoutValue / 1000} seconds.`;
+      console.log("autoaction: Done applying actions.");
+      setStatus("Done.");
+    }, timeout);
+    // Provide a status message as to when actions will get run next.
+    let msg = `Actions for the current record (ID ${mappedRecord.id}) will run${numRuns[mappedRecord.id] > 0 ? " again" : ""} in ${timeout / 1000} seconds.`;
+    setStatus(msg);
     console.log(`autoaction: ${msg}`);
   } catch (err) {
     handleError(err)
