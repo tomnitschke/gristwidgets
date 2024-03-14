@@ -138,11 +138,12 @@ function run(mappedRecord) {
           window.clearTimeout(initialTimeouts[recordID]);
         }
       }
-      for (const recordID in intervals) {
+      //TODO intervals should keep running, just not actually apply anything if this is not the current record. so move this to applyactions.
+      /*for (const recordID in intervals) {
         if (recordID != mappedRecord.id) {
-          window.clearTimeout(intervals[recordID]);
+          window.clearInterval(intervals[recordID]);
         }
-      }
+      }*/
     }
     if (!intervals[mappedRecord.id]) {
       // If all runs for this record have already been completed, provide a message to that effect and exit.
