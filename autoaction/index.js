@@ -85,7 +85,8 @@ function mapGristRecord(record, colMap, requiredTruthyCols) {
   return mappedRecord;
 }
 
-async function run(mappedRecord) {
+function run(mappedRecord) {
+  console.log("autoaction: run()! at:", new Date());
   // Reset the timeout each time Grist fires an 'on record' event, so that
   // actions will only ever run for the currently selected record.
   window.clearTimeout(currentTimeout);
