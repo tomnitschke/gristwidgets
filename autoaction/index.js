@@ -1,6 +1,6 @@
-let currentTimeout = null;
+let initialTimeouts = {};
+let intervals = {}; //record id: interval id
 let numRuns = {}; //record id: num
-let lastRunTime = {}; //record id: time
 let currentRecordID = null;
 
 const REQUIRED_COLUMNS = ["actions", "isEnabled"];
@@ -88,12 +88,9 @@ function mapGristRecord(record, colMap, requiredTruthyCols) {
 
 function run(mappedRecord) {
   console.log("autoaction: run()! at:", new Date());
-  // Reset the timeout each time Grist fires an 'on record' event, so that
-  // actions will only ever run for the currently selected record.
-  window.clearTimeout(currentTimeout);
   // Get the actions for the current record.
   let actions = mappedRecord.actions;
-  try { 
+  try {
     try {
       // Try to show what actions we're executing by collapsing the list of lists into a readable string.
       // As a side effect, if this fails, we can certainly say that the actions list provided by the user
@@ -105,71 +102,65 @@ function run(mappedRecord) {
     }
     if (!mappedRecord.isEnabled) {
       // If the 'enabled' switch is off, don't do anything.
-      setStatus(`'Enabled' switch (column '${mappedColNamesToRealColNames.isEnabled}') for this record (ID ${mappedRecord.id}) is turned off, won't run actions.`);
+      setStatus(`'Enabled' switch for this record (ID ${mappedRecord.id}) is turned off, won't run actions.`);
       return;
     }
     // Set 'some defaults if no user-supplied values are available.
     mappedRecord.maxReps ??= 1;
     mappedRecord.initDelay ??= 0;
     mappedRecord.repInterval ??= 1000;
-    // If there is no entry for this record yet in 'numRuns', add one.
+    mappedRecord.runSolo ??= true;
+    // Add entries for this record to 'numRuns' if needed.
     numRuns[mappedRecord.id] ??= 0;
-    // Likewise for the 'lastRunTime' dictionary.
-    let now = new Date();
-    lastRunTime[mappedRecord.id] ??= now;
-    // If actions for this record have already run the configured number of times,
-    // do nothing now and let the user know as much.
-    // Allow unlimited runs if this value is set to < 0.
-    if (mappedRecord.maxReps >= 0 && numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
-      let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
-      setStatus(msg);
-      console.log(`autoaction: ${msg}`);
-      return;
-    }  
-    // Schedule actions for this record for when they're next (or first) due to run.
-    let timeout = numRuns[mappedRecord.id] > 0 ? mappedRecord.repInterval : mappedRecord.initDelay;
-    // Stick to the configured interval by adjusting timeout by 'lastRunTime'.
-    // For the first run, the line below will evaluate 'now - now', thus 0 seconds
-    // to be subtracted from the configured timeout value.
-    let lastRunMillisecondsAgo = (now - lastRunTime[mappedRecord.id]);
-    timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
-/////////////////
-    console.log(`autoaction: lastRun for record ${mappedRecord.id} was ${lastRunMillisecondsAgo/1000} ago, so set new timeout now to run again in ${timeout/1000}! now is: `, new Date());
-    currentTimeout = window.setTimeout(async function() {
-      // Increase the 'numRuns' counter for this record, then execute actions.
-      let targetRecordID = mappedRecord.id;
-      if (targetRecordID != currentRecordID) {
-        console.log(`autoaction: Not applying actions for record with ID ${targetRecordID} because the current record is now ${currentRecordID}.`);
-        return;
+    if (numRuns[mappedRecord.id] == 0) {
+      // If this is the first run for this record, start executing actions.
+      // In order to respect the 'initDelay' setting, we do this by
+      // setting a timeout rather than executing immediately.
+      initialTimeouts[mappedRecord.id] = window.setTimeout(async function() {
+        let msg = `Will run actions for this record (ID ${mappedRecord.id}) in ${mappedRecord.repInterval / 1000} seconds.`;
+        setStatus(msg);
+        console.log(`autoaction: ${msg}`);
+        await applyActions(actions, mappedRecord);
+        // After the first run is done, set up the interval.
+        intervals[mappedRecord.id] = window.setInterval(async function() {
+          await applyActions(actions, mappedRecord);
+        }, mappedRecord.repInterval);
+      }, mappedRecord.initDelay);
+    }
+    // Clear the initial timeouts and intervals for other records if configured.
+    if (mappedRecord.runSolo) {
+      for (const recordID in initialTimeouts) {
+        if (recordID != mappedRecord.id) {
+          window.clearTimeout(initialTimeouts[recordID]);
+        }
       }
-      let msg = `Applying actions for record ${targetRecordID}.`;
-      console.log(`autoaction: ${msg}`, actions);
-      setStatus(msg);
-      numRuns[mappedRecord.id] += 1;
-      lastRunTime[mappedRecord.id] = now;
-      await applyActions(actions);
-      console.log("autoaction: Done applying actions.");
-      setStatus("Done.");
-      // If the user action makes changes to this same record, allow this
-      // modification to trigger gristRecordUpdates() again.
-      currentRecordID = null;
-    }, timeout);
-    // Provide a status message as to when actions will get run next.
-    let msg = `Actions for the current record (ID ${mappedRecord.id}) will run${numRuns[mappedRecord.id] > 0 ? " again" : ""} in ${timeout / 1000} seconds.`;
-    setStatus(msg);
-    console.log(`autoaction: ${msg}`);
+      for (const recordID in intervals) {
+        if (recordID != mappedRecord.id) {
+          window.clearTimeout(intervals[recordID]);
+        }
+      }
+    }
   } catch (err) {
-    handleError(err)
+    handleError(err);
   }
 }
 
-async function applyActions(actions) {
+//async function applyActions(actions) {
+async function applyActions(actions, mappedRecord) {
+  // If actions for this record have already run the configured number
+  // of times, do nothing now and let the user know as much. Allow
+  // unlimited runs if 'maxReps' is set to < 0.
+  if (mappedRecord.maxReps >= 0 && numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
+    let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
+    setStatus(msg);
+    console.log(`autoaction: ${msg}`);
+    return;
+  }
   try {
-    window.clearTimeout(currentTimeout);
     await grist.docApi.applyUserActions(actions);
   } catch(err) {
     if (err.message.startsWith("[Sandbox]")) {
-      err.message += `<br />Most likely the actions list you provided isn't valid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_FORMAT_EXAMPLE_FORMULA}`;
+      err.message += `<br />Most likely the actions list you provided isn't valid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`;
     }
     return handleError(err);
   }
