@@ -130,7 +130,7 @@ function run(mappedRecord) {
         }, mappedRecord.repInterval);
       }, mappedRecord.initDelay);
     }
-    // Clear the initial timeouts and intervals for other records if configured.
+    // Clear the initial timeouts and the intervals for other records if configured.
     if (mappedRecord.runSolo) {
       for (const recordID in initialTimeouts) {
         if (recordID != mappedRecord.id) {
