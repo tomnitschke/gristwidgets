@@ -116,13 +116,16 @@ function run(mappedRecord) {
       // If this is the first run for this record, start executing actions.
       // In order to respect the 'initDelay' setting, we do this by
       // setting a timeout rather than executing immediately.
+      let msg = `Will run actions for this record (ID ${mappedRecord.id}) in ${mappedRecord.initDelay / 1000} seconds.`;
+      setStatus(msg);
+      console.log(`autoaction: ${msg}`);
       initialTimeouts[mappedRecord.id] = window.setTimeout(async function() {
-        let msg = `Will run actions for this record (ID ${mappedRecord.id}) in ${mappedRecord.repInterval / 1000} seconds.`;
-        setStatus(msg);
-        console.log(`autoaction: ${msg}`);
         await applyActions(actions, mappedRecord);
         // After the first run is done, set up the interval.
         intervals[mappedRecord.id] = window.setInterval(async function() {
+          let msg = `Actions for this record (ID ${mappedRecord.id}) will be repeated every ${mappedRecord.repInterval / 1000} seconds${mappedRecord.maxReps > 0 ? " until " + mappedRecord.maxReps + " runs have been completed" : ""}.`;
+          setStatus(msg);
+          console.log(`autoaction: ${msg}`);
           await applyActions(actions, mappedRecord);
         }, mappedRecord.repInterval);
       }, mappedRecord.initDelay);
