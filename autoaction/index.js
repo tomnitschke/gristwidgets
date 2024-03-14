@@ -161,6 +161,9 @@ async function applyActions(actions, mappedRecord) {
     return;
   }
   try {
+    // Apply actions. Increment 'numRuns' first, though, so
+    // we're safe even if applyUserActions() screws up.
+    numRuns[mappedRecord.id] += 1;
     await grist.docApi.applyUserActions(actions);
   } catch(err) {
     if (err.message.startsWith("[Sandbox]")) {
