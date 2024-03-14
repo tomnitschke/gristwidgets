@@ -53,7 +53,7 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     if (mappedRecord.id == currentRecordID) {
       // Guard against undesirable Grist behaviour where sometimes the
       // 'on record' event gets fired twice for the same record.
-      console.log(`autoaction: Not running gristRecordSelected() twice for the same record (ID ${mappedRecord.id})`;
+      console.log(`autoaction: Not running gristRecordSelected() twice for the same record (ID ${mappedRecord.id})`);
       return;
     }
     currentRecordID = mappedRecord.id;
