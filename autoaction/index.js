@@ -144,6 +144,13 @@ function run(mappedRecord) {
         }
       }
     }
+    if (!intervals[mappedRecord.id]) {
+      // If all runs for this record have already been completed, provide a message to that effect and exit.
+      let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
+      setStatus(msg);
+      console.log(`autoaction: ${msg}`);
+      return;
+    }
   } catch (err) {
     handleError(err);
   }
@@ -152,12 +159,16 @@ function run(mappedRecord) {
 //async function applyActions(actions) {
 async function applyActions(actions, mappedRecord) {
   // If actions for this record have already run the configured number
-  // of times, do nothing now and let the user know as much. Allow
-  // unlimited runs if 'maxReps' is set to < 0.
+  // of times, do nothing now and let the user know as much. Also,
+  // clear any running interval for this record.
+  // Note: Setting 'maxReps' to < 0 will disable this check,
+  // allowing for an unlimited number of runs.
   if (mappedRecord.maxReps >= 0 && numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
     let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
     setStatus(msg);
     console.log(`autoaction: ${msg}`);
+    window.clearInterval(intervals[mappedRecord.id]);
+    intervals[mappedRecord.id] = null;
     return;
   }
   try {
