@@ -37,6 +37,7 @@ ready(function(){
       { name: "initDelay", type: "Int", title: "Delay", optional: true, description: "Sets the number of milliseconds to wait, once a record gets selected, before executing the actions for it." },
       { name: "maxReps", type: "Int", title: "Repetitions", optional: true, description: "Sets the maximum number of times actions for the current record will be run. The default is 1. Values < 0 mean unlimited runs. Note that the execution cycle gets reset each time you reload the page." },
       { name: "repInterval", type: "Int", title: "Repetition Interval", optional: true, description: "Sets the number of milliseconds to wait between subsequent executions of actions for the currently selected record." },
+      { name: "runSolo", type: "Bool", title: "Run solo?", optional: true, description: "If set to True (which is the default), only actions for this record will keep getting run repeatedly (as per repetition/interval settings, see above)." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
