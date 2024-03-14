@@ -51,8 +51,9 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
       throw new Error("Please map all required columns first.");
     }
     if (mappedRecord.id == currentRecordID) {
-      // Guard against undesirable Grist behaviour (the 'on record' event gets fired twice
-      // for the same record sometimes).
+      // Guard against undesirable Grist behaviour where sometimes the
+      // 'on record' event gets fired twice for the same record.
+      console.log(`autoaction: Not running gristRecordSelected() twice for the same record (ID ${mappedRecord.id})`;
       return;
     }
     currentRecordID = mappedRecord.id;
@@ -134,16 +135,24 @@ function run(mappedRecord) {
     timeout = Math.max(0, timeout - lastRunMillisecondsAgo);
 /////////////////
     console.log(`autoaction: lastRun for record ${mappedRecord.id} was ${lastRunMillisecondsAgo/1000} ago, so set new timeout now to run again in ${timeout/1000}! now is: `, new Date());
-    currentTimeout = window.setTimeout(function() {
+    currentTimeout = window.setTimeout(async function() {
       // Increase the 'numRuns' counter for this record, then execute actions.
-      let msg = `Applying actions for record ${mappedRecord.id}.`;
+      let targetRecordID = mappedRecord.id;
+      if (targetRecordID != currentRecordID) {
+        console.log(`autoaction: Not applying actions for record with ID ${targetRecordID} because the current record is now ${currentRecordID}.`);
+        return;
+      }
+      let msg = `Applying actions for record ${targetRecordID}.`;
       console.log(`autoaction: ${msg}`, actions);
       setStatus(msg);
       numRuns[mappedRecord.id] += 1;
       lastRunTime[mappedRecord.id] = now;
-      applyActions(actions);
+      await applyActions(actions);
       console.log("autoaction: Done applying actions.");
       setStatus("Done.");
+      // If the user action makes changes to this same record, allow this
+      // modification to trigger gristRecordUpdates() again.
+      currentRecordID = null;
     }, timeout);
     // Provide a status message as to when actions will get run next.
     let msg = `Actions for the current record (ID ${mappedRecord.id}) will run${numRuns[mappedRecord.id] > 0 ? " again" : ""} in ${timeout / 1000} seconds.`;
