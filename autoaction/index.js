@@ -122,7 +122,7 @@ function run(mappedRecord) {
       msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
-      if (!initialTimeouts[mappedRecord.id]) return;
+      if (initialTimeouts[mappedRecord.id]) return;
       initialTimeouts[mappedRecord.id] = window.setTimeout(async function() {
         let hasInitialTimeoutAppliedActions = await applyActions(actions, mappedRecord);
         // After the first run is done, set up the interval.
