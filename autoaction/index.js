@@ -115,13 +115,14 @@ function run(mappedRecord) {
     mappedRecord.runBackgrounded ??= false;
     // Add entries for this record to 'numRuns' if needed.
     numRuns[mappedRecord.id] ??= 0;
-    if (numRuns[mappedRecord.id] == 0 && !initialTimeouts[mappedRecord.id]) {
+    if (numRuns[mappedRecord.id] == 0) {
       // If this is the first run for this record and if there isn't already a pending
       // timeout function for it, set up one now.
       let msg = `Will run actions for this record (ID ${mappedRecord.id}) in ${mappedRecord.initDelay / 1000} seconds.`;
       msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
+      if (!initialTimeouts[mappedRecord.id]) return;
       initialTimeouts[mappedRecord.id] = window.setTimeout(async function() {
         let hasInitialTimeoutAppliedActions = await applyActions(actions, mappedRecord);
         // After the first run is done, set up the interval.
@@ -139,6 +140,9 @@ function run(mappedRecord) {
           await applyActions(actions, mappedRecord);
         }, mappedRecord.repInterval);
       }, mappedRecord.initDelay);
+    } else {
+      let msg = `Actions for this record (ID ${mappedRecord.id}) will be repeated every ${mappedRecord.repInterval / 1000} seconds${mappedRecord.maxReps > 0 ? " until " + mappedRecord.maxReps + " runs have been completed" : ""}.`;
+      msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
     }
     /*if (!intervals[mappedRecord.id]) {
       // If all runs for this record have already been completed, provide a message to that effect and exit.
