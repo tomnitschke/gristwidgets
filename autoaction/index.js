@@ -143,6 +143,8 @@ function run(mappedRecord) {
     } else {
       let msg = `Actions for this record (ID ${mappedRecord.id}) will be repeated every ${mappedRecord.repInterval / 1000} seconds${mappedRecord.maxReps > 0 ? " until " + mappedRecord.maxReps + " runs have been completed" : ""}.`;
       msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
+      console.log(`autoaction: ${msg}`);
+      setStatus(msg);
     }
     /*if (!intervals[mappedRecord.id]) {
       // If all runs for this record have already been completed, provide a message to that effect and exit.
