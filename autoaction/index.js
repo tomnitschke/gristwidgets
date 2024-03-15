@@ -131,11 +131,11 @@ function run(mappedRecord) {
         // in a selected state long enough for the timeout to fire). Arguably, this
         // is the most intuitive behaviour here.
         if (!hasInitialTimeoutAppliedActions) return;
+        let msg = `Actions for this record (ID ${mappedRecord.id}) will be repeated every ${mappedRecord.repInterval / 1000} seconds${mappedRecord.maxReps > 0 ? " until " + mappedRecord.maxReps + " runs have been completed" : ""}.`;
+        msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
+        if (mappedRecord.id == currentRecordID) setStatus(msg);
+        console.log(`autoaction: ${msg}`);
         intervals[mappedRecord.id] = window.setInterval(async function() {
-          let msg = `Actions for this record (ID ${mappedRecord.id}) will be repeated every ${mappedRecord.repInterval / 1000} seconds${mappedRecord.maxReps > 0 ? " until " + mappedRecord.maxReps + " runs have been completed" : ""}.`;
-          msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
-          setStatus(msg);
-          console.log(`autoaction: ${msg}`);
           await applyActions(actions, mappedRecord);
         }, mappedRecord.repInterval);
       }, mappedRecord.initDelay);
@@ -170,7 +170,7 @@ async function applyActions(actions, mappedRecord) {
     // Note: Setting 'maxReps' to < 0 will disable this check,
     // allowing for an unlimited number of runs.
     let msg = `Actions for record ${mappedRecord.id} (the current record is ${currentRecordID}) have already been executed ${mappedRecord.maxReps} times, won't run them again until the page is reloaded.`;
-    //setStatus(msg);
+    if (mappedRecord.id == currentRecordID) setStatus(msg);
     console.log(`autoaction: ${msg}`);
     window.clearInterval(intervals[mappedRecord.id]);
     intervals[mappedRecord.id] = null;
