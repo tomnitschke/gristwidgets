@@ -2,6 +2,7 @@ let initialTimeouts = {};
 let intervals = {}; //record id: interval id
 let numRuns = {}; //record id: num
 let currentRecordID = null;
+let timePageLoaded = new Date();
 
 const REQUIRED_COLUMNS = ["actions", "isEnabled"];
 const ACTIONS_EXAMPLE_FORMULA = `<pre>return [
@@ -34,10 +35,10 @@ ready(function(){
     columns: [
       { name: "actions", type: "Any", strictType: true, title: "Actions", description: "List of user actions to execute. As each user action definition is a list, this column must hold a list of lists. See https://github.com/gristlabs/grist-core/blob/main/documentation/overview.md#changes-to-documents" },
       { name: "isEnabled", type: "Bool", title: "Enabled?", description: "If this column's value is False, the widget won't do anything." },
-      { name: "initDelay", type: "Int", title: "Delay", optional: true, description: "Sets the number of milliseconds to wait, once a record gets selected, before executing the actions for it." },
-      { name: "maxReps", type: "Int", title: "Repetitions", optional: true, description: "Sets the maximum number of times actions for the current record will be run. The default is 1. Values < 0 mean unlimited runs. Note that the execution cycle gets reset each time you reload the page." },
-      { name: "repInterval", type: "Int", title: "Repetition Interval", optional: true, description: "Sets the number of milliseconds to wait between subsequent executions of actions for the currently selected record." },
-      { name: "runSolo", type: "Bool", title: "Run solo?", optional: true, description: "If set to True (which is the default), only actions for this record will keep getting run repeatedly (as per repetition/interval settings, see above)." },
+      { name: "initDelay", type: "Int", title: "Delay", optional: true, description: "Sets the number of milliseconds to wait, once a record gets selected, before executing the actions for it. The default is 0." },
+      { name: "maxReps", type: "Int", title: "Repetitions", optional: true, description: "Sets the maximum number of times actions for the this record will be run (but note that the execution cycle gets reset each time you reload the page). Values < 0 mean unlimited runs. The default is 1." },
+      { name: "repInterval", type: "Int", title: "Repetition Interval", optional: true, description: "Sets the number of milliseconds to wait between subsequent action runs for this record. The default is 1000." },
+      { name: "runBackgrounded", type: "Bool", title: "Run backgrounded??", optional: true, description: "If set to True, actions for this record will keep getting run repeatedly (as per repetition/interval settings, see above) even if it isn't the currently selected record. The default is False." },
     ],
   });
   // Register callback for when the user selects a record in Grist.
@@ -92,11 +93,12 @@ function run(mappedRecord) {
   // Get the actions for the current record.
   let actions = mappedRecord.actions;
   try {
+    let actionsStrRepr = "";
     try {
-      // Try to show what actions we're executing by collapsing the list of lists into a readable string.
+      // Try to create a string representation of the actions we're executing by collapsing the list of lists.
       // As a side effect, if this fails, we can certainly say that the actions list provided by the user
-      // somehow doesn't have the right format, and let them know about it.
-      setStatus(`Applying actions: ${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`);
+      // oesn't have the right format, and let them know about it.
+      actionsStrRepr = `${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`;
     } catch (e) {
       setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`);
       return;
@@ -110,48 +112,41 @@ function run(mappedRecord) {
     mappedRecord.maxReps ??= 1;
     mappedRecord.initDelay ??= 0;
     mappedRecord.repInterval ??= 1000;
-    mappedRecord.runSolo ??= true;
+    mappedRecord.runBackgrounded ??= true;
     // Add entries for this record to 'numRuns' if needed.
     numRuns[mappedRecord.id] ??= 0;
-    if (numRuns[mappedRecord.id] == 0) {
-      // If this is the first run for this record, start executing actions.
-      // In order to respect the 'initDelay' setting, we do this by
-      // setting a timeout rather than executing immediately.
+    if (numRuns[mappedRecord.id] == 0 && !initialTimeouts[mappedRecord.id]) {
+      // If this is the first run for this record and if there isn't already a pending
+      // timeout function for it, set up one now.
       let msg = `Will run actions for this record (ID ${mappedRecord.id}) in ${mappedRecord.initDelay / 1000} seconds.`;
+      msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
       initialTimeouts[mappedRecord.id] = window.setTimeout(async function() {
-        await applyActions(actions, mappedRecord);
+        let hasInitialTimeoutAppliedActions = await applyActions(actions, mappedRecord);
         // After the first run is done, set up the interval.
+        // Note: If the selected record changes before the timeout function has actually
+        // applied user actions, then don't start up the interval for this record
+        // yet. This will happen only when the record is next selected (and then kept
+        // in a selected state long enough for the timeout to fire). Arguably, this
+        // is the most intuitive behaviour here.
+        if (!hasInitialTimeoutAppliedActions) return;
         intervals[mappedRecord.id] = window.setInterval(async function() {
           let msg = `Actions for this record (ID ${mappedRecord.id}) will be repeated every ${mappedRecord.repInterval / 1000} seconds${mappedRecord.maxReps > 0 ? " until " + mappedRecord.maxReps + " runs have been completed" : ""}.`;
+          msg += `<br/>Actions:<br/><pre>${actionsStrRepr}</pre>`;
           setStatus(msg);
           console.log(`autoaction: ${msg}`);
           await applyActions(actions, mappedRecord);
         }, mappedRecord.repInterval);
       }, mappedRecord.initDelay);
     }
-    // Clear the initial timeouts and the intervals for other records if configured.
-    if (mappedRecord.runSolo) {
-      for (const recordID in initialTimeouts) {
-        if (recordID != mappedRecord.id) {
-          window.clearTimeout(initialTimeouts[recordID]);
-        }
-      }
-      //TODO intervals should keep running, just not actually apply anything if this is not the current record. so move this to applyactions.
-      /*for (const recordID in intervals) {
-        if (recordID != mappedRecord.id) {
-          window.clearInterval(intervals[recordID]);
-        }
-      }*/
-    }
-    if (!intervals[mappedRecord.id]) {
+    /*if (!intervals[mappedRecord.id]) {
       // If all runs for this record have already been completed, provide a message to that effect and exit.
       let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
       setStatus(msg);
       console.log(`autoaction: ${msg}`);
       return;
-    }
+    }*/
   } catch (err) {
     handleError(err);
   }
@@ -159,29 +154,46 @@ function run(mappedRecord) {
 
 //async function applyActions(actions) {
 async function applyActions(actions, mappedRecord) {
-  // If actions for this record have already run the configured number
-  // of times, do nothing now and let the user know as much. Also,
-  // clear any running interval for this record.
-  // Note: Setting 'maxReps' to < 0 will disable this check,
-  // allowing for an unlimited number of runs.
+  if (!mappedRecord.runBackgrounded && mappedRecord.id != currentRecordID) {
+    // If this run isn't for the currently selected record and if that
+    // record isn't configured to 'runBackgrounded', then don't do
+    // anything. Do null out the timeout, however, so that run()
+    // can detect what's going on.
+    initialTimeouts[mappedRecord.id] = null;
+    console.log(`autoaction: Not running background actions for record ${mappedRecord.id} (the current record is ${currentRecordID}).`);
+    return false;
+  }
   if (mappedRecord.maxReps >= 0 && numRuns[mappedRecord.id] >= mappedRecord.maxReps) {
-    let msg = `Actions for the current record (ID ${mappedRecord.id}) have already been executed ${mappedRecord.maxReps > 1 ? mappedRecord.maxReps + " times" : ""}, won't run them again until the page is reloaded.`;
-    setStatus(msg);
+    // If actions for this record have already run the configured number
+    // of times, do nothing now and let the user know as much. Also,
+    // clear any running interval or initial timeout for this record.
+    // Note: Setting 'maxReps' to < 0 will disable this check,
+    // allowing for an unlimited number of runs.
+    let msg = `Actions for record ${mappedRecord.id} (the current record is ${currentRecordID}) have already been executed ${mappedRecord.maxReps} times, won't run them again until the page is reloaded.`;
+    //setStatus(msg);
     console.log(`autoaction: ${msg}`);
     window.clearInterval(intervals[mappedRecord.id]);
     intervals[mappedRecord.id] = null;
-    return;
+    initialTimeouts[mappedRecord.id] = null;
+    return false;
   }
   try {
     // Apply actions. Increment 'numRuns' first, though, so
     // we're safe even if applyUserActions() screws up.
+    console.log(`autoaction: Applying actions for record ${mappedRecord.id} now!`);
     numRuns[mappedRecord.id] += 1;
     await grist.docApi.applyUserActions(actions);
+    return true;
   } catch(err) {
     if (err.message.startsWith("[Sandbox]")) {
       err.message += `<br />Most likely the actions list you provided isn't valid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`;
     }
-    return handleError(err);
+    handleError(err);
+    // Return true as if actions had been applied without problem, so that run() will
+    // set up a new timeout once this record gets selected again. As a result, the
+    // user will see the error message every time the record gets selected, which
+    // is what we want.
+    return true;
   }
 }
 
