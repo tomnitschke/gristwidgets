@@ -112,7 +112,7 @@ function run(mappedRecord) {
     mappedRecord.maxReps ??= 1;
     mappedRecord.initDelay ??= 0;
     mappedRecord.repInterval ??= 1000;
-    mappedRecord.runBackgrounded ??= true;
+    mappedRecord.runBackgrounded ??= false;
     // Add entries for this record to 'numRuns' if needed.
     numRuns[mappedRecord.id] ??= 0;
     if (numRuns[mappedRecord.id] == 0 && !initialTimeouts[mappedRecord.id]) {
