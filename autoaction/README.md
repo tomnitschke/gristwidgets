@@ -8,12 +8,16 @@ Or you could throw some switch (meaning a toggle column) each time, to trigger o
 doing. Obviously it’s easy to screw up your entire document with this.**
 
 To use this, insert a custom widget into your Grist page and set its URL to `https://tomnitschke.github.io/gristwidgets/autoaction`.  
-You'll then have to map two columns:
+Then you can map the following columns:
 * Actions - "Any" type column that defines what actions to run. See below for details.
 * Enabled? - "Bool" type column that acts as a safety switch. If its value is not True, the widget won't do anything.
+* Delay (optional) - "Integer" type column that sets a delay (in milliseconds) after which to run the actions. The delay timer starts once the record gets selected. The default is 0.
+* Repetitions (optional) - "Integer" column defining how often to execute actions for the current record. Set to -1 to allow unlimited repetition. The default is 1. Note: Reloading the page resets the counter.
+* Repetition Interval (optional) - "Integer" column providing the interval (in milliseconds) at which actions are repeatedly run. Obviously, this has no effect if 'Repetitions' is set to 1. The default is 1000.
+* Run Backgrounded? - "Bool" type column indicating whether to allow action runs on records that aren't currently selected. When True, any records other than the current one may continue to have their actions run, but do note that in order for them to _start_ doing so, the user will have to select them at least once. The default value is False, so that actions are only ever run on the current record.
 
 ## How to define user actions
-You "Actions" column must return a _list of lists_. This means it must be a formula column set to the "Any" type, or it won't work.
+Your "Actions" column must return a _list of lists_. This means it must be a formula column set to the "Any" type, or it won't work.
 Here's what the format generally looks like:
 ```
 return [
