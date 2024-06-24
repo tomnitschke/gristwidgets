@@ -137,6 +137,9 @@ def create_placeholder_mapping(record: grist.Record, decimals_separator: str="."
       if disable_formatting:
         # If no further formatting is required, we're done here.
         continue
+      if val is None:
+        mapping[col] = ""
+        continue
       if type(val) in (str, int, float, bool, list, tuple, datetime.datetime, datetime.date):
         # For column types we can handle, format the value accordingly.
         mapping[col] = format_value(
