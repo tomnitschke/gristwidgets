@@ -98,7 +98,7 @@ function run(mappedRecord) {
       // Try to create a string representation of the actions we're executing by collapsing the list of lists.
       // As a side effect, if this fails, we can certainly say that the actions list provided by the user
       // oesn't have the right format, and let them know about it.
-      actionsStrRepr = `${actions.map((x) => x.map((y) => y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`;
+      actionsStrRepr = `${actions.map((x) => x.map((y) => y === null || y.constructor === Object ? JSON.stringify(y) : y).join(":")).join(",<br />")}`;
     } catch (e) {
       setStatus(`List of actions seems invalid. It needs to be a list of lists, so your column formula needs to look similar to this:<br />${ACTIONS_EXAMPLE_FORMULA}`);
       return;
