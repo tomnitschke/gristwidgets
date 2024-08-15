@@ -27,6 +27,14 @@ return [
   # 'AddRecord' is similar, but instead of a record id we pass 'None'
   [ "AddRecord", "TableName", None, { "my_column": "the_value_to_put_into_the_new_record" } ],
 
+  # Nota bene: When updating columns of type ReferenceList, you need to pass a list of referenced record IDs *as a string representation*.
+  # Thanks to user gareth1 for finding out: https://community.getgrist.com/t/how-to-copy-reference-list-using-action-button/4777/2
+  # The two lines below illustrate how to deal with such cases. The first version uses a hard-coded string representation of a list
+  # - note how the list with referenced IDs 1, 22, and 17 is in quotes -, while the second version uses an actual list and converts
+  # that to a string representation by using repr()
+  [ "UpdateRecord", "TableName", 1337, { "my_tricky_reference_list_column", "[1, 22, 17]" } ],
+  [ "UpdateRecord", "TableName", 1337, { "my_tricky_reference_list_column", repr([1, 22, 17]) } ],
+
   # Add more actions here as you see fit.
 
   # For more information, see:
