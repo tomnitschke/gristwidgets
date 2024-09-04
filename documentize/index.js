@@ -247,7 +247,6 @@ function processData() {
 ready(function(){
   // Import jsPDF.
   //window.jsPDF = window.jspdf.jsPDF;
-  import { jsPDF } from "jsPDF";
   // Set up a global error handler.
   window.addEventListener("error", function(err) {
     handleError(err);
