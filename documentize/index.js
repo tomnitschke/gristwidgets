@@ -145,9 +145,24 @@ async function gristRecordSelected(record, mappedColNamesToRealColNames) {
     // html2pdf config:
     currentData.config_pdf = {
       filename: currentData.filename,
-      pagebreak: { after: ".pagebreak" },
-      jsPDF: { compress: true },
+      pagebreak: {
+        after: ".pagebreak"
+      },
+      jsPDF: {
+        compress: true
+      },
+      margin: 10,
+      image: {
+        type: "png",
+        quality: 1.0
+      },
+      html2canvas: {
+        scale: window.devicePixelRatio * 2,
+        allowTaint: true,
+        useCORS: true,
+      }
     };
+
     if (CONFIGPDF_COL_NAME in mappedRecord) {
       currentData.config_pdf = mappedRecord[CONFIGPDF_COL_NAME];
     }
