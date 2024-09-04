@@ -217,7 +217,7 @@ function processData() {
   try {
     if (format == "docx") {
       $(document).googoose(currentData.config_docx);
-    } else {
+    } else if (format == "pdf") {
       let docElem = document.querySelector("#document");
       let pagebreakElements = docElem.querySelectorAll(currentData.config_pdf.pagebreak.after);
       for (const pagebreakElem of pagebreakElements) {
@@ -228,6 +228,13 @@ function processData() {
           pagebreakElem.style.display = "revert";
         }
       });
+    } else {
+      // Process HTML->PDF using the jsPDF library.
+      // Default format is a4 paper, portrait, using millimeters for units
+      const doc = new jsPDF();
+      doc.html(document.querySelector("#document"), function(doc) {
+        doc.save(currentData.filename);
+      })
     }
     console.log("documentize: Processing done. Offering up the file for download!");
   } catch (err) {
