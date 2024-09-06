@@ -311,7 +311,7 @@ return Export(locals())
 ```
 
 Now make another formula column "placeholder_mapping" and put this inside:
-```
+```python
 # First off, you might want to make sure the placeholder data gets updated whenever
 # the user makes changes to the template. To do this, reference the template
 # attachment column explicitly:
@@ -334,7 +334,7 @@ You can now map the column "placeholder_mapping" as the "Placeholder Data" colum
 
 ## Inserting Images from Grist attachments
 To insert an image from your Grist attachments into the document, use a placeholder like '{%some_image}' (note the percent sign), then correspondingly create a formula column 'some_image', set its type to Integer, and put the following in it:
-```
+```python
 import grist
 
 def get_attachment_by_filename(filename: str) -> grist.Record or None:
