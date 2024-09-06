@@ -19,7 +19,7 @@ Then you can map the following columns:
 ## How to define user actions
 Your "Actions" column must return a _list of lists_. This means it must be a formula column set to the "Any" type, or it won't work.
 Here's what the format generally looks like:
-```
+```python
 return [
   # The 'UpdateRecord' action takes the parameters: 'table_name' (str), 'record_id' (int), 'data' (dict, like { 'column_name': 'value_to_update_to' })
   [ "UpdateRecord", "TableName", 1, { "my_column": "the_value_to_update_to" } ],
