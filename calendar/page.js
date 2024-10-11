@@ -298,7 +298,8 @@ class CalendarHandler {
       this._clearHighlightEvent(this._selectedRecordId);
     }
 
-    if (grist.getOption('calendarTodayOnLoad') === true) {
+    let shouldGoToToday = grist.getOption('calendarTodayOnLoad');
+    if (shouldGoToToday) {
       return;
     }
 
@@ -580,7 +581,6 @@ async function calendarViewChanges(radiobutton) {
 
 // Just like calendarViewChanges(), above, but here we change the "today on load" option.
 async function toggleTodayOnLoad(checkbox) {
-  //go to 'today'
   if (!isReadOnly) {
     await grist.setOption('calendarTodayOnLoad', checkbox.checked);
   }
