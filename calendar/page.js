@@ -573,6 +573,14 @@ async function calendarViewChanges(radiobutton) {
   }
 }
 
+// Just like calendarViewChanges(), above, but here we change the "today on load" option.
+async function toggleTodayOnLoad(checkbox) {
+  //go to 'today'
+  if (!isReadOnly) {
+    await grist.setOption('calendarTodayOnLoad', checkbox.checked);
+  }
+}
+
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
@@ -580,6 +588,9 @@ function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
+  if (options?.calendarTodayOnLoad) {
+    calendarHandler.calendarToday();
+  }
 };
 
 function changeCalendarView(view) {
