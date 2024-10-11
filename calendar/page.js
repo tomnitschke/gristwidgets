@@ -927,6 +927,10 @@ function applyConfigOption(configOption, value) {
       [optionName]: optionValue
     }
   });
+  let calendarOptions = calendarHandler.calendar.getOptions();
+  calendarHandler.calendar.destroy();
+  const container = document.getElementById('calendar');
+  calendarHandler.calendar = new tui.Calendar(container, calendarOptions);
 }
 
 // HACK: show Record Card popup on dblclick.
