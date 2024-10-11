@@ -417,11 +417,11 @@ input:checked + label {
 #config-container .config-row > label {
   display: flex;
   justify-content: flex-end;
-  align-items: start;
 }
 
 #config-container .config-row > label > * {
   flex: 3;
+  align-self: start;
 }
 
 #config-container .config-row > label > span {
