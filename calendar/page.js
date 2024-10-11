@@ -54,6 +54,7 @@ function getMonthName() {
 }
 
 class CalendarHandler {
+  isTodayOnLoadDone = false;
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
     _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
@@ -325,8 +326,9 @@ class CalendarHandler {
     }
 
     let shouldGoToToday = await grist.getOption('calendarTodayOnLoad');
-    if (shouldGoToToday) {
+    if (shouldGoToToday && !calendarHandler.isTodayOnLoadDone) {
       calendarHandler.calendarToday();
+      calendarHandler.isTodayOnLoadDone = true;
     }
   }
 
