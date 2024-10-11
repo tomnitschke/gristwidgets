@@ -603,10 +603,11 @@ function onGristSettingsChanged(options, settings) {
     let wereOptionsApplied = false;
     for (prop in options) {
       if (prop.startsWith("config:")) {
-        applyConfigOption(prop, options[prop]);
+        const val = ['config:week.startDayOfWeek', 'config:month.startDayOfWeek'].includes(prop) ? parseInt(options[prop], 10) : options[prop];
+        applyConfigOption(prop, val);
         const configElem = document.getElementById(prop);
         if (configElem) {
-          configElem[configElem.type == 'checkbox' ? 'checked' : 'value'] = options[prop];
+          configElem[configElem.type == 'checkbox' ? 'checked' : 'value'] = val;
         }
         wereOptionsApplied = true;
       }
