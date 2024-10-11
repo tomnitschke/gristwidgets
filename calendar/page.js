@@ -298,7 +298,7 @@ class CalendarHandler {
       this._clearHighlightEvent(this._selectedRecordId);
     }
 
-    let shouldGoToToday = grist.getOption('calendarTodayOnLoad');
+    let shouldGoToToday = await grist.getOption('calendarTodayOnLoad');
     if (shouldGoToToday) {
       return;
     }

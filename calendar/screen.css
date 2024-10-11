@@ -397,11 +397,15 @@ input:checked + label {
   overflow-y: hidden;
 }
 
-#calendar-container {
+#calendar-container, #config-container {
   display: flex;
   flex-direction: column;
   gap: 10px;
   height: 100%;
+}
+
+#config-container {
+  display: none;
 }
 
 #calendar {
