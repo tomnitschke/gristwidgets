@@ -22,6 +22,11 @@ body {
   align-items: center;
 }
 
+#config-nav {
+  padding: 0;
+  justify-content: space-between;
+}
+
 /*overriding bootstrap button colors*/
 #calendar-options .btn, #config-nav .btn {
   color: var(--grist-theme-text);
@@ -29,6 +34,10 @@ body {
   border-color: var(--grist-theme-button-group-border);
   padding: 4px 10px;
   outline: none;
+}
+
+#config-nav .btn {
+  justify-self: right;
 }
 
 #calendar-options .btn:active, #config-nav .btn:active {

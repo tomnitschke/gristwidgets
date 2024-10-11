@@ -906,6 +906,10 @@ function toggleConfigPanel() {
   }
 }
 
+async function clearConfig() {
+  await grist.clearConfig();
+}
+
 function setConfigOptionFromElement(configElem) {
   const value = 'checked' in configElem ? configElem.checked : configElem.value;
   setConfigOption(configElem.id, value);
