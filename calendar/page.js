@@ -298,7 +298,7 @@ class CalendarHandler {
       this._clearHighlightEvent(this._selectedRecordId);
     }
 
-    if (grist.getOption('calendarTodayOnLoad')) {
+    if (grist.getOption('calendarTodayOnLoad') === true) {
       return;
     }
 
