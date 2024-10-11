@@ -24,7 +24,7 @@ body {
 
 #config-nav {
   padding: 0;
-  justify-content: space-between;
+  justify-content: end;
 }
 
 /*overriding bootstrap button colors*/
@@ -37,7 +37,7 @@ body {
 }
 
 #config-nav .btn {
-  align-self: flex-end;
+  /*align-self: flex-end;*/
 }
 
 #calendar-options .btn:active, #config-nav .btn:active {
