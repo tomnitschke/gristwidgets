@@ -907,7 +907,7 @@ function toggleConfigPanel() {
 }
 
 async function clearConfig() {
-  await grist.clearConfig();
+  await grist.clearOptions();
 }
 
 function setConfigOptionFromElement(configElem) {
