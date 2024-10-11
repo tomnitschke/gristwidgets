@@ -36,10 +36,6 @@ body {
   outline: none;
 }
 
-#config-nav .btn {
-  /*align-self: flex-end;*/
-}
-
 #calendar-options .btn:active, #config-nav .btn:active {
   box-shadow: unset;
 }
