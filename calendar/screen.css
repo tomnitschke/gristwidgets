@@ -421,7 +421,7 @@ input:checked + label {
 
 #config-container .config-row > label > * {
   flex: 3;
-  align-self: start;
+  justify-self: start;
 }
 
 #config-container .config-row > label > span {
