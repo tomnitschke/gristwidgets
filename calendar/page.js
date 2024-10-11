@@ -599,6 +599,7 @@ function onGristSettingsChanged(options, settings) {
     document.getElementById('calendar-toggle-today-on-load').checked = true;
   }
   if (options) {
+    let wereOptionsApplied = false;
     for (prop in options) {
       if (prop.startsWith("config:")) {
         applyConfigOption(prop, options[prop]);
@@ -606,7 +607,14 @@ function onGristSettingsChanged(options, settings) {
         if (configElem) {
           configElem[configElem.type == 'checkbox' ? 'checked' : 'value'] = options[prop];
         }
+        wereOptionsApplied = true;
       }
+    }
+    if (wereOptionsApplied) {
+      let calendarOptions = calendarHandler.calendar.getOptions();
+      calendarHandler.calendar.destroy();
+      const container = document.getElementById('calendar');
+      calendarHandler.calendar = new tui.Calendar(container, calendarOptions);
     }
   }
 };
@@ -927,10 +935,6 @@ function applyConfigOption(configOption, value) {
       [optionName]: optionValue
     }
   });
-  let calendarOptions = calendarHandler.calendar.getOptions();
-  calendarHandler.calendar.destroy();
-  const container = document.getElementById('calendar');
-  calendarHandler.calendar = new tui.Calendar(container, calendarOptions);
 }
 
 // HACK: show Record Card popup on dblclick.
