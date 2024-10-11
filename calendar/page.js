@@ -290,16 +290,21 @@ class CalendarHandler {
       return;
     }
 
-    if (this._selectedRecordId) {
-      this._clearHighlightEvent(this._selectedRecordId);
-    }
-    const [startType] = await colTypesFetcher.getColTypes();
-    const startDate = getAdjustedDate(record.startDate, startType);
-    this.calendar.setDate(startDate);
-
     if (record.customOptions) {
       this.calendar.setOptions(record.customOptions);
     }
+
+    if (this._selectedRecordId) {
+      this._clearHighlightEvent(this._selectedRecordId);
+    }
+
+    if (grist.getOption('calendarTodayOnLoad')) {
+      return;
+    }
+
+    const [startType] = await colTypesFetcher.getColTypes();
+    const startDate = getAdjustedDate(record.startDate, startType);
+    this.calendar.setDate(startDate);
     
     this._selectedRecordId = record.id;
     updateUIAfterNavigation();
