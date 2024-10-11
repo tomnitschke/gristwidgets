@@ -1,0 +1,30 @@
+{
+  "name": "@gristlabs/widget-calendar",
+  "description": "Widget for visualizing data as a calendar",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.2",
+  "grist": [
+    {
+      "name": "Calendar",
+      "url": "https://gristlabs.github.io/grist-widget/calendar/index.html",
+      "widgetId": "@gristlabs/widget-calendar",
+      "published": true,
+      "accessLevel": "full",
+      "renderAfterReady": true,
+      "archive": {
+        "domains": ["uicdn.toast.com", "maxcdn.bootstrapcdn.com", "unpkg.com", "cdn.jsdelivr.net"],
+        "entrypoints": [
+          "https://gristlabs.github.io/grist-widget/calendar/i18n/"
+        ]
+      },
+      "description": "Show records as events in a calendar view. Choose between daily, monthly, or yearly views.",
+      "authors": [
+        {
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
+        }
+      ],
+      "isGristLabsMaintained": true
+    }
+  ]
+}
