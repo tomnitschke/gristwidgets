@@ -31,6 +31,10 @@
   "event category and style": "Event category and style",
   "today-on-load": "Always go to today on load",
   "close": "Close",
+  "config-section-weeks": "Weeks",
   "config:week.startDayOfWeek": "First day of the week",
-  "config:week.workweek": "Show only working days"
+  "config:week.workweek": "Show only working days",
+  "config-section-days": "Days",
+  "config:week.hourStart": "First hour of the day",
+  "config:week.hourEnd": "Last hour of the day"
 }

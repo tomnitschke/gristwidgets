@@ -409,6 +409,19 @@ input:checked + label {
   padding: 10px;
 }
 
+#config-container .config-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#config-container .config-row > label > * {
+  flex: 3;
+}
+
+#config-container .config-row > label > span {
+  flex: 1;
+}
+
 #calendar {
   flex-grow: 1;
   overflow: auto;

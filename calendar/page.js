@@ -171,7 +171,7 @@ class CalendarHandler {
         popupDelete(){
           return t('Delete')
         },
-        poupSave(){
+        popupSave(){
           return t('Save')
         },
         popupEdit(){
@@ -906,9 +906,13 @@ function toggleConfigPanel() {
   }
 }
 
-function setConfigOption(configElem) {
+function setConfigOptionFromElement(configElem) {
   const value = 'checked' in configElem ? configElem.checked : configElem.value;
-  grist.setOption(configElem.id, value);
+  setConfigOption(configElem.id, value);
+}
+
+function setConfigOption(configOption, value) {
+  grist.setOption(configOption, value);
 }
 
 function applyConfigOption(configOption, value) {
