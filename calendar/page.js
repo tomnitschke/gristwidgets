@@ -604,7 +604,7 @@ function onGristSettingsChanged(options, settings) {
         applyConfigOption(prop, options[prop]);
         const configElem = document.getElementById(prop);
         if (configElem) {
-          configElem['checked' in configElem ? 'checked' : 'value'] = options[prop];
+          configElem[configElem.type == 'checkbox' ? 'checked' : 'value'] = options[prop];
         }
       }
     }
@@ -911,7 +911,7 @@ async function clearConfig() {
 }
 
 function setConfigOptionFromElement(configElem) {
-  const value = 'checked' in configElem ? configElem.checked : configElem.value;
+  const value = configElem.type == 'checkbox' ? configElem.checked : configElem.value;
   setConfigOption(configElem.id, value);
 }
 
