@@ -300,6 +300,7 @@ class CalendarHandler {
 
     let shouldGoToToday = await grist.getOption('calendarTodayOnLoad');
     if (shouldGoToToday) {
+      this.calendar.setDate(new Date());
       updateUIAfterNavigation();
       return;
     }
@@ -598,6 +599,13 @@ function onGristSettingsChanged(options, settings) {
     calendarHandler.calendarToday();
     document.getElementById('calendar-toggle-today-on-load').checked = true;
   }
+  if (options) {
+    for (prop in options) {
+      if (prop.startsWith("config:")) {
+        applyConfigOption(prop, options[prop]);
+      }
+    }
+  }
 };
 
 function changeCalendarView(view) {
@@ -884,14 +892,25 @@ function clean(obj) {
 }
 
 function toggleConfigPanel() {
-  const panel = document.getElementById('config-container');
-  panel.style.display = panel.style.display == 'none' ? 'flex' : 'none';
+  const configPanel = document.getElementById('config-container');
+  const mainPanel = document.getElementById('calendar-container');
+  if (configPanel.style.display == 'none') {
+    configPanel.style.display = 'flex';
+    mainPanel.style.display = 'none';
+  } else {
+    configPanel.style.display = 'none';
+    mainPanel.style.display = 'flex';
+  }
 }
 
-function setConfigOption(configControlElement) {
-  let calendarOptions = calendarHandler._getCalendarOptions();
-  const [optionCategory, optionName] = configControlElement.id.split(":").pop().split(".");
-  const optionValue = configControlElement.value;
+function setConfigOption(configElem) {
+  const value = 'checked' in configElem ? configElem.checked : configElem.value;
+  grist.setOption(configElem.id, value);
+}
+
+function applyConfigOption(configOption, value) {
+  const [optionCategory, optionName] = configOption.split(":").pop().split(".");
+  const optionValue = value;
   calendarHandler.calendar.setOptions({
     [optionCategory]: {
       [optionName]: optionValue

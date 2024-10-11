@@ -30,5 +30,7 @@
   "Type": "type",
   "event category and style": "Event category and style",
   "today-on-load": "Always go to today on load",
-  "close": "Close"
+  "close": "Close",
+  "config:week.startDayOfWeek": "First day of the week",
+  "config:week.narrowWeekend": "Compact display of weekend days"
 }

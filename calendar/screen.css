@@ -13,7 +13,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
 }
 
-#calendar-options {
+#calendar-options, #config-nav {
   color: var(--grist-theme-text);
   display: flex;
   gap: 10px 15px;
@@ -23,7 +23,7 @@ body {
 }
 
 /*overriding bootstrap button colors*/
-#calendar-options .btn {
+#calendar-options .btn, #config-nav .btn {
   color: var(--grist-theme-text);
   background-color: var(--grist-theme-button-group-bg);
   border-color: var(--grist-theme-button-group-border);
@@ -31,7 +31,7 @@ body {
   outline: none;
 }
 
-#calendar-options .btn:active {
+#calendar-options .btn:active, #config-nav .btn:active {
   box-shadow: unset;
 }
 
@@ -60,7 +60,7 @@ body {
   -webkit-mask-image: var(--icon-ArrowRight);
 }
 
-#calendar-options .btn:hover {
+#calendar-options .btn:hover, #config-nav .btn:hover {
   background-color: var(--grist-theme-hover);
   border-color: var(--grist-theme-button-group-border-hover);
 }
@@ -413,7 +413,7 @@ input:checked + label {
   overflow: auto;
 }
 
-#calendar-options .btn.active {
+#calendar-options .btn.active, #config-nav .btn.active {
   color: var(--grist-theme-button-group-selected-fg);
   background-color: var(--grist-theme-button-group-selected-bg);
   border-color: var(--grist-theme-button-group-selected-border);
