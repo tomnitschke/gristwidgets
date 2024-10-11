@@ -590,6 +590,7 @@ function onGristSettingsChanged(options, settings) {
   colTypesFetcher.setAccessLevel(settings.accessLevel);
   if (options?.calendarTodayOnLoad) {
     calendarHandler.calendarToday();
+    document.getElementById('calendar-toggle-today-on-load').checked = true;
   }
 };
 
