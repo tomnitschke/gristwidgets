@@ -417,6 +417,7 @@ input:checked + label {
 #config-container .config-row > label {
   display: flex;
   justify-content: flex-end;
+  align-items: start;
 }
 
 #config-container .config-row > label > * {
