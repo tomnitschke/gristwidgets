@@ -603,7 +603,9 @@ function onGristSettingsChanged(options, settings) {
       if (prop.startsWith("config:")) {
         applyConfigOption(prop, options[prop]);
         const configElem = document.getElementById(prop);
-        configElem['checked' in configElem ? 'checked' : 'value'] = options[prop];
+        if (configElem) {
+          configElem['checked' in configElem ? 'checked' : 'value'] = options[prop];
+        }
       }
     }
   }
