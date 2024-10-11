@@ -611,10 +611,10 @@ function onGristSettingsChanged(options, settings) {
       }
     }
     if (wereOptionsApplied) {
-      let calendarOptions = calendarHandler.calendar.getOptions();
-      calendarHandler.calendar.destroy();
-      const container = document.getElementById('calendar');
-      calendarHandler.calendar = new tui.Calendar(container, calendarOptions);
+      //let calendarOptions = calendarHandler.calendar.getOptions();
+      //calendarHandler.calendar.destroy();
+      //const container = document.getElementById('calendar');
+      //calendarHandler.calendar = new tui.Calendar(container, calendarOptions);
     }
   }
 };

@@ -62,7 +62,7 @@
     <div class="config-row">
       <label for="config:week.startDayOfWeek">
         <span data-i18n="config-startDayOfWeek">First day of the week</span>
-        <select id="config:week.startDayOfWeek" onchange="setConfigOptionFromElement(this); setConfigOption('month.startDayOfWeek', this.value)">
+        <select id="config:week.startDayOfWeek" onchange="setConfigOption('week.startDayOfWeek', this.valueAsNumber()); setConfigOption('month.startDayOfWeek', this.valueAsNumber)">
           <option value="0" data-i18n="Sun">Sun</option>
           <option value="1" data-i18n="Mon">Mon</option>
           <option value="2" data-i18n="Tue">Tue</option>
