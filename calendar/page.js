@@ -298,13 +298,6 @@ class CalendarHandler {
       this._clearHighlightEvent(this._selectedRecordId);
     }
 
-    let shouldGoToToday = await grist.getOption('calendarTodayOnLoad');
-    if (shouldGoToToday) {
-      this.calendar.setDate(new Date());
-      updateUIAfterNavigation();
-      return;
-    }
-
     const [startType] = await colTypesFetcher.getColTypes();
     const startDate = getAdjustedDate(record.startDate, startType);
     this.calendar.setDate(startDate);
@@ -329,6 +322,11 @@ class CalendarHandler {
           event.scrollIntoView({behavior: 'smooth'});
         }
       }, 0);
+    }
+
+    let shouldGoToToday = await grist.getOption('calendarTodayOnLoad');
+    if (shouldGoToToday) {
+      calendarHandler.calendarToday();
     }
   }
 
@@ -596,7 +594,6 @@ function onGristSettingsChanged(options, settings) {
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
   if (options?.calendarTodayOnLoad) {
-    calendarHandler.calendarToday();
     document.getElementById('calendar-toggle-today-on-load').checked = true;
   }
   if (options) {
