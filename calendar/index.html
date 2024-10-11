@@ -61,7 +61,7 @@
   <fieldset><legend data-i18n="config-section-weeks">Weeks</legend>
     <div class="config-row">
       <label for="config:week.startDayOfWeek">
-        <span data-i18n="config:week.startDayOfWeek">First day of the week</span>
+        <span data-i18n="config-startDayOfWeek">First day of the week</span>
         <select id="config:week.startDayOfWeek" onchange="setConfigOptionFromElement(this); setConfigOption('month.startDayOfWeek', this.value)">
           <option value="0" data-i18n="Sun">Sun</option>
           <option value="1" data-i18n="Mon">Mon</option>
@@ -75,7 +75,7 @@
     </div>
     <div class="config-row">
       <label for="config:week.workweek">
-        <span data-i18n="config:week.workweek">Show only working days</span>
+        <span data-i18n="config-workweek">Show only working days</span>
         <input type="checkbox" id="config:week.workweek" onclick="setConfigOptionFromElement(this); setConfigOption('month.workweek', this.checked)" />
       </label>
     </div>

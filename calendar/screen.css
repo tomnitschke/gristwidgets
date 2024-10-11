@@ -417,15 +417,15 @@ input:checked + label {
 #config-container .config-row > label {
   display: flex;
   justify-content: flex-end;
+  align-items: baseline;
 }
 
 #config-container .config-row > label > * {
-  flex: 3;
-  justify-self: start;
+  flex-grow: 3;
 }
 
 #config-container .config-row > label > span {
-  flex: 1;
+  flex-grow: 1;
 }
 
 #calendar {
