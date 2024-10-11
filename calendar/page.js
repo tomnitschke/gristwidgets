@@ -300,6 +300,7 @@ class CalendarHandler {
 
     let shouldGoToToday = await grist.getOption('calendarTodayOnLoad');
     if (shouldGoToToday) {
+      updateUIAfterNavigation();
       return;
     }
 
@@ -527,7 +528,7 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true});
+  grist.ready({requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true, onEditOptions: toggleConfigPanel, });
 }
 
 async function translatePage() {
@@ -880,6 +881,22 @@ function safeParse(value) {
 
 function clean(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+}
+
+function toggleConfigPanel() {
+  const panel = document.getElementById('config-container');
+  panel.style.display = panel.style.display == 'none' ? 'flex' : 'none';
+}
+
+function setConfigOption(configControlElement) {
+  let calendarOptions = calendarHandler._getCalendarOptions();
+  const [optionCategory, optionName] = configControlElement.id.split(":").pop().split(".");
+  const optionValue = configControlElement.value;
+  calendarHandler.calendar.setOptions({
+    [optionCategory]: {
+      [optionName]: optionValue
+    }
+  });
 }
 
 // HACK: show Record Card popup on dblclick.

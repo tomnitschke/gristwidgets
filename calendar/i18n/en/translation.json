@@ -29,5 +29,6 @@
   "Update": "Update",
   "Type": "type",
   "event category and style": "Event category and style",
-  "today-on-load": "Always go to today on load"
+  "today-on-load": "Always go to today on load",
+  "close": "Close"
 }

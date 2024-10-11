@@ -26,7 +26,7 @@
             </button>
             <button id="calendar-button-today" class="btn btn-sm" data-i18n="today" onclick="calendarHandler.calendarToday()">Today
             </button>
-            <label id="calendar-today-on-load-label" class="btn" for="calendar-toggle-today-on-load">
+            <label id="calendar-today-on-load-label" class="btn btn-sm" for="calendar-toggle-today-on-load">
               <input type="checkbox" id="calendar-toggle-today-on-load" class="btn-check" onclick="toggleTodayOnLoad(this)" />
               <span data-i18n="today-on-load">Always go to today on load</span>
             </label>
@@ -54,7 +54,19 @@
     </div>
 </div>
 <div id="config-container">
-  
+  <nav id="config-nav">
+    <button id="config-button-close" class="btn btn-sm" data-i18n="close" onclick="toggleConfigPanel()">Close</button>
+  </nav>
+  <label for="config:week.startDayOfWeek"><span data-i18n="config:week.startDayOfWeek">First day of the week:</span></label>
+  <select id="config:week.startDayOfWeek" onchange="setConfigOption(this)">
+    <option value="0"><span data-i18n="Sun">Sun</span></option>
+    <option value="1"><span data-i18n="Mon">Mon</span></option>
+    <option value="2"><span data-i18n="Tue">Tue</span></option>
+    <option value="3"><span data-i18n="Wed">Wed</span></option>
+    <option value="4"><span data-i18n="Thu">Thu</span></option>
+    <option value="5"><span data-i18n="Fri">Fri</span></option>
+    <option value="6"><span data-i18n="Sat">Sat</span></option>
+  </select>
 </div>
 </body>
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
