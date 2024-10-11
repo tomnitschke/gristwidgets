@@ -409,7 +409,7 @@ input:checked + label {
   padding: 10px;
 }
 
-#config-container .config-row {
+#config-container .config-row > label {
   display: flex;
   justify-content: flex-end;
 }
