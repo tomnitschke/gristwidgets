@@ -612,6 +612,7 @@ function onGristSettingsChanged(options, settings) {
       }
     }
     if (wereOptionsApplied) {
+      let debugDummy = grist.getOptions();
       //let calendarOptions = calendarHandler.calendar.getOptions();
       //calendarHandler.calendar.destroy();
       //const container = document.getElementById('calendar');
