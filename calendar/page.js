@@ -1,3 +1,4 @@
+//FIXME: changing first day of week breaks grid selection / double click logic. Weirdly, this continues even when setting it to the default value, "0", whereas clearing all widget options will solve the problem.
 // to keep all calendar related logic;
 let calendarHandler;
 
