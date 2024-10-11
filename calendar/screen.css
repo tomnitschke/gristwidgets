@@ -37,7 +37,7 @@ body {
 }
 
 #config-nav .btn {
-  justify-self: right;
+  align-self: flex-end;
 }
 
 #calendar-options .btn:active, #config-nav .btn:active {
