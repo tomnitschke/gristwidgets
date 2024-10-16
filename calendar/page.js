@@ -601,9 +601,15 @@ function onGristSettingsChanged(options, settings) {
   }
   if (options) {
     let wereOptionsApplied = false;
+    const numericalOptions = [
+      'config:week.startDayOfWeek',
+      'config:month.startDayOfWeek',
+      'config:week.hourStart',
+      'config:week.hourEnd',
+    ];
     for (prop in options) {
       if (prop.startsWith("config:")) {
-        const val = ['config:week.startDayOfWeek', 'config:month.startDayOfWeek'].includes(prop) ? parseInt(options[prop], 10) : options[prop];
+        const val = numericalOptions.includes(prop) ? parseInt(options[prop], 10) : options[prop];
         applyConfigOption(prop, val);
         const configElem = document.getElementById(prop);
         if (configElem) {
