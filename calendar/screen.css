@@ -414,7 +414,16 @@ input:checked + label {
   padding: 10px;
 }
 
-#config-container .config-row > label {
+.config-row {
+
+}
+
+.config-row label {
+  display: inline-block;
+  width: 50%;
+}
+
+/*#config-container .config-row > label {
   display: flex;
   justify-content: flex-end;
   align-items: baseline;
@@ -426,7 +435,7 @@ input:checked + label {
 
 #config-container .config-row > label > span {
   flex-grow: 1;
-}
+}*/
 
 #calendar {
   flex-grow: 1;
