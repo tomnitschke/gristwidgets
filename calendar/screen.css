@@ -24,7 +24,11 @@ body {
 
 #config-nav {
   padding: 0;
-  justify-content: end;
+  justify-content: flex-start;
+}
+
+#config-nav :nth-child(2) {
+  margin-left: auto;
 }
 
 /*overriding bootstrap button colors*/
@@ -418,27 +422,9 @@ input:checked + label {
   display: flex;
 }
 
-.config-row > * {
-  flex-grow: 3;
-}
-
 .config-row > label {
-  flex-grow: 1;
+  flex-basis: 200px;
 }
-
-/*#config-container .config-row > label {
-  display: flex;
-  justify-content: flex-end;
-  align-items: baseline;
-}
-
-#config-container .config-row > label > * {
-  flex-grow: 3;
-}
-
-#config-container .config-row > label > span {
-  flex-grow: 1;
-}*/
 
 #calendar {
   flex-grow: 1;
