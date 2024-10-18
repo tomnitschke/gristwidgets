@@ -33,6 +33,9 @@
   "config-close": "Close",
   "config-clear": "Reset config",
   "config-section-weeks": "Weeks",
+  "config-section-days": "Days",
   "config-startDayOfWeek": "First day of the week",
-  "config-workweek": "Show only working days"
+  "config-workweek": "Show only working days",
+  "config-hourStart": "First hour of the day",
+  "config-hourEnd": "Last hour of the day"
 }
