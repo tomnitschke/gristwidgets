@@ -293,7 +293,11 @@ class CalendarHandler {
     }
 
     if (record.customOptions) {
-      this.calendar.setOptions(record.customOptions);
+      if (record.customOptions == 'default') {
+        this.calendar.setOptions(this._getCalendarOptions);
+      } else {
+        this.calendar.setOptions(record.customOptions);
+      }
     }
 
     if (this._selectedRecordId) {
@@ -563,9 +567,13 @@ async function translatePage() {
 function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if ('customOptions' in mappedRecord) {
-    let customOptionsDecoded = safeParse(mappedRecord.customOptions);
-    if (customOptionsDecoded) {
-      mappedRecord.customOptions = customOptionsDecoded;
+    if (mappedRecord.customOptions.toLowerCase().trim() != 'default') {
+      let customOptionsDecoded = safeParse(mappedRecord.customOptions);
+      if (customOptionsDecoded) {
+        mappedRecord.customOptions = customOptionsDecoded;
+      } else {
+        mappedRecord.customOptions = 'default';
+      }
     }
   }
   if (mappedRecord && calendarHandler) {
