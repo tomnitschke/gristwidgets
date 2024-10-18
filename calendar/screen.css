@@ -420,6 +420,7 @@ input:checked + label {
 
 .config-row {
   display: flex;
+  align-items: baseline;
 }
 
 .config-row > :not(label, input[type='checkbox']) {
