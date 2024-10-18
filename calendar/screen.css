@@ -422,7 +422,7 @@ input:checked + label {
   display: flex;
 }
 
-.config-row:not(input[type='checkbox']) > * {
+.config-row > :not(label, input[type='checkbox']) {
   flex-grow: 1;
 }
 
