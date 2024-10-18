@@ -294,7 +294,7 @@ class CalendarHandler {
 
     if (record.customOptions) {
       if (record.customOptions == 'default') {
-        this.calendar.setOptions(this._getCalendarOptions);
+        this.calendar.setOptions(this._getCalendarOptions());
       } else {
         this.calendar.setOptions(record.customOptions);
       }
