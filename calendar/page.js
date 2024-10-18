@@ -501,7 +501,7 @@ function getGristOptions() {
       strictType: true,
       allowMultiple: false,
       title: t("Custom Options"),
-      description: t("custom options object, as json"),
+      description: t("custom options object, as json string; or 'default' to use default options."),
     }
   ];
 }
