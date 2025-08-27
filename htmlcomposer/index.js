@@ -48,7 +48,7 @@ onDOMready(() => {
       if (State.currentRecordMapped?.js) {
         const scriptElem = document.createElement('script');
         scriptElem.async = false;
-        scriptElem.innerHTML = State.currentRecordMapped.js;
+        scriptElem.innerHTML = `try{${State.currentRecordMapped.js}}catch(uncaughtUserJsError){console.error(uncaughtUserJsError);}`;
         body.appendChild(scriptElem);
       }
     } catch (error) {
