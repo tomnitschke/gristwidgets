@@ -6,16 +6,17 @@ window.lastWriteBack = new Date();
 grist.ready({
   requiredAccess: 'full',
   columns: [
-    {name: 'code', title: 'Code', type: 'Text'},
+    {name: 'code', title: 'Code', type: 'Text', strictType: true},
   ]
 });
 grist.onNewRecord(async (colMapping) => {
-  if (!editor) return;
+  if (!editor || !colMapping) return;
   editor.updateOptions({ readOnly: true });
   editor.setModel(monaco.editor.createModel('', 'python'));
   window.currentRecord = null;
 });
 grist.onRecord(async (record, colMapping) => {
+    if (!colMapping) return;
     if (!window.monacoLoaded) {
         await loadMonaco();
         buildEditor();
