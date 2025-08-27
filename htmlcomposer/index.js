@@ -23,7 +23,7 @@ onDOMready(() => {
   });
   
   grist.onRecord(async (record, colMapping) => {
-    console.log(record, colMapping);
+    //console.log(record, colMapping);
     if (!record || !record.id || !colMapping) {
       State.currentRecord = null;
       State.currentRecordMapped = null;
