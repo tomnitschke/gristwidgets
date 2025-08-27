@@ -7,6 +7,7 @@ grist.ready({
   requiredAccess: 'full',
   columns: [
     {name: 'code', title: 'Code', type: 'Text', strictType: true},
+    {name: 'language', title: 'Language', description: 'Programming language identifier used for syntax highlighting. Examples: \'python\', \'javascript\', \'html\', \'css\'', type: 'Text'},
   ]
 });
 grist.onNewRecord(async (colMapping) => {
@@ -31,7 +32,7 @@ grist.onRecord(async (record, colMapping) => {
       return;
     }
     window.currentRecord = record;
-    model = monaco.editor.createModel(record[window.colMapping.code], 'python');
+    model = monaco.editor.createModel(record[window.colMapping.code], record[window.colMapping.language]);
     model.onDidChangeContent(async () => { await commitChanges(false); });
     editor.setModel(model);
 });
