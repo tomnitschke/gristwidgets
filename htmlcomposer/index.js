@@ -40,7 +40,9 @@ onDOMready(() => {
       let body = document.body;
       body.innerHTML = '';
       if (State.currentRecordMapped?.css) {
-        document.getElementById('customcss').appendChild(document.createRange().createContextualFragment(State.currentRecordMapped.css));
+        let styleElem = document.getElementById('customcss');
+        styleElem.innerHTML = '';
+        styleElem.appendChild(document.createRange().createContextualFragment(State.currentRecordMapped.css));
       }
       body.appendChild(document.createRange().createContextualFragment(State.currentRecordMapped.html));
       if (State.currentRecordMapped?.js) {
