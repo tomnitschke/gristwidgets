@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
     <style>
-      body { height: 98dvh; overflow: hidden; font-family:var(--grist-theme-font-family); }
+      html, body { margin: 0; padding: 0; }
+      body { display: flex; flex-direction: column; box-sizing: border-box; height: 100dvh; margin: 0; padding: 2px; overflow: hidden; font-family: var(--grist-theme-font-family); }
     </style>
     <script src="index.js"></script>
 </head>
@@ -22,6 +23,6 @@
       <sl-checkbox id="autosaveCheck" size="small" disabled>Autosave enabled</sl-checkbox>
     </sl-tooltip>
   </div>
-  <div id="bpmnjs"></div>
+  <div id="bpmnjs" style="flex-grow: 1;"></div>
 </body>
 </html>
