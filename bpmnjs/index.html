@@ -9,13 +9,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
     <style>
-      body { height: 100dvh; font-family:var(--grist-theme-font-family); }
+      html, body { min-height: 100%; }
+      body { font-family:var(--grist-theme-font-family); }
     </style>
     <script src="index.js"></script>
 </head>
 <body>
   <div style="height: 100%; overflow: hidden;">
-    <div id="topBar" style="padding: 5px; display: flex; align-items: center; justify-content: space-between; column-gap: 7px; border-bottom: solid 1px var(--grist-theme-widget-border);">
+    <div id="topBar" style="height:45px; padding: 5px; display: flex; align-items: center; justify-content: space-between; column-gap: 7px; border-bottom: solid 1px var(--grist-theme-widget-border);">
       <sl-button id="saveBtn" variant="primary" size="small">Save</sl-button>
       <sl-button id="zoomFitBtn" size="small">Reset Zoom</sl-button>
       <sl-tooltip>
@@ -23,7 +24,7 @@
         <sl-checkbox id="autosaveCheck" size="small" disabled>Autosave enabled</sl-checkbox>
       </sl-tooltip>
     </div>
-    <div id="bpmnjs"></div>
+    <div id="bpmnjs" style="height: calc(100%-45px);"></div>
   </div>
 </body>
 </html>
