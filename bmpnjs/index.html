@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.7.0/dist/assets/bpmn-js.css">
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.7.0/dist/assets/diagram-js.css">
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.7.0/dist/assets/bpmn-font/css/bpmn.css">
+    <script src="https://unpkg.com/bpmn-js@18.7.0/dist/bpmn-modeler.development.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+    <style>
+      body, html { height:unset!important;width:unset!important;margin:0; }
+      body { font-family:var(--grist-theme-font-family); }
+    </style>
+</head>
+<body>
+  <div style="height: 100%; overflow: hidden;">
+    <div id="topBar" style="padding: 5px; display: flex; align-items: center; justify-content: space-between; column-gap: 7px; border-bottom: solid 1px var(--grist-theme-widget-border);">
+      <sl-button id="saveBtn" variant="primary" size="small">Save</sl-button>
+      <sl-button id="zoomFitBtn" size="small">Reset Zoom</sl-button>
+      <sl-tooltip>
+        <div slot="content">Click to enable auto-saving every 10 seconds.<br/>This may only be activated after having saved manually at least once.</div>
+        <sl-checkbox id="autosaveCheck" size="small" disabled>Autosave enabled</sl-checkbox>
+      </sl-tooltip>
+    </div>
+    <div id="bpmnjs"></div>
+  </div>
+</body>
+</html>
