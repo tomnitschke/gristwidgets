@@ -14,6 +14,7 @@ class GristWidget {
     this.cursor = 0;
     this.bpmn = null;
     this.autosaveIntervalHandler = null;
+    this.colMapping = null;
     this.eTopBar = document.querySelector('#topBar');
     this.eSaveBtn = document.querySelector('#saveBtn');
     this.eZoomFitBtn = document.querySelector('#zoomFitBtn');
@@ -36,7 +37,8 @@ class GristWidget {
       Util.log("onRecord",record);
       if (record.id !== this.cursor) {
         this.cursor = record.id;
-        await this.load(record[colMapping.xml]);
+        this.colMapping = colMapping;
+        await this.load(record[this.colMapping.xml]);
         this.setTopBarEnabled(true);
         this.eAutosaveCheck.disabled = true;
       }
