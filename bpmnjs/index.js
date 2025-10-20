@@ -12,7 +12,6 @@ class GristWidget {
     this.wasInitStarted = false;
     this.isInitDone = false;
     this.cursor = 0;
-    this.visibleColsNames = [];
     this.bpmn = null;
     this.autosaveIntervalHandler = null;
     this.eTopBar = document.querySelector('#topBar');
@@ -31,13 +30,13 @@ class GristWidget {
     }
     else { this.eventControl.onRecords.ignore--; }
   }
-  async onRecord (record) {
+  async onRecord (record, colMapping) {
     if (!this.wasInitStarted && !this.isInitDone) { this.wasInitStarted = true; await this.init(grist.getSelectedTableIdSync(), record); } if (!this.isInitDone) { return; }
     if (!this.eventControl.onRecord.ignore) {
       Util.log("onRecord",record);
       if (record.id !== this.cursor) {
         this.cursor = record.id;
-        await this.load(record[this.colMapping.xml]);
+        await this.load(record[colMapping.xml]);
         this.setTopBarEnabled(true);
         this.eAutosaveCheck.disabled = true;
       }
