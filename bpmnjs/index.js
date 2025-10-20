@@ -64,7 +64,7 @@ class GristWidget {
   async save (invokedByAutosave=false) {
     if (this.cursor && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
       const xml = await this.bpmn.saveXML({ format: false });
-      await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event.
+      await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
       Util.log(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}'.`);
     }
   }
