@@ -1,3 +1,5 @@
+/* This widget uses the excellent BPMN-JS library by Camunda. See LICENCE.md for the respective licence terms. */
+
 const Util = { logPrefix: 'GristBPMNJS', log: function (...messages) { console.log(Util.logPrefix, ...messages); }, warn: function (...messages) { console.warn(Util.logPrefix, ...messages); }, err: function (...messages) { console.error(Util.logPrefix, ...messages); }, onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonParse(object, defaultVal) { try { return JSON.parse(object); } catch { return defaultVal; } }, };
 
 const AUTOSAVE_INTERVAL = 10000;
