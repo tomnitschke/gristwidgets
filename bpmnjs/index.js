@@ -21,6 +21,7 @@ class GristWidget {
     this.eSaveBtn = document.querySelector('#saveBtn');
     this.eZoomFitBtn = document.querySelector('#zoomFitBtn');
     this.eAutosaveCheck = document.querySelector('#autosaveCheck');
+    this.eStatusMsg = document.querySelector('#statusMsg');
     grist.ready({ requiredAccess: 'full', allowSelectBy: true, columns: [
       { name: 'xml', title: 'XML data', type: 'Text', strictType: true },
     ] });
@@ -41,8 +42,6 @@ class GristWidget {
         this.cursor = record.id;
         this.colMapping = colMapping;
         await this.load(record[this.colMapping.xml]);
-        this.setTopBarEnabled(true);
-        this.eAutosaveCheck.disabled = true;
       }
     }
     else { this.eventControl.onRecord.ignore--; }
@@ -50,9 +49,7 @@ class GristWidget {
   async onNewRecord () {
     if (!this.isInitDone) { return; }
     this.cursor = null;
-    this.bpmn.clear();
-    this.setTopBarEnabled(false);
-    this.eAutosaveCheck.disabled = true;
+    this.clear();
   }
   async init(tableName, sampleRecord, colMapping) {
     this.bpmn = new BpmnJS({ container: document.querySelector('#bpmnjs') });
@@ -62,14 +59,29 @@ class GristWidget {
     clearInterval(this.autosaveIntervalHandler); this.autosaveIntervalHandler = setInterval(async () => { await this.save(true); }, AUTOSAVE_INTERVAL);
     this.isInitDone = true;
   }
+  _hideStatusMsg () { this.eStatusMsg.style.display = 'none'; }
+  _setStatusMsg (statusMsg) { this.eStatusMsg.style.display = 'block'; this.eStatusMsg.innerHTML = statusMsg; }
+  clear (statusMsg=null) {
+    this.bpmn.clear();
+    this.setTopBarEnabled(false);
+    this.eAutosaveCheck.disabled = true;
+    if (statusMsg) { this._setStatusMsg(statusMsg); }
+  }
   async load (xml) {
-    await this.bpmn.importXML(xml || DEFAULT_XML);
+    this._hideStatusMsg();
+    try{
+      await this.bpmn.importXML(xml || DEFAULT_XML);
+      this.setTopBarEnabled(true);
+      this.eAutosaveCheck.disabled = true;
+    } catch (error) { Util.err(error); this.clear(`Error loading diagram: ${error}`); }
   }
   async save (invokedByAutosave=false) {
     if (this.cursor && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
       const xml = await this.bpmn.saveXML({ format: false });
-      await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
-      Util.log(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}'.`);
+      try {
+        await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
+        Util.log(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}'.`);
+      } catch (error) { Util.err(error); this._setStatusMsg(`Error saving diagram: ${error}`); }
     }
   }
   setTopBarEnabled (isEnabled) { for (const elem of this.eTopBar.querySelectorAll('sl-button,sl-checkbox')) { elem.disabled = !isEnabled; } }
