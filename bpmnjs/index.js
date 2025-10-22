@@ -22,6 +22,7 @@ class GristWidget {
     this.eExportBtn = document.querySelector('#exportBtn');
     this.eZoomFitBtn = document.querySelector('#zoomFitBtn');
     this.eAutosaveCheck = document.querySelector('#autosaveCheck');
+    this.eAutoexportCheck = document.querySelector('#autoexportCheck');
     this.eStatusMsg = document.querySelector('#statusMsg');
     grist.ready({ requiredAccess: 'full', allowSelectBy: true, columns: [
       { name: 'xml', title: 'XML data', type: 'Text', strictType: true },
@@ -84,10 +85,11 @@ class GristWidget {
         const xml = await this.bpmn.saveXML({ format: false });
         await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
         Util.log(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}':`, xml);
+        if (this.eAutoexportCheck.checked) { await this.export(); }
       } catch (error) { Util.err(error); this._setStatusMsg(`Error saving diagram: ${error}`); }
     }
   }
-  async export (format='svg') {
+  async export () {
     if (!this.cursor || !this.colMapping.svg) { return; }
     try {
       const svg = await this.bpmn.saveSVG();
