@@ -19,7 +19,10 @@
   <div id="topBar" style="padding: 5px; display: flex; align-items: center; justify-content: space-between; column-gap: 7px; border-bottom: solid 1px var(--grist-theme-widget-border);">
     <sl-button id="saveBtn" variant="primary" size="small">Save</sl-button>
     <sl-button id="exportBtn" size="small">Export to SVG</sl-button>
+    <sl-checkbox id="autoexportCheck" size="small" checked>Always export to SVG when saving</sl-checkbox>
+    <div style="flex-grow:1;"></div>
     <sl-button id="zoomFitBtn" size="small">Reset Zoom</sl-button>
+    <div style="flex-grow:1;"></div>
     <sl-tooltip>
       <div slot="content">Click to enable auto-saving every 10 seconds.<br/>This may only be activated after having saved manually at least once.</div>
       <sl-checkbox id="autosaveCheck" size="small" disabled>Autosave enabled</sl-checkbox>
