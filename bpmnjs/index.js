@@ -19,11 +19,13 @@ class GristWidget {
     this.colMapping = null;
     this.eTopBar = document.querySelector('#topBar');
     this.eSaveBtn = document.querySelector('#saveBtn');
+    this.eExportBtn = document.querySelector('#exportBtn');
     this.eZoomFitBtn = document.querySelector('#zoomFitBtn');
     this.eAutosaveCheck = document.querySelector('#autosaveCheck');
     this.eStatusMsg = document.querySelector('#statusMsg');
     grist.ready({ requiredAccess: 'full', allowSelectBy: true, columns: [
       { name: 'xml', title: 'XML data', type: 'Text', strictType: true },
+      { name: 'svg', title: 'SVG data', type: 'Text', strictType: true, optional: true, description: "Optional field for exported SVG data. Note that diagrams cannot be loaded from, only saved to, SVG." },
     ] });
     grist.onRecords(this.onRecords.bind(this)); grist.onRecord(this.onRecord.bind(this)); grist.onNewRecord(this.onNewRecord.bind(this));
   }
@@ -55,6 +57,7 @@ class GristWidget {
     this.bpmn = new BpmnJS({ container: document.querySelector('#bpmnjs') });
     this.colMapping = colMapping;
     this.eSaveBtn.addEventListener('click', async (evt) => { await this.save(); this.eAutosaveCheck.disabled = false; });
+    this.eExportBtn.addEventListener('click', async (evt) => { await this.export(); });
     this.eZoomFitBtn.addEventListener('click', () => { this.bpmn.get('canvas').zoom('fit-viewport'); });
     clearInterval(this.autosaveIntervalHandler); this.autosaveIntervalHandler = setInterval(async () => { await this.save(true); }, AUTOSAVE_INTERVAL);
     this.isInitDone = true;
@@ -77,12 +80,20 @@ class GristWidget {
   }
   async save (invokedByAutosave=false) {
     if (this.cursor && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
-      const xml = await this.bpmn.saveXML({ format: false });
       try {
+        const xml = await this.bpmn.saveXML({ format: false });
         await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
-        Util.log(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}'.`);
+        Util.log(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}':`, xml);
       } catch (error) { Util.err(error); this._setStatusMsg(`Error saving diagram: ${error}`); }
     }
+  }
+  async export (format='svg') {
+    if (!this.cursor || !this.colMapping.svg) { return; }
+    try {
+      const svg = await this.bpmn.saveSVG();
+      await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.svg]: svg.svg}});
+      Util.log(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.svg}':`, svg);
+    } catch (error) { Util.err(error); this._setStatusMsg(`Error exporting diagram: ${error}`); }
   }
   setTopBarEnabled (isEnabled) { for (const elem of this.eTopBar.querySelectorAll('sl-button,sl-checkbox')) { elem.disabled = !isEnabled; } }
 };
