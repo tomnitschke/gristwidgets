@@ -24,7 +24,7 @@ class GristWidget {
     this.eAutosaveCheck = document.querySelector('#autosaveCheck');
     this.eAutoexportCheck = document.querySelector('#autoexportCheck');
     this.eStatusMsg = document.querySelector('#statusMsg');
-    grist.ready({ requiredAccess: 'full', allowSelectBy: true, columns: [
+    grist.ready({ requiredAccess: 'full', columns: [
       { name: 'xml', title: 'XML data', type: 'Text', strictType: true },
       { name: 'svg', title: 'SVG data', type: 'Text', strictType: true, optional: true, description: "Optional field for exported SVG data. Note that diagrams cannot be loaded from, only saved to, SVG." },
     ] });
