@@ -1,4 +1,5 @@
 /* This widget uses the excellent BPMN-JS library by Camunda. See LICENCE.md for the respective licence terms. */
+import BpmnJsColorPicker from 'https://cdn.jsdelivr.net/npm/bpmn-js-color-picker@0.7.2/+esm';
 
 const Util = { logPrefix: 'GristBPMNJS', log: function (...messages) { console.log(Util.logPrefix, ...messages); }, warn: function (...messages) { console.warn(Util.logPrefix, ...messages); }, err: function (...messages) { console.error(Util.logPrefix, ...messages); }, onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonParse(object, defaultVal) { try { return JSON.parse(object); } catch { return defaultVal; } }, };
 
@@ -55,7 +56,7 @@ class GristWidget {
     this.clear();
   }
   async init(tableName, sampleRecord, colMapping) {
-    this.bpmn = new BpmnJS({ container: document.querySelector('#bpmnjs') });
+    this.bpmn = new BpmnJS({ container: document.querySelector('#bpmnjs'), additionalModules: [ BpmnJsColorPicker ], });
     this.colMapping = colMapping;
     this.eSaveBtn.addEventListener('click', async (evt) => { await this.save(); this.eAutosaveCheck.disabled = false; });
     this.eExportBtn.addEventListener('click', async (evt) => { await this.export(); });
