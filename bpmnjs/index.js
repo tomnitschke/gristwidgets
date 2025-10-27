@@ -56,7 +56,9 @@ class GristWidget {
     this.clear();
   }
   async init(tableName, sampleRecord, colMapping) {
-    this.bpmn = new BpmnJS({ container: document.querySelector('#bpmnjs'), additionalModules: [ BpmnJsColorPicker ], });
+    this.bpmn = new BpmnJS({ container: document.querySelector('#bpmnjs'), additionalModules: [
+      BpmnJsColorPicker, BpmnJSPropertiesPanel.BpmnPropertiesPanelModule, BpmnJSPropertiesPanel.BpmnPropertiesProviderModule,
+    ], propertiesPanel: { parent: '#bpmnjsPropertiesPanel' }, });
     this.colMapping = colMapping;
     this.eSaveBtn.addEventListener('click', async (evt) => { await this.save(); this.eAutosaveCheck.disabled = false; });
     this.eExportBtn.addEventListener('click', async (evt) => { await this.export(); });
