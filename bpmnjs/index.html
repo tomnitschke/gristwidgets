@@ -11,12 +11,14 @@
   <style>
     html, body { margin: 0; padding: 0; }
     body { display: flex; flex-direction: column; box-sizing: border-box; height: 100dvh; margin: 0; padding: 2px; overflow: hidden; font-family: var(--grist-theme-font-family); }
+    #topBar { padding: 5px; display: flex; align-items: center; justify-content: space-between; column-gap: 7px; border-bottom: solid 1px var(--grist-theme-widget-border); }
     #statusMsg { padding: 20px; font-size: var(--grist-theme-xx-large-font-size); color: red; }
+    #bpmnjsPropertiesPanel > div { width: 100%; }
   </style>
   <script type="module" src="./index.js"></script>
 </head>
 <body>
-  <div id="topBar" style="padding: 5px; display: flex; align-items: center; justify-content: space-between; column-gap: 7px; border-bottom: solid 1px var(--grist-theme-widget-border);">
+  <div id="topBar">
     <div style="flex-grow:1;flex-basis:0;">
       <sl-button id="saveBtn" variant="primary" size="small">Save</sl-button>
       <sl-button id="exportBtn" size="small">Export to SVG</sl-button>
@@ -32,7 +34,12 @@
       </sl-tooltip>
     </div>
   </div>
-  <div id="statusMsg"></div>
-  <div id="bpmnjs" style="flex-grow: 1;"></div>
+  <sl-split-panel style="flex-grow: 1;" position="100" snap="100%">
+    <div slot="start">
+      <div id="statusMsg"></div>
+      <div id="bpmnjs" style="height: 100%;"></div>
+    </div>
+    <div id="bpmnjsPropertiesPanel" slot="end"></div>
+  </sl-split-panel>
 </body>
 </html>
