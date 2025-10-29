@@ -6,8 +6,8 @@ export const Util = { logPrefix: 'GristWidget', log: function (...messages) { co
 /********************************************************************************************************************************************/
 export class GristWidget extends EventTarget {
   static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMapping){super('ready');Object.assign(this,{records,cursor,colMapping});}}
-  static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,wereRecordsModified){super('recordsModified');
-    Object.assign({prevRecords,records,wereRecordsModified});}}
+  static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records){super('recordsModified');
+    Object.assign({prevRecords,records});}}
   static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor){super('cursorMoved');Object.assign(this,{prevCursor,cursor});}}
   static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor){super('cursorMovedToNew');Object.assign(this,{prevCursor});}}
   static ColMappingChangedEvent = class ColMappingChangedEvent extends Event {constructor (prevColMapping, colMapping){super('colMappingChanged');Object.assign(this,{prevColMapping,colMapping});}}
@@ -46,7 +46,7 @@ export class GristWidget extends EventTarget {
   }
   #updateRecords (records, disableEventDispatch=false) {
     this.records.prev = this.records.current; this.records.current = records || []; const wereRecordsModified = Util.areDictsEqual(this.records.current, this.records.prev); ///TODO proper change detection, see GristAGG
-    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, wereRecordsModified)); }
+    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev)); }
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
