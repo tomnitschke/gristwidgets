@@ -70,7 +70,7 @@ export class GristWidget extends EventTarget {
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
       new GristWidget.CursorMovedToNewEvent(this.cursor.prev) : new GristWidget.CursorMovedEvent(this.cursor.prev, this.cursor.current)); }
     return wasCursorChanged; }
-  #updateColMapping (colMappings, disableEventDispatch=false) { this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappings || {};
+  #updateColMappings (colMappings, disableEventDispatch=false) { this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappings || {};
     const wereColMappingsChanged = !Util.areDictsEqual(this.colMappings.prev, this.colMappings.current);
     if (!disableEventDispatch && wereColMappingsChanged) {
       this.dispatchEvent(new GristWidget.ColMappingsChangedEvent(this.colMappings.prev, this.colMappings.current)); }
