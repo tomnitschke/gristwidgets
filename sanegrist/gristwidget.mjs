@@ -21,7 +21,7 @@ export class GristWidget extends EventTarget {
   static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings, colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
     this.name = widgetName;
-    this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug;
+    this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
     this.wasReadyEventDispatched = false;
     this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] };
     this.eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
