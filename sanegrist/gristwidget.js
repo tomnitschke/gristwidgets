@@ -1,10 +1,10 @@
 'use strict';
 
-const Util = { logPrefix: 'GristWidget', log: function (...messages) { console.log(Util.logPrefix, ...messages); }, warn: function (...messages) { console.warn(Util.logPrefix, ...messages); }, err: function (...messages) { console.error(Util.logPrefix, ...messages); }, onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonDecode: function (str, defaultVal=undefined) { try { return JSON.parse(str); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, jsonEncode: function(obj, defaultVal=null) { try{ return JSON.stringify(obj); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, areDictsEqual: function (dictA, dictB) { dictA = dictA || {}; dictB = dictB || {}; for (const [key, val] of Object.entries(dictA)) { if (!(key in dictB)) { return false; } if (dictB[key] !== val) { return false; } } for (const [key, val] of Object.entries(dictB)) { if (!(key in dictA)) { return false; } /*///TODO: include array comparison (see GristAGG), if dictA or dictB are arrays.*/ if (dictA[key] !== val) { return false; } } return true; }};
+export const Util = { logPrefix: 'GristWidget', log: function (...messages) { console.log(Util.logPrefix, ...messages); }, warn: function (...messages) { console.warn(Util.logPrefix, ...messages); }, err: function (...messages) { console.error(Util.logPrefix, ...messages); }, onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonDecode: function (str, defaultVal=undefined) { try { return JSON.parse(str); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, jsonEncode: function(obj, defaultVal=null) { try{ return JSON.stringify(obj); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, areDictsEqual: function (dictA, dictB) { dictA = dictA || {}; dictB = dictB || {}; for (const [key, val] of Object.entries(dictA)) { if (!(key in dictB)) { return false; } if (dictB[key] !== val) { return false; } } for (const [key, val] of Object.entries(dictB)) { if (!(key in dictA)) { return false; } /*///TODO: include array comparison (see GristAGG), if dictA or dictB are arrays.*/ if (dictA[key] !== val) { return false; } } return true; }};
 
 
 /********************************************************************************************************************************************/
-class GristWidget extends EventTarget {
+export class GristWidget extends EventTarget {
   static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMapping){super('ready');Object.assign(this,{records,cursor,colMapping});}}
   static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,wereRecordsModified){super('recordsModified');
     Object.assign({prevRecords,records,wereRecordsModified});}}
@@ -71,9 +71,10 @@ class GristWidget extends EventTarget {
 
 
 /********************************************************************************************************************************************/
-Util.onDOMReady(() => {
+// EXAMPLE USAGE:
+/*Util.onDOMReady(() => {
   const widget = new GristWidget('MyAwesomeWidget', { requiredAccess: 'full', columns: [
     { name: 'name', title: 'Name', type: 'Text', strictType: false },
   ]});
   widget.addEventListener('ready', (records, cursor, colMapping) => {}); // Do something useful with the events exposed by GristWidget...
-});
+});*/
