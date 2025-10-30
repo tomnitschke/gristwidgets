@@ -7,7 +7,7 @@ This is in its early stages and as such, isn't exactly loaded with features just
 You'll need to write your plugin as an [ECMA module](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), i.e. do `<script type="module" src="yourAwesomePlugin.mjs"></script>`.
 Then in your JS code, simply import what you need from `https://tomnitschke.github.io/gristwidgets/sanegrist/...`. Typically, you'll probably want this:
 ```js
-import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs'  // GristWidget is what makes it all happen, Util is there because it provides a nice onDOMReady function for us, see below.
+import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';  // GristWidget is what makes it all happen, Util is there because it provides a nice onDOMReady function for us, see below.
 ```
 Now you're ready to create your plugin:
 ```js
