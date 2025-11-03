@@ -84,8 +84,8 @@ class GristBPMN {
     if (this.widget.cursor.current && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
       try {
         const xml = await this.bpmn.saveXML({ format: false });
-        await grist.getTable().update({id: this.widget.cursor.current, fields: {[this.widget.colMappings.current.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
-        this.msg(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current}].${this.widget.colMappings.current.xml}':`, xml);
+        await grist.getTable().update({id: this.widget.cursor.current.id, fields: {[this.widget.colMappings.current.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
+        this.msg(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current.id}].${this.widget.colMappings.current.xml}':`, xml);
         if (this.eAutoexportCheck.checked) { await this.export(); }
       } catch (error) { this.err(error); this.#setStatusMsg(`Error saving diagram: ${error}`); }
     }
@@ -94,8 +94,8 @@ class GristBPMN {
     if (!this.widget.cursor.current || !this.widget.colMappings.current.svg) { return; }
     try {
       const svg = await this.bpmn.saveSVG();
-      await grist.getTable().update({id: this.widget.cursor.current, fields: {[this.widget.colMappings.current.svg]: svg.svg}});
-      this.msg(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current}].${this.widget.colMappings.current.svg}':`, svg);
+      await grist.getTable().update({id: this.widget.cursor.current.id, fields: {[this.widget.colMappings.current.svg]: svg.svg}});
+      this.msg(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current.id}].${this.widget.colMappings.current.svg}':`, svg);
     } catch (error) { this.err(error); this.#setStatusMsg(`Error exporting diagram: ${error}`); }
   }
 }
