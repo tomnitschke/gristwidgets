@@ -41,7 +41,7 @@ class GristBPMN {
     this.eAutoexportCheck = document.querySelector('#autoexportCheck');
     this.eStatusMsg = document.querySelector('#statusMsg');
     this.widget.addEventListener('ready', async (readyEvent) => { this.debug('ready',readyEvent); await this.#init(); await this.load(readyEvent.cursor[readyEvent.colMappings.xml]); });
-    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => { this.debug('cursorMoved',cursorMovedEvent); await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings]); });
+    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => { this.debug('cursorMoved',cursorMovedEvent); await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings.xml]); });
     this.widget.addEventListener('cursorMovedToNew', (cursorMovedToNewEvent) => { this.debug('cursorMovedToNew',cursorMovedToNewEvent); this.clear(); });
   }
   async #init() {
