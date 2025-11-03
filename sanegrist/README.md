@@ -11,7 +11,7 @@ import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sa
 ```
 Now you're ready to create your plugin:
 ```js
-class MyGristPlugin {               // Name it whatever your like, obviously.
+class MyGristPlugin {               // Name it whatever you like, obviously.
   constructor (gristWidget) {
     this.gristWidget = gristWidget; // Make an instance of SaneGrist's GristWidget class and keep a reference to it someplace useful.
     this.gristWidget.addEventListener('ready', (records, cursor, colMappings) => {
