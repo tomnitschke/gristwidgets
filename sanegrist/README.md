@@ -45,19 +45,22 @@ Note that this uses just a very basic comparison algorithm to detect modificatio
 Subscribed event handlers will receive a GristWidget.RecordsModifiedEvent with the following properties:
 - `prevRecords`: The list of records of the linked Grist table as they were before the modification happened.
 - `records`: The current list of records, after the modification.
+- `colMappings`: The current column mappings (see explanation above).
 ### `cursorMoved`
 The user changed the currently selected record in the linked view (i.e., mostly: They clicked on another table row).
 Unlike Grist's 'onRecord' event, this is guaranteed to fire exactly once per such user interaction, and only if the interaction ended up with a different record being selected than before. It also won't fire when the plugin is first loaded, as that's what the 'ready' event (see above) is for.  
 Subscribed event handlers will receive a GristWidget.CursorMovedEvent with the following properties:
 - `prevCursor`: The previously selected record.
 - `cursor`: The currently selected record.
+- `colMappings`: The current column mappings (see explanation above).
 ### `cursorMovedToNew`
 The user selected the special 'new record' row.
 Like 'cursorMoved', above, this will only fire once per each situation where the special 'new record' row was selected subsequently to another record having been selected previously.  
 Subscribed event handlers will receive a GristWidget.CursorMovedToNewEvent with the following properties:
 - `prevCursor`: The previously selected record.
+- `colMappings`: The current column mappings (see explanation above).
 ### `colMappingsChanged`
 This event fires whenever any column mapping for the widget was changed.
 Subscribed event handlers will receive a GristWidget.ColMappingsChangedEvent with the following properties:  
 - `prevColMappings`: The previous column mappings, before the change.
-- `colMappings`: The current column mappings.
+- `colMappings`: The current column mappings (see explanation above).
