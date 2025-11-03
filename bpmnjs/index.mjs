@@ -2,6 +2,8 @@
   This widget uses the excellent BPMN-JS library by Camunda (https://bpmn.io/).
   See LICENCE.md in this repo for the respective licence terms.
 ***/
+'use strict';
+
 import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 import BpmnJsColorPicker from 'https://cdn.jsdelivr.net/npm/bpmn-js-color-picker@0.7.2/+esm';
 
