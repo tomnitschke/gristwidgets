@@ -16,8 +16,8 @@ export class GristWidget extends EventTarget {
   static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings){super('ready');Object.assign(this,{records,cursor,colMappings});}}
   static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records){super('recordsModified');
     Object.assign({prevRecords,records});}}
-  static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor){super('cursorMoved');Object.assign(this,{prevCursor,cursor});}}
-  static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor){super('cursorMovedToNew');Object.assign(this,{prevCursor});}}
+  static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}}
+  static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}}
   static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings, colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
     this.name = widgetName;
@@ -37,7 +37,7 @@ export class GristWidget extends EventTarget {
       return;
     }
     if (this.eventControl.onRecords.skip) { this.eventControl.onRecords.skip--; return; }
-    this.#updateColMappings(colMappings); const wereRecordsModified = this.#updateRecords(records);
+    this.#updateColMappings(colMappings); this.#updateRecords(records);
   }
   #onRecord (record, colMappings) {
     this.debug("onRecord!",record,colMappings);
@@ -69,7 +69,7 @@ export class GristWidget extends EventTarget {
       return;
     }
     if (this.eventControl.onNewRecord.skip) { this.eventControl.onNewRecord.skip--; return; }
-    this.#updateCursor(undefined);
+    this.#updateColMappings(colMappings); this.#updateCursor(undefined);
   }
   #updateRecords (records, disableEventDispatch=false) {
     this.records.prev = this.records.current; this.records.current = records || []; const wereRecordsModified = Util.areDictsEqual(this.records.current, this.records.prev); ///TODO proper change detection, see GristAGG
@@ -77,7 +77,7 @@ export class GristWidget extends EventTarget {
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
-      new GristWidget.CursorMovedToNewEvent(this.cursor.prev) : new GristWidget.CursorMovedEvent(this.cursor.prev, this.cursor.current)); }
+      new GristWidget.CursorMovedToNewEvent(this.cursor.prev, this.colMappings.current) : new GristWidget.CursorMovedEvent(this.cursor.prev, this.cursor.current, this.colMappings.current)); }
     return wasCursorChanged; }
   #updateColMappings (colMappings, disableEventDispatch=false) { this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappings || {};
     const wereColMappingsChanged = !Util.areDictsEqual(this.colMappings.prev, this.colMappings.current);
