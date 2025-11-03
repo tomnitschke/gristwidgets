@@ -25,6 +25,7 @@ class GristBPMN {
         { name: 'svg', title: 'SVG data', type: 'Text', strictType: true, optional: true, description: "Optional field for exported SVG data. Note that diagrams cannot be loaded from, only saved to, SVG." },
       ],
     }, true);
+    this.debug = this.widget.logger.debug.bind(this.widget.logger);
     this.msg = this.widget.logger.msg.bind(this.widget.logger);
     this.err = this.widget.logger.err.bind(this.widget.logger);
     this.bpmn = null;
@@ -37,9 +38,9 @@ class GristBPMN {
     this.eAutosaveCheck = document.querySelector('#autosaveCheck');
     this.eAutoexportCheck = document.querySelector('#autoexportCheck');
     this.eStatusMsg = document.querySelector('#statusMsg');
-    this.widget.addEventListener('ready', async (readyEvent) => { await this.#init(); await this.load(readyEvent.cursor[readyEvent.colMappings.xml]); });
-    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => { await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings]); });
-    this.widget.addEventListener('cursorMovedToNew', (cursorMovedToNewEvent) => { this.clear(); });
+    this.widget.addEventListener('ready', async (readyEvent) => { this.debug('ready',readyEvent); await this.#init(); await this.load(readyEvent.cursor[readyEvent.colMappings.xml]); });
+    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => { this.debug('cursorMoved',cursorMovedEvent); await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings]); });
+    this.widget.addEventListener('cursorMovedToNew', (cursorMovedToNewEvent) => { this.debug('cursorMovedToNew',cursorMovedToNewEvent); this.clear(); });
   }
   async #init() {
     this.bpmn = new BpmnJS({
