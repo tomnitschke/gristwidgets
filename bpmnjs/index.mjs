@@ -81,21 +81,21 @@ class GristBPMN {
     } catch (error) { this.err(error); this.clear(`Error loading diagram: ${error}`); }
   }
   async save (invokedByAutosave=false) {
-    if (this.cursor && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
+    if (this.widget.cursor.current && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
       try {
         const xml = await this.bpmn.saveXML({ format: false });
-        await grist.getTable().update({id: this.cursor, fields: {[this.widget.colMappings.current.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
-        this.msg(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.widget.colMappings.current.xml}':`, xml);
+        await grist.getTable().update({id: this.widget.cursor.current, fields: {[this.widget.colMappings.current.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
+        this.msg(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current}].${this.widget.colMappings.current.xml}':`, xml);
         if (this.eAutoexportCheck.checked) { await this.export(); }
       } catch (error) { this.err(error); this.#setStatusMsg(`Error saving diagram: ${error}`); }
     }
   }
   async export () {
-    if (!this.cursor || !this.widget.colMappings.current.svg) { return; }
+    if (!this.widget.cursor.current || !this.widget.colMappings.current.svg) { return; }
     try {
       const svg = await this.bpmn.saveSVG();
-      await grist.getTable().update({id: this.cursor, fields: {[this.widget.colMappings.current.svg]: svg.svg}});
-      this.msg(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.widget.colMappings.current.svg}':`, svg);
+      await grist.getTable().update({id: this.widget.cursor.current, fields: {[this.widget.colMappings.current.svg]: svg.svg}});
+      this.msg(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current}].${this.widget.colMappings.current.svg}':`, svg);
     } catch (error) { this.err(error); this.#setStatusMsg(`Error exporting diagram: ${error}`); }
   }
 }
@@ -109,7 +109,7 @@ class GristWidget {
     this.eventControl = { onRecords: { ignore: 0, args: {} }, onRecord: { ignore: 0, args: {} } };
     this.wasInitStarted = false;
     this.isInitDone = false;
-    this.cursor = 0;
+    this.widget.cursor.current = 0;
     this.bpmn = null;
     this.autosaveIntervalHandler = null;
     this.colMapping = null;
@@ -137,8 +137,8 @@ class GristWidget {
   async onRecord (record, colMapping) {
     if (!this.wasInitStarted && !this.isInitDone) { this.wasInitStarted = true; await this.init(grist.getSelectedTableIdSync(), record); } if (!this.isInitDone) { return; }
     if (!this.eventControl.onRecord.ignore) {
-      if (record.id !== this.cursor) {
-        this.cursor = record.id;
+      if (record.id !== this.widget.cursor.current) {
+        this.widget.cursor.current = record.id;
         this.colMapping = colMapping;
         await this.load(record[this.colMapping.xml]);
       }
@@ -147,7 +147,7 @@ class GristWidget {
   }
   async onNewRecord () {
     if (!this.isInitDone) { return; }
-    this.cursor = null;
+    this.widget.cursor.current = null;
     this.clear();
   }
   async init(tableName, sampleRecord, colMapping) {
@@ -178,21 +178,21 @@ class GristWidget {
     } catch (error) { this.err(error); this.clear(`Error loading diagram: ${error}`); }
   }
   async save (invokedByAutosave=false) {
-    if (this.cursor && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
+    if (this.widget.cursor.current && (!invokedByAutosave || (!this.eAutosaveCheck.disabled && this.eAutosaveCheck.checked))) {
       try {
         const xml = await this.bpmn.saveXML({ format: false });
-        await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
-        this.msg(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.xml}':`, xml);
+        await grist.getTable().update({id: this.widget.cursor.current, fields: {[this.colMapping.xml]: xml.xml}}); //NB using tableOps.update() does *not* seem to cause Grist to trigger an 'onRecord' event *if* no actual data change resulted from the operation.
+        this.msg(`Saved XML to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current}].${this.colMapping.xml}':`, xml);
         if (this.eAutoexportCheck.checked) { await this.export(); }
       } catch (error) { this.err(error); this.#setStatusMsg(`Error saving diagram: ${error}`); }
     }
   }
   async export () {
-    if (!this.cursor || !this.colMapping.svg) { return; }
+    if (!this.widget.cursor.current || !this.colMapping.svg) { return; }
     try {
       const svg = await this.bpmn.saveSVG();
-      await grist.getTable().update({id: this.cursor, fields: {[this.colMapping.svg]: svg.svg}});
-      this.msg(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.cursor}].${this.colMapping.svg}':`, svg);
+      await grist.getTable().update({id: this.widget.cursor.current, fields: {[this.colMapping.svg]: svg.svg}});
+      this.msg(`Exported SVG to '${grist.getSelectedTableIdSync()}[${this.widget.cursor.current}].${this.colMapping.svg}':`, svg);
     } catch (error) { this.err(error); this.#setStatusMsg(`Error exporting diagram: ${error}`); }
   }
   #setTopBarEnabled (isEnabled) { for (const elem of this.eTopBar.querySelectorAll('sl-button,sl-checkbox')) { elem.disabled = !isEnabled; } }
