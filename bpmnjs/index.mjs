@@ -71,9 +71,11 @@ class GristBPMN {
     if (statusMsg) { this.#setStatusMsg(statusMsg); }
   }
   async load (xml) {
-    this.#hideStatusMsg();
+    this.debug('loading xml:', xml);
+    this.#setStatusMsg(`Loading...`);
     try{
       await this.bpmn.importXML(xml || this.config.defaultXML);
+      this.#hideStatusMsg();
       this.#setTopBarEnabled(true);
       this.eAutosaveCheck.disabled = true;
     } catch (error) { this.err(error); this.clear(`Error loading diagram: ${error}`); }
