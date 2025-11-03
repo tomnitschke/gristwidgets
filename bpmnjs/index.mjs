@@ -71,7 +71,7 @@ class GristBPMN {
     if (statusMsg) { this.#setStatusMsg(statusMsg); }
   }
   async load (xml) {
-    this.debug('loading xml:', xml);
+    //this.debug('loading xml:', xml);
     this.#setStatusMsg(`Loading...`);
     try{
       await this.bpmn.importXML(xml || this.config.defaultXML);
