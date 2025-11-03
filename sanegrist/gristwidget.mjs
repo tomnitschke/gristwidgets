@@ -73,7 +73,7 @@ export class GristWidget extends EventTarget {
   }
   #updateRecords (records, disableEventDispatch=false) {
     this.records.prev = this.records.current; this.records.current = records || []; const wereRecordsModified = Util.areDictsEqual(this.records.current, this.records.prev); ///TODO proper change detection, see GristAGG
-    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev)); }
+    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current)); }
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
