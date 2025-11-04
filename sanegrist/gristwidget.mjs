@@ -112,8 +112,14 @@ export class GristWidget extends EventTarget {
     this.#updateColMappings(colMappings); this.#updateCursor(undefined);
   }
   #updateRecords (records, disableEventDispatch=false) {
-    this.records.prev = this.records.current; this.records.current = records || []; const delta = Util.dictsDelta(this.records.prev, this.records.current); const wereRecordsModified = Boolean(delta.added || delta.changed || delta.removed);
-    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
+    this.records.prev = this.records.current; this.records.current = records || [];
+    let wereRecordsModified = false;
+    const deltas = [];
+    for (const [idx, currentRecord] of Object.entries(this.records.current)) {
+      const delta = Util.dictsDelta(this.records.prev.at(idx) || {}, currentRecord);
+      if (delta.added || delta.changed || delta.removed) { this.debug('record modified:',currentRecord,'vs',this.records.prev.at(idx) || {},'==> delta:',delta); wereRecordsModified = true; }
+    }
+    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, deltas)); }
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
