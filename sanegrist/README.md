@@ -60,10 +60,20 @@ Subscribed event handlers will receive a GristWidget.CursorMovedToNewEvent with 
 - `prevCursor`: The previously selected record.
 - `colMappings`: The current column mappings (see explanation above).
 ### `colMappingsChanged`
-This event fires whenever any column mapping for the widget was changed.
-Subscribed event handlers will receive a GristWidget.ColMappingsChangedEvent with the following properties:  
+This event fires whenever any column mapping for the widget was changed.  
+Subscribed event handlers will receive a GristWidget.ColMappingsChangedEvent with the following properties:
 - `prevColMappings`: The previous column mappings, before the change.
 - `colMappings`: The current column mappings (see explanation above).
+### `optionsEditorOpened`
+The user clicked on Grist's widget configuration button.  
+Subscribed event handlers will receive a GristWidget.OptionsEditorOpenedEvent with the following properties:
+- `prevOptions`: The widget options from before the last time they were changed. Widget options are simply key-value pairs `{ optionName: optionValue, ... }`.
+- `options`: The current widget options.
+### `optionsChanged`
+Fires when the widget options get modified by `setOption()` or `setOptions()`, below.  
+Subscribed event handlers will receive a GristWidget.OptionsChanged with the following properties:
+- `prevOptions`: See `optionsEditorOpened` event, above.
+- `options`: See `optionsEditorOpened` event, above.
 
 ## Methods of GristWidget
 ### `getRecordsDelta (prevRecords, currentRecords)`
