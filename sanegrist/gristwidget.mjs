@@ -126,7 +126,6 @@ export class GristWidget extends EventTarget {
     if (!disableEventDispatch && wereColMappingsChanged) {
       this.dispatchEvent(new GristWidget.ColMappingsChangedEvent(this.colMappings.prev, this.colMappings.current)); }
     return wereColMappingsChanged; }
-  /******************* TODO: document all below *************************/
   getRecordsDelta (prevRecords, currentRecords) {
     const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: {}, changed: {}, removed: {} };
     for (const currentRecord of currentRecords) {
@@ -141,6 +140,7 @@ export class GristWidget extends EventTarget {
     }
     return delta;
   }
+  /******************* TODO: document all below *************************/
   scheduleSkipGristEvent (eventName, numEventsToSkip=1, eventArgs=undefined) {
     const validEventNames = Object.keys(this.eventControl); if (!validEventNames.includes(eventName)) { throw new Error(`eventName must be one of '${validEventNames.join("', '")}', not '${eventName}'.`); }
     this.eventControl[eventName].skip += numEventsToSkip || 0; this.eventControl[eventName].args = eventArgs || {};
