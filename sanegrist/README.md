@@ -12,8 +12,14 @@ import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sa
 Now you're ready to create your plugin:
 ```js
 class MyGristPlugin {               // Name it whatever you like, obviously.
-  constructor (gristWidget) {
-    this.gristWidget = gristWidget; // Make an instance of SaneGrist's GristWidget class and keep a reference to it someplace useful.
+  constructor () {
+    const gristOptions = {            // Object to pass to grist.ready() -- see https://support.getgrist.com/code/interfaces/grist_plugin_api.ReadyPayload/
+      requiredAccess: 'read table',   // may be undefined, 'read table', or 'full'
+      columns: [
+        // ...                        // Grist column mappings go here, see https://support.getgrist.com/code/modules/grist_plugin_api/#columnstomap
+      ],
+    };
+    this.gristWidget = new GristWidget('My Grist Plugin', gristOptions);  // Make an instance of SaneGrist's GristWidget class, pass a widget name and grist options object to it.
     this.gristWidget.addEventListener('ready', (records, cursor, colMappings) => {
       // ...                        // Subscribe to GristWidget's events. See below for available events and what they do!
     });
@@ -21,13 +27,6 @@ class MyGristPlugin {               // Name it whatever you like, obviously.
 }
 
 Util.onDOMReady(() => {
-  const gristOptions = {            // Object to pass to grist.ready() -- see https://support.getgrist.com/code/interfaces/grist_plugin_api.ReadyPayload/
-    requiredAccess: 'read table',   // may be undefined, 'read table', or 'full'
-    columns: [
-      // ...                        // Grist column mappings go here, see https://support.getgrist.com/code/modules/grist_plugin_api/#columnstomap
-    ],
-  };
-  const widget = new GristWidget('My Grist Plugin', gristOptions);
   const plugin = new MyGristPlugin();
 });
 ```
