@@ -67,7 +67,7 @@ Subscribed event handlers will receive a GristWidget.ColMappingsChangedEvent wit
 ### `optionsEditorOpened`
 The user clicked on Grist's widget configuration button.  
 Subscribed event handlers will receive a GristWidget.OptionsEditorOpenedEvent with the following properties:
-- `prevOptions`: The widget options from before the last time they were changed. Widget options are simply key-value pairs `{ optionName: optionValue, ... }`.
+- `prevOptions`: The widget options from before the last time they were changed. Widget options are simply key-value pairs `{ optionName: optionValue, ... }`. It will always include the key `interactionOptions` with a value of https://support.getgrist.com/code/interfaces/grist_plugin_api.InteractionOptions/.
 - `options`: The current widget options.
 ### `optionsChanged`
 Fires when the widget options get modified by `setOption()` or `setOptions()`, below.  
