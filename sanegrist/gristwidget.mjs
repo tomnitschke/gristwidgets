@@ -72,6 +72,8 @@ export class GristWidget extends EventTarget {
       this.addEventListener('cursorMoved',(evt) => this.debug(evt.type, evt));
       this.addEventListener('cursorMovedToNew',(evt) => this.debug(evt.type, evt));
       this.addEventListener('recordsModified',(evt) => this.debug(evt.type, evt));
+      this.addEventListener('optionsEditorOpened',(evt) => this.debug(evt.type, evt));
+      this.addEventListener('optionsChanged',(evt) => this.debug(evt.type, evt));
     }
   }
   #onEditOptions () {
@@ -87,6 +89,11 @@ export class GristWidget extends EventTarget {
   async setOption (name, value) {
     this.debug('setOption',name,value);
     return await grist.setOption(name, value);
+  }
+  async setOptions (options) {
+    options = options || {};
+    this.debug('setOptions',options);
+    return await grist.setOptions(options);
   }
   #onRecords (records, colMappings) {
     this.debug("onRecords!",records,colMappings);
