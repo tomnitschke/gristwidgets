@@ -49,7 +49,7 @@ class Logger {
 export class GristWidget extends EventTarget {
   static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings){super('ready');Object.assign(this,{records,cursor,colMappings});}}
   static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings,delta){super('recordsModified');
-    Object.assign({prevRecords,records,colMappings,delta});}}
+    Object.assign(this,{prevRecords,records,colMappings,delta});}}
   static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}}
   static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}}
   static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings, colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
