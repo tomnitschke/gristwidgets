@@ -5,16 +5,16 @@ export const Util = { onDOMReady: function (fn) { if (document.readyState !== "l
     dictA = dictA || {}; dictB = dictB || {};
     const delta = { added: [], changed: [], removed: [] };
     for (const [key, value] of Object.entries(dictA)) {
-      if (!(key in dictB)) { delta.removed.push({key: value}); continue; }
+      if (!(key in dictB)) { delta.removed.push({[key]: value}); continue; }
       if (Array.isArray(value)) {
-        if (!Array.isArray(dictB[key])) { delta.changed.push({key: value}); continue; }
-        if (value.length !== dictB[key].length) { delta.changed.push({key: value}); continue; }
-        if (value.some((val, idx) => val !== dictB[key][idx])) { delta.changed.push({key: value}); continue; }
+        if (!Array.isArray(dictB[key])) { delta.changed.push({[key]: value}); continue; }
+        if (value.length !== dictB[key].length) { delta.changed.push({[key]: value}); continue; }
+        if (value.some((val, idx) => val !== dictB[key][idx])) { delta.changed.push({[key]: value}); continue; }
       }
-      if (dictB[key] !== value) { delta.changed.push({key: value}); continue; }
+      if (dictB[key] !== value) { delta.changed.push({[key]: value}); continue; }
     }
     for (const [key, value] of Object.entries(dictB)) {
-      if (!(key in dictA)) { delta.added.push({key: value}); continue; }
+      if (!(key in dictA)) { delta.added.push({[key]: value}); continue; }
     }
     return delta;
   },
@@ -112,7 +112,7 @@ export class GristWidget extends EventTarget {
     this.#updateColMappings(colMappings); this.#updateCursor(undefined);
   }
   #updateRecords (records, disableEventDispatch=false) {
-    this.records.prev = this.records.current; this.records.current = records || []; const delta = Util.dictsDelta(this.records.current, this.records.prev); const wereRecordsModified = Boolean(delta.added || delta.changed || delta.removed);
+    this.records.prev = this.records.current; this.records.current = records || []; const delta = Util.dictsDelta(this.records.prev, this.records.current); const wereRecordsModified = Boolean(delta.added || delta.changed || delta.removed);
     if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
