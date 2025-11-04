@@ -46,6 +46,7 @@ Subscribed event handlers will receive a GristWidget.RecordsModifiedEvent with t
 - `prevRecords`: The list of records of the linked Grist table as they were before the modification happened.
 - `records`: The current list of records, after the modification.
 - `colMappings`: The current column mappings (see explanation above).
+- `delta`: An object describing the differences between the current and the previous list of records: `{ added: [ {colName: value}, ... ], changed: [...], removed: [...] }`.
 ### `cursorMoved`
 The user changed the currently selected record in the linked view (i.e., mostly: They clicked on another table row).
 Unlike Grist's 'onRecord' event, this is guaranteed to fire exactly once per such user interaction, and only if the interaction ended up with a different record being selected than before. It also won't fire when the plugin is first loaded, as that's what the 'ready' event (see above) is for.  
