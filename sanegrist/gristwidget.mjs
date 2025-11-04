@@ -3,7 +3,7 @@
 export const Util = { onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonDecode: function (str, defaultVal=undefined) { try { return JSON.parse(str); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, jsonEncode: function(obj, defaultVal=undefined) { try{ return JSON.stringify(obj); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } },
   dictsDelta: function (dictA, dictB) {
     dictA = dictA || {}; dictB = dictB || {};
-    const delta = { get hasAnyChanges () { return Boolean(this.added.length || this.changed.length || this.removed.length); }, added: [], changed: [], removed: [] };
+    const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: [], changed: [], removed: [] };
     for (const [key, value] of Object.entries(dictA)) {
       if (!(key in dictB)) { delta.removed.push({[key]: value}); continue; }
       if (Array.isArray(value)) {
@@ -128,7 +128,7 @@ export class GristWidget extends EventTarget {
     return wereColMappingsChanged; }
   /******************* TODO: document all below *************************/
   getRecordsDelta (prevRecords, currentRecords) {
-    const delta = { get hasAnyChanges () { return Boolean(this.added.length || this.changed.length || this.removed.length); }, added: {}, changed: {}, removed: {} };
+    const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: {}, changed: {}, removed: {} };
     for (const currentRecord of currentRecords) {
       const prevRecord = prevRecords.find((rec) => rec.id === currentRecord.id);
       if (!prevRecord) { delta.added[currentRecord.id] = { added: {...currentRecord}, changed: {}, removed: {} }; continue; }
