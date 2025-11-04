@@ -1,6 +1,40 @@
 'use strict';
 
-export const Util = { onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonDecode: function (str, defaultVal=undefined) { try { return JSON.parse(str); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, jsonEncode: function(obj, defaultVal=null) { try{ return JSON.stringify(obj); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, areDictsEqual: function (dictA, dictB) { dictA = dictA || {}; dictB = dictB || {}; for (const [key, val] of Object.entries(dictA)) { if (!(key in dictB)) { return false; } if (dictB[key] !== val) { return false; } } for (const [key, val] of Object.entries(dictB)) { if (!(key in dictA)) { return false; } /*///TODO: include array comparison (see GristAGG), if dictA or dictB are arrays.*/ if (dictA[key] !== val) { return false; } } return true; }};
+export const Util = { onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonDecode: function (str, defaultVal=undefined) { try { return JSON.parse(str); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, jsonEncode: function(obj, defaultVal=undefined) { try{ return JSON.stringify(obj); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } },
+  dictsDelta: function (dictA, dictB) {
+    dictA = dictA || {}; dictB = dictB || {};
+    const delta = { added: [], changed: [], removed: [] };
+    for (const [key, value] of Object.entries(dictA)) {
+      if (!(key in dictB)) { delta.removed.push({key: value}); continue; }
+      if (Array.isArray(value)) {
+        if (!Array.isArray(dictB[key])) { delta.changed.push({key: value}); continue; }
+        if (value.length !== dictB[key].length) { delta.changed.push({key: value}); continue; }
+        if (value.some((val, idx) => val !== dictB[key][idx])) { delta.changed.push({key: value}); continue; }
+      }
+      if (dictB[key] !== value) { delta.changed.push({key: value}); continue; }
+    }
+    for (const [key, value] of Object.entries(dictB)) {
+      if (!(key in dictA)) { delta.added.push({key: value}); continue; }
+    }
+    return delta;
+  },
+  areDictsEqual: function (dictA, dictB) {
+    dictA = dictA || {}; dictB = dictB || {};
+    for (const [key, value] of Object.entries(dictA)) {
+      if (!(key in dictB)) { return false; }
+      if (Array.isArray(value)) {
+        if (!Array.isArray(dictB[key])) { return false; }
+        if (value.length !== dictB[key].length) { return false; }
+        if (value.some((val, idx) => val !== dictB[key][idx])) { return false; }
+      }
+      if (dictB[key] !== value) { return false; }
+    }
+    for (const [key, value] of Object.entries(dictB)) {
+      if (!(key in dictA)) { return false; }
+    }
+    return true;
+  }
+};
 
 class Logger {
   constructor (prefix, isDebugMode=false) { this.prefix = prefix; this.isDebugMode = isDebugMode; }
@@ -14,8 +48,8 @@ class Logger {
 /********************************************************************************************************************************************/
 export class GristWidget extends EventTarget {
   static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings){super('ready');Object.assign(this,{records,cursor,colMappings});}}
-  static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings){super('recordsModified');
-    Object.assign({prevRecords,records,colMappings});}}
+  static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings,delta){super('recordsModified');
+    Object.assign({prevRecords,records,colMappings,delta});}}
   static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}}
   static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}}
   static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings, colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
@@ -26,6 +60,12 @@ export class GristWidget extends EventTarget {
     this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] };
     this.eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
     grist.ready(gristOptions); grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this));
+    if (isDebugMode) {
+      this.addEventListener('ready',(evt) => this.debug(evt.type, evt));
+      this.addEventListener('cursorMoved',(evt) => this.debug(evt.type, evt));
+      this.addEventListener('cursorMovedToNew',(evt) => this.debug(evt.type, evt));
+      this.addEventListener('recordsModified',(evt) => this.debug(evt.type, evt));
+    }
   }
   #onRecords (records, colMappings) {
     this.debug("onRecords!",records,colMappings);
@@ -72,8 +112,8 @@ export class GristWidget extends EventTarget {
     this.#updateColMappings(colMappings); this.#updateCursor(undefined);
   }
   #updateRecords (records, disableEventDispatch=false) {
-    this.records.prev = this.records.current; this.records.current = records || []; const wereRecordsModified = Util.areDictsEqual(this.records.current, this.records.prev); ///TODO proper change detection, see GristAGG
-    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current)); }
+    this.records.prev = this.records.current; this.records.current = records || []; const delta = Util.dictsDelta(this.records.current, this.records.prev); const wereRecordsModified = Boolean(delta.added || delta.changed || delta.removed);
+    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
