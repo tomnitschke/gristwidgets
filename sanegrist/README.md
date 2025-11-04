@@ -19,7 +19,7 @@ class MyGristPlugin {               // Name it whatever you like, obviously.
         // ...                        // Grist column mappings go here, see https://support.getgrist.com/code/modules/grist_plugin_api/#columnstomap
       ],
     };
-    this.gristWidget = new GristWidget('My Grist Plugin', gristOptions);  // Make an instance of SaneGrist's GristWidget class, pass a widget name and grist options object to it.
+    this.gristWidget = new GristWidget('My Grist Plugin', gristOptions);  // Make an instance of SaneGrist's GristWidget class, pass a widget name and grist options object to it. Optionally pass true as a third argument to enable verbose logging.
     this.gristWidget.addEventListener('ready', (records, cursor, colMappings) => {
       // ...                        // Subscribe to GristWidget's events. See below for available events and what they do!
     });
