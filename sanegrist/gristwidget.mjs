@@ -1,5 +1,7 @@
 'use strict';
 
+
+/********************************************************************************************************************************************/
 export const Util = { onDOMReady: function (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }, jsonDecode: function (str, defaultVal=undefined) { try { return JSON.parse(str); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } }, jsonEncode: function(obj, defaultVal=undefined) { try{ return JSON.stringify(obj); } catch (error) { if (typeof defaultVal === 'undefined') { throw error; } else { return defaultVal; } } },
   dictsDelta: function (dictA, dictB) {
     dictA = dictA || {}; dictB = dictB || {};
@@ -36,6 +38,8 @@ export const Util = { onDOMReady: function (fn) { if (document.readyState !== "l
   }
 };
 
+
+/********************************************************************************************************************************************/
 class Logger {
   constructor (prefix, isDebugMode=false) { this.prefix = prefix; this.isDebugMode = isDebugMode; }
   debug (...messages) { if (this.isDebugMode) { console.debug(this.prefix, ...messages); } }
@@ -52,14 +56,17 @@ export class GristWidget extends EventTarget {
     Object.assign(this,{prevRecords,records,colMappings,delta});}}
   static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}}
   static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}}
-  static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings, colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
+  static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings,colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
+  static OptionsEditorOpenedEvent = class OptionsEditorOpenedEvent extends Event {constructor(prevOptions,options){super('optionsEditorOpened');Object.assign(this,{prevOptions,options});}}
+  static OptionsChangedEvent = class OptionsChangedEvent extends Event {constructor(prevOptions,options){super('optionsChanged');Object.assign(this,{prevOptions,options});}}
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
     this.name = widgetName;
     this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
-    this.wasReadyEventDispatched = false;
-    this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] };
-    this.eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
-    grist.ready(gristOptions); grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this));
+    this.#wasReadyEventDispatched = false;
+    this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
+    this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] }; this.options = { prev: {}, current: {} };
+    grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...gristOptions });
+      grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
     if (isDebugMode) {
       this.addEventListener('ready',(evt) => this.debug(evt.type, evt));
       this.addEventListener('cursorMoved',(evt) => this.debug(evt.type, evt));
@@ -67,48 +74,62 @@ export class GristWidget extends EventTarget {
       this.addEventListener('recordsModified',(evt) => this.debug(evt.type, evt));
     }
   }
+  #onEditOptions () {
+    this.debug('#onEditOptions');
+    this.dispatchEvent(new GristWidget.OptionsEditorOpenedEvent(this.options.prev, this.options.current));
+  }
+  #onOptions (options, interactionOptions) {
+    this.debug('#onOptions',options,interactionOptions);
+    this.#updateOptions({ ...options, interactionOptions: interactionOptions });
+    if (!this.#wasReadyEventDispatched) { return; }
+    this.dispatchEvent(new GristWidget.OptionsChangedEvent(this.options.prev, this.options.current));
+  }
+  async setOption (name, value) {
+    this.debug('setOption',name,value);
+    return await grist.setOption(name, value);
+  }
   #onRecords (records, colMappings) {
     this.debug("onRecords!",records,colMappings);
-    if (!this.eventControl.onRecords.wasEverTriggered) {
-      this.eventControl.onRecords.wasEverTriggered = true;
+    if (!this.#eventControl.onRecords.wasEverTriggered) {
+      this.#eventControl.onRecords.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateRecords(records, true);
-      if (!this.wasReadyEventDispatched && this.eventControl.onRecord.wasEverTriggered /*&& this.cursor.current?.id*/) { this.debug("dispatching ready-event from onRecords",this.records,this.cursor,this.colMappings); 
-        this.wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }
+      if (!this.#wasReadyEventDispatched && this.#eventControl.onRecord.wasEverTriggered /*&& this.cursor.current?.id*/) { this.debug("dispatching ready-event from onRecords",this.records,this.cursor,this.colMappings); 
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }
       return;
     }
-    if (this.eventControl.onRecords.skip) { this.eventControl.onRecords.skip--; return; }
+    if (this.#eventControl.onRecords.skip) { this.#eventControl.onRecords.skip--; return; }
     this.#updateColMappings(colMappings); this.#updateRecords(records);
   }
   #onRecord (record, colMappings) {
     this.debug("onRecord!",record,colMappings);
-    /*if (!this.hasOnRecordsEverFired || !this.wasReadyEventDispatched) { this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
-      if (!this.wasReadyEventDispatched) { //this.debug("dispatching ready-event from onRecord");
-        this.wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); return; }}*/
-    if (!this.eventControl.onRecord.wasEverTriggered) {
-      this.eventControl.onRecord.wasEverTriggered = true;
+    /*if (!this.hasOnRecordsEverFired || !this.#wasReadyEventDispatched) { this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
+      if (!this.#wasReadyEventDispatched) { //this.debug("dispatching ready-event from onRecord");
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); return; }}*/
+    if (!this.#eventControl.onRecord.wasEverTriggered) {
+      this.#eventControl.onRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
-      if (!this.wasReadyEventDispatched && this.eventControl.onRecords.wasEverTriggered) { this.debug("dispatching ready-event from onRecord",this.records,this.cursor,this.colMappings);
-        this.wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
+      if (!this.#wasReadyEventDispatched && this.#eventControl.onRecords.wasEverTriggered) { this.debug("dispatching ready-event from onRecord",this.records,this.cursor,this.colMappings);
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
       }
       return;
     }
-    if (this.eventControl.onRecord.skip) { this.eventControl.onRecord.skip--; return; }
+    if (this.#eventControl.onRecord.skip) { this.#eventControl.onRecord.skip--; return; }
     this.#updateColMappings(colMappings); this.#updateCursor(record);
   }
   #onNewRecord (colMappings) {
     this.debug("onNewRecord!",colMappings);
-    /*if (!this.hasOnRecordsEverFired || !this.wasReadyEventDispatched) { this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
-      if (!this.wasReadyEventDispatched) { //this.debug("dispatched ready-event from onNewRecord");
-        this.wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }}*/
-    if (!this.eventControl.onNewRecord.wasEverTriggered) {
-      this.eventControl.onNewRecord.wasEverTriggered = true;
+    /*if (!this.hasOnRecordsEverFired || !this.#wasReadyEventDispatched) { this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
+      if (!this.#wasReadyEventDispatched) { //this.debug("dispatched ready-event from onNewRecord");
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }}*/
+    if (!this.#eventControl.onNewRecord.wasEverTriggered) {
+      this.#eventControl.onNewRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
-      if (!this.wasReadyEventDispatched && this.eventControl.onRecords.wasEverTriggered) { this.debug("dispatching ready-event from onNewRecord",this.records,this.cursor,this.colMappings);
-        this.wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
+      if (!this.#wasReadyEventDispatched && this.#eventControl.onRecords.wasEverTriggered) { this.debug("dispatching ready-event from onNewRecord",this.records,this.cursor,this.colMappings);
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
       }
       return;
     }
-    if (this.eventControl.onNewRecord.skip) { this.eventControl.onNewRecord.skip--; return; }
+    if (this.#eventControl.onNewRecord.skip) { this.#eventControl.onNewRecord.skip--; return; }
     this.#updateColMappings(colMappings); this.#updateCursor(undefined);
   }
   #updateRecords (records, disableEventDispatch=false) {
@@ -126,6 +147,7 @@ export class GristWidget extends EventTarget {
     if (!disableEventDispatch && wereColMappingsChanged) {
       this.dispatchEvent(new GristWidget.ColMappingsChangedEvent(this.colMappings.prev, this.colMappings.current)); }
     return wereColMappingsChanged; }
+  #updateOptions (options) { this.options.prev = this.options.current; this.options.current = options; }
   getRecordsDelta (prevRecords, currentRecords) {
     const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: {}, changed: {}, removed: {} };
     for (const currentRecord of currentRecords) {
@@ -142,8 +164,8 @@ export class GristWidget extends EventTarget {
   }
   /******************* TODO: document all below *************************/
   scheduleSkipGristEvent (eventName, numEventsToSkip=1, eventArgs=undefined) {
-    const validEventNames = Object.keys(this.eventControl); if (!validEventNames.includes(eventName)) { throw new Error(`eventName must be one of '${validEventNames.join("', '")}', not '${eventName}'.`); }
-    this.eventControl[eventName].skip += numEventsToSkip || 0; this.eventControl[eventName].args = eventArgs || {};
+    const validEventNames = Object.keys(this.#eventControl); if (!validEventNames.includes(eventName)) { throw new Error(`eventName must be one of '${validEventNames.join("', '")}', not '${eventName}'.`); }
+    this.#eventControl[eventName].skip += numEventsToSkip || 0; this.#eventControl[eventName].args = eventArgs || {};
   }
   async writeRecord (fields, recId=-1, gristOpOptions=undefined) { recId = recId === -1 ? this.cursor.current?.id : recId; const tableOps = grist.getTable();
     if (!recId) { return await tableOps.create({fields: fields}, gristOpOptions); }
