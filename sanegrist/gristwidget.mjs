@@ -113,13 +113,9 @@ export class GristWidget extends EventTarget {
   }
   #updateRecords (records, disableEventDispatch=false) {
     this.records.prev = this.records.current; this.records.current = records || [];
-    let wereRecordsModified = false;
-    const deltas = [];
-    for (const [idx, currentRecord] of Object.entries(this.records.current)) {
-      const delta = Util.dictsDelta(this.records.prev.at(idx) || {}, currentRecord);
-      if (delta.added || delta.changed || delta.removed) { this.debug('record modified:',currentRecord,'vs',this.records.prev.at(idx) || {},'==> delta:',delta); wereRecordsModified = true; }
-    }
-    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, deltas)); }
+    const delta = this.getRecordsDelta(this.records.prev, this.records.current);
+    const wereRecordsModified = Boolean(delta.added || delta.changed || delta.removed);
+    if (!disableEventDispatch && wereRecordsModified) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
   }
   #updateCursor (record, disableEventDispatch=false) { this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
@@ -130,6 +126,21 @@ export class GristWidget extends EventTarget {
     if (!disableEventDispatch && wereColMappingsChanged) {
       this.dispatchEvent(new GristWidget.ColMappingsChangedEvent(this.colMappings.prev, this.colMappings.current)); }
     return wereColMappingsChanged; }
+  /******************* TODO: document all below *************************/
+  getRecordsDelta (prevRecords, currentRecords) {
+    const delta = { added: {}, changed: {}, removed: {} };
+    for (const currentRecord of currentRecords) {
+      const prevRecord = prevRecords.find((rec) => rec.id === currentRecord.id);
+      if (!prevRecord) { delta.added[currentRecord.id] = { added: {...currentRecord}, changed: {}, removed: {} }; continue; }
+      const fieldsDelta = Util.dictsDelta(prevRecord, currentRecord);
+      if (fieldsDelta.added || fieldsDelta.changed || fieldsDelta.removed) { delta.changed[currentRecord.id] = fieldsDelta; continue; }
+    }
+    for (const prevRecord of prevRecords) {
+      const currentRecord = currentRecords.find((rec) => rec.id === prevRecord.id);
+      if (!currentRecord) { delta.removed[prevRecord.id] = { added: {}, changed: {}, removed: {...prevRecord} }; continue; }
+    }
+    return delta;
+  }
   scheduleSkipGristEvent (eventName, numEventsToSkip=1, eventArgs=undefined) {
     const validEventNames = Object.keys(this.eventControl); if (!validEventNames.includes(eventName)) { throw new Error(`eventName must be one of '${validEventNames.join("', '")}', not '${eventName}'.`); }
     this.eventControl[eventName].skip += numEventsToSkip || 0; this.eventControl[eventName].args = eventArgs || {};
