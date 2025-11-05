@@ -70,6 +70,7 @@ export class GristWidget extends EventTarget {
     this.#wasReadyEventDispatched = false;
     this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
     this.#recordOps = {};
+    this.tableName = grist.getSelectedTableIdSync();
     this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] }; this.options = { prev: {}, current: {} };
     grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...gristOptions });
       grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
