@@ -194,9 +194,9 @@ export class GristWidget extends EventTarget {
     this.#eventControl[eventName].skip += numEventsToSkip || 0; this.#eventControl[eventName].args = eventArgs || {};
   }
   async writeRecord (fields, recId=-1, gristOpOptions=undefined) {
-    if (recId === -1) {
+    if (recId === -1 && typeof this.cursor.current !== 'undefined') {
       recId = this.cursor.current?.id;
-      if (!recId) { throw new Error(`writeRecord() called with recId = -1 but current cursor is falsy (which probably shouldn't be happening!) - can't determine which record to write to.`); }
+      if (!recId) { throw new Error(`writeRecord() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to write to.`); }
     }
     const tableOps = grist.getTable();
     if (!recId) { return await tableOps.create({fields: fields}, gristOpOptions); }
@@ -206,17 +206,22 @@ export class GristWidget extends EventTarget {
     const fn = async () => this.writeRecord(fields, recId, gristOpOptions);
     return this.scheduleRecordOperation(fn, timeoutMs, recId);
   }
-  scheduleRecordOperation (fn, timeoutMs, recId=-1) {
-    if (recId === -1) {
+  scheduleRecordOperation (fn, timeoutMs, recId=-1, runLastScheduledIfDue=true) {
+    if (recId === -1 && typeof this.cursor.current !== 'undefined') {
       recId = this.cursor.current?.id;
-      if (!recId) { throw new Error(`scheduleRecordOperation() called with recId = -1 but current cursor is falsy (which probably shouldn't be happening!) - can't determine which record to link the operation ${fn} to.`); }
+      if (!recId) { throw new Error(`scheduleRecordOperation() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to link the operation ${fn} to.`); }
     }
     const key = recId || 'new';
-    if (this.#recordOps[key]) {
+    const existingScheduledOp = this.#recordOps[key];
+    const now = Date.now();
+    if (existingScheduledOp) {
       window.clearTimeout(this.#recordOps[key].timeoutHandle);
       delete this.#recordOps[key];
+      if (runLastScheduledIfDue && existingScheduledOp.timeScheduled + existingScheduledOp.timeoutMs >= now) {
+        existingScheduledOp.fn();
+      }
     }
-    this.#recordOps[key] = { fn: fn, timeoutHandle: window.setTimeout(fn, timeoutMs) };
+    this.#recordOps[key] = { fn: fn, timeScheduled: now, timeoutMs: timeoutMs, timeoutHandle: window.setTimeout(fn, timeoutMs) };
   }
   async runScheduledRecordOperationsNow (recIds) {
     for (const [recId, info] of Object.entries(this.#recordOps)) {
