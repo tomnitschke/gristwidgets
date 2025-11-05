@@ -11,7 +11,9 @@ class GristMonaco {
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
-    this.monaco = null;
+    this.api = null;
+    this.editor = null;
+    this.editorModel = null;
     this.eContainer = document.querySelector('#monaco');
     this.widget.addEventListener('ready', async (readyEvent) => {
       await this.init();
@@ -21,18 +23,22 @@ class GristMonaco {
   }
   async init () {
     this.debug("init");
-    MonacoLoader.config({
+    /*MonacoLoader.config({
       monaco: Monaco,
       paths: {
         vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs/',
       },
-    });
-    this.monaco = await MonacoLoader.init();
-    /*this.monaco = Monaco.editor.create(this.eContainer, {
-      value: ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
-      language: 'javascript',
     });*/
-    this.debug("monaco loaded:",this.monaco);
+    this.api = await MonacoLoader.init();
+    this.editorModel = Monaco.editor.createModel('', 'javascript');
+    this.editor = this.api.editor.create(this.eContainer, {
+      model: this.editorModel;
+    });
+    this.debug("monaco loaded:",this.editor);
+    this.editorModel.onDidChangeContent((evt) => {
+      this.debug("model content changed",evt);
+    });
+    this.editorModel.updateOptions({ tabSize: 3 });
   }
   async load (content) {
     this.debug("load",content);
