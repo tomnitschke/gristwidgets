@@ -19,12 +19,15 @@ class GristMonaco {
     this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings.content]));
   }
   async init () {
+    this.debug("init");
     this.monaco = Monaco.editor.create(this.eContainer, {
       value: ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
       language: 'javascript',
     });
+    this.debug("monaco loaded:",this.monaco);
   }
   async load (content) {
+    this.debug("load",content);
   }
 }
 
