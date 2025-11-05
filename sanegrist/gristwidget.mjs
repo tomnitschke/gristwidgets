@@ -206,7 +206,7 @@ export class GristWidget extends EventTarget {
     const fn = async () => this.writeRecord(fields, recId, gristOpOptions);
     return this.scheduleRecordOperation(fn, timeoutMs, recId);
   }
-  scheduleRecordOperation (fn, timeoutMs, recId=-1, runLastScheduledIfDue=true) {
+  scheduleRecordOperation (fn, timeoutMs, recId=-1, maintainInterval=true) {
     if (recId === -1 && typeof this.cursor.current !== 'undefined') {
       recId = this.cursor.current?.id;
       if (!recId) { throw new Error(`scheduleRecordOperation() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to link the operation ${fn} to.`); }
@@ -217,9 +217,8 @@ export class GristWidget extends EventTarget {
     if (existingScheduledOp) {
       window.clearTimeout(this.#recordOps[key].timeoutHandle);
       delete this.#recordOps[key];
-      if (runLastScheduledIfDue && now - existingScheduledOp.timeScheduled >= timeoutMs) {
-        this.debug("running last scheduled op for recId",recId,"as it was scheduled",existingScheduledOp.timeScheduled,"with a timeout of",existingScheduledOp.timeoutMs,"and that's >= now:",now,"===",now-existingScheduledOp.timeScheduled);
-        existingScheduledOp.fn();
+      if (maintainInterval) {
+        timeoutMs = Math.max(0, timeoutMs - (now - existingScheduledOp.timeScheduled));
       }
     }
     this.#recordOps[key] = { fn: fn, timeScheduled: now, timeoutMs: timeoutMs, timeoutHandle: window.setTimeout(fn, timeoutMs) };
