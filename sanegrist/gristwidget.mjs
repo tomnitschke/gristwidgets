@@ -217,8 +217,8 @@ export class GristWidget extends EventTarget {
     if (existingScheduledOp) {
       window.clearTimeout(this.#recordOps[key].timeoutHandle);
       delete this.#recordOps[key];
-      if (runLastScheduledIfDue && existingScheduledOp.timeScheduled + existingScheduledOp.timeoutMs >= now) {
-        this.debug("running last scheduled op for recId",recId,"as it was scheduled",existingScheduledOp.timeScheduled,"with a timeout of",existingScheduledOp.timeoutMs,"and that's >= now:",now);
+      if (runLastScheduledIfDue && now - existingScheduledOp.timeScheduled >= timeoutMs) {
+        this.debug("running last scheduled op for recId",recId,"as it was scheduled",existingScheduledOp.timeScheduled,"with a timeout of",existingScheduledOp.timeoutMs,"and that's >= now:",now,"===",now-existingScheduledOp.timeScheduled);
         existingScheduledOp.fn();
       }
     }
