@@ -26,7 +26,7 @@ class GristMonaco {
     MonacoLoader.config({
       //monaco: Monaco,
       paths: {
-        vs: 'https://esm.sh/monaco-editor@0.54.0/esm/vs/',
+        vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs',
       },
     });
     this.api = await MonacoLoader.init();
