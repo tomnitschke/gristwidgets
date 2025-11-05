@@ -184,6 +184,10 @@ export class GristWidget extends EventTarget {
     return delta;
   }
   /******************* TODO: document all below *************************/
+  async moveCursor (newCursor) {
+    const wasCursorChanged = this.#updateCursor(newCursor);
+    if (wasCursorChanged) { await grist.setCursorPos({ rowId: this.cursor.current?.id || 'new' }); }
+  }
   scheduleSkipGristEvent (eventName, numEventsToSkip=1, eventArgs=undefined) {
     const validEventNames = Object.keys(this.#eventControl); if (!validEventNames.includes(eventName)) { throw new Error(`eventName must be one of '${validEventNames.join("', '")}', not '${eventName}'.`); }
     this.#eventControl[eventName].skip += numEventsToSkip || 0; this.#eventControl[eventName].args = eventArgs || {};
