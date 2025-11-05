@@ -115,7 +115,7 @@ export class GristWidget extends EventTarget {
     if (!this.#eventControl.onRecords.wasEverTriggered) {
       this.#eventControl.onRecords.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateRecords(records, true);
-      if (!this.#wasReadyEventDispatched && this.#eventControl.onRecord.wasEverTriggered /*&& this.cursor.current?.id*/) { this.debug("dispatching ready-event from onRecords",this.records,this.cursor,this.colMappings); 
+      if (!this.#wasReadyEventDispatched) { this.debug("dispatching ready-event from onRecords",this.records,this.cursor,this.colMappings); 
         this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }
       return;
     }
@@ -130,7 +130,7 @@ export class GristWidget extends EventTarget {
     if (!this.#eventControl.onRecord.wasEverTriggered) {
       this.#eventControl.onRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
-      if (!this.#wasReadyEventDispatched && this.#eventControl.onRecords.wasEverTriggered) { this.debug("dispatching ready-event from onRecord",this.records,this.cursor,this.colMappings);
+      if (!this.#wasReadyEventDispatched) { this.debug("dispatching ready-event from onRecord",this.records,this.cursor,this.colMappings);
         this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
       }
       return;
@@ -146,7 +146,7 @@ export class GristWidget extends EventTarget {
     if (!this.#eventControl.onNewRecord.wasEverTriggered) {
       this.#eventControl.onNewRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
-      if (!this.#wasReadyEventDispatched && this.#eventControl.onRecords.wasEverTriggered) { this.debug("dispatching ready-event from onNewRecord",this.records,this.cursor,this.colMappings);
+      if (!this.#wasReadyEventDispatched) { this.debug("dispatching ready-event from onNewRecord",this.records,this.cursor,this.colMappings);
         this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
       }
       return;
