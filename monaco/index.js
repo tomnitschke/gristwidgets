@@ -14,7 +14,7 @@ class GristMonaco {
     this.eContainer = document.querySelector('#monaco');
     this.widget.addEventListener('ready', async (readyEvent) => {
       await this.init();
-      await this.load(readyEvent.cursor[readyEvent.colMappings.content]);
+      await this.load(readyEvent.cursor?.[readyEvent.colMappings.content]);
     });
     this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => await this.load(cursorMovedEvent.cursor?.[cursorMovedEvent.colMappings.content]));
   }
