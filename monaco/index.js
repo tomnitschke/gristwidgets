@@ -1,6 +1,6 @@
 import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 //import * as Monaco from 'https://esm.sh/monaco-editor@0.54.0/?dev';
-import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
+//import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 class GristMonaco {
   constructor () {
@@ -23,12 +23,12 @@ class GristMonaco {
   }
   async init () {
     this.debug("init");
-    MonacoLoader.config({
+    /*MonacoLoader.config({
       //monaco: Monaco,
       paths: {
         vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs',
       },
-    });
+    });*/
     this.api = await MonacoLoader.init();
     this.editorModel = Monaco.editor.createModel('', 'javascript');
     this.editorModel.onDidChangeContent((evt) => {
