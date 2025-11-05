@@ -220,7 +220,7 @@ export class GristWidget extends EventTarget {
   }
   async runScheduledRecordOperationsNow (recIds) {
     for (const [recId, info] of Object.entries(this.#recordOps)) {
-      if (!recIds || (recIds.includes && recIds.includes(recId)) {
+      if (!recIds || (recIds.includes && recIds.includes(recId))) {
         await info.fn(); // 'await' works for sync functions, too; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#conversion_to_promise
         delete this.#recordOps[recId];
       }
