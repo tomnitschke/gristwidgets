@@ -1,4 +1,41 @@
-window.monacoLoaded = false;
+import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import * as Monaco from 'https://esm.sh/monaco-editor@0.54.0/?dev';
+
+class GristMonaco {
+  constructor () {
+    this.widget = new GristWidget('GristMonaco', {
+      requiredAccess: 'full',
+      columns: [
+        { name: 'content', title: 'Content', type: 'Text', strictType: true },
+      ],
+    }, true);
+    this.debug = this.widget.logger.debug.bind(this.widget.logger);
+    this.monaco = null;
+    this.eContainer = document.querySelector('#monaco');
+    this.widget.addEventListener('ready', async (readyEvent) => {
+      await this.init();
+      await this.load(readyEvent.cursor[readyEvent.colMappings.content]);
+    });
+    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings.content]));
+  }
+  async init () {
+    this.monaco = Monaco.editor.create(this.eContainer, {
+      value: ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
+      language: 'javascript',
+    });
+  }
+  async load (content) {
+  }
+}
+
+
+
+
+
+
+
+
+/*window.monacoLoaded = false;
 window.colMapping = null;
 window.currentRecord = null;
 window.lastWriteBack = new Date();
@@ -6,7 +43,7 @@ window.lastWriteBack = new Date();
 grist.ready({
   requiredAccess: 'full',
   columns: [
-    {name: 'code', title: 'Code', type: 'Text', strictType: true},
+    {name: 'content', title: 'content', type: 'Text', strictType: true},
     {name: 'language', title: 'Language', description: 'Programming language identifier used for syntax highlighting. Examples: \'python\', \'javascript\', \'html\', \'css\'', type: 'Text'},
   ]
 });
@@ -32,7 +69,7 @@ grist.onRecord(async (record, colMapping) => {
       return;
     }
     window.currentRecord = record;
-    model = monaco.editor.createModel(record[window.colMapping.code], record[window.colMapping.language]);
+    model = monaco.editor.createModel(record[window.colMapping.content], record[window.colMapping.language]);
     model.onDidChangeContent(async () => { await commitChanges(false); });
     editor.setModel(model);
 });
@@ -42,7 +79,7 @@ async function commitChanges(doItImmediately) {
   let now = new Date();
   //console.log('now:', now, 'last:', window.lastWriteBack, 'timediff:', now - window.lastWriteBack);
   if (doItImmediately || (now - window.lastWriteBack > 3000)) {
-    await grist.getTable().update({ id: window.currentRecord.id, fields: {[window.colMapping.code]: window.editor.getModel().getValue()} });
+    await grist.getTable().update({ id: window.currentRecord.id, fields: {[window.colMapping.content]: window.editor.getModel().getValue()} });
     window.lastWriteBack = now;
   }
 }
@@ -100,7 +137,7 @@ function buildEditor() {
   const container = document.getElementById('container');
   // Create JS monaco model - like a tab in the IDE.
   // Create IDE. Options here are only for styling and making editor look like a
-  // code snippet.
+  // content snippet.
   const editor = monaco.editor.create(container, {
     model: model,
     automaticLayout: true,
@@ -120,3 +157,4 @@ function buildEditor() {
   editor.onDidBlurEditorText(async () => await commitChanges(true));
   window.editor = editor;
 }
+*/
