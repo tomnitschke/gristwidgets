@@ -28,6 +28,9 @@ class GristMonaco {
   }
 }
 
+Util.onDOMReady(() => {
+  const gristMonaco = new GristMonaco();
+});
 
 
 
