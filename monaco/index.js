@@ -30,7 +30,7 @@ class GristMonaco {
       },
     });*/
     this.api = await MonacoLoader.init();
-    this.editorModel = Monaco.editor.createModel('', 'javascript');
+    this.editorModel = this.api.editor.createModel('', 'javascript');
     this.editorModel.onDidChangeContent((evt) => {
       this.widget.scheduleRecordOperation(() => {
         this.debug("model content changed",evt,"current content:",this.editorModel.getValue());
