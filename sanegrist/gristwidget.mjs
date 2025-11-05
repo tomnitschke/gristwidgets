@@ -59,16 +59,21 @@ export class GristWidget extends EventTarget {
   static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings,colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
   static OptionsEditorOpenedEvent = class OptionsEditorOpenedEvent extends Event {constructor(prevOptions,options){super('optionsEditorOpened');Object.assign(this,{prevOptions,options});}}
   static OptionsChangedEvent = class OptionsChangedEvent extends Event {constructor(prevOptions,options){super('optionsChanged');Object.assign(this,{prevOptions,options});}}
+  static WidgetHiddenEvent = class WidgetHiddenEvent extends Event {constructor(){super('widgetHidden');}}
+  static WidgetShownEvent = class WidgetShownEvent extends Event{constructor(){super('widgetShown');}}
   #wasReadyEventDispatched;
   #eventControl;
+  #recordOps;
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
     this.name = widgetName;
     this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
     this.#wasReadyEventDispatched = false;
     this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
+    this.#recordOps = {};
     this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] }; this.options = { prev: {}, current: {} };
     grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...gristOptions });
       grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
+    window.addEventListener('visibilitychange', this.#onPageVisibilityChanged.bind(this));
     if (isDebugMode) {
       this.addEventListener('ready',(evt) => this.debug(evt.type, evt));
       this.addEventListener('cursorMoved',(evt) => this.debug(evt.type, evt));
@@ -76,6 +81,13 @@ export class GristWidget extends EventTarget {
       this.addEventListener('recordsModified',(evt) => this.debug(evt.type, evt));
       this.addEventListener('optionsEditorOpened',(evt) => this.debug(evt.type, evt));
       this.addEventListener('optionsChanged',(evt) => this.debug(evt.type, evt));
+    }
+  }
+  async #onPageVisibilityChanged () {
+    if (document.visibilityState === 'hidden') {
+      this.dispatchEvent(new GristWidget.WidgetHiddenEvent());
+    } else if (document.visibilityState === 'visible') {
+      this.dispatchEvent(new GristWidget.WidgetShownEvent());
     }
   }
   #onEditOptions () {
@@ -176,9 +188,38 @@ export class GristWidget extends EventTarget {
     const validEventNames = Object.keys(this.#eventControl); if (!validEventNames.includes(eventName)) { throw new Error(`eventName must be one of '${validEventNames.join("', '")}', not '${eventName}'.`); }
     this.#eventControl[eventName].skip += numEventsToSkip || 0; this.#eventControl[eventName].args = eventArgs || {};
   }
-  async writeRecord (fields, recId=-1, gristOpOptions=undefined) { recId = recId === -1 ? this.cursor.current?.id : recId; const tableOps = grist.getTable();
+  async writeRecord (fields, recId=-1, gristOpOptions=undefined) {
+    if (recId === -1) {
+      recId = this.cursor.current?.id;
+      if (!recId) { throw new Error(`writeRecord() called with recId = -1 but current cursor is falsy (which probably shouldn't be happening!) - can't determine which record to write to.`); }
+    }
+    const tableOps = grist.getTable();
     if (!recId) { return await tableOps.create({fields: fields}, gristOpOptions); }
     await tableOps.update({id: recId, fields: fields}); return recId;
+  }
+  scheduleWriteRecord (timeoutMs, fields, recId=-1, gristOpOptions=undefined) {
+    const fn = async () => this.writeRecord(fields, recId, gristOpOptions);
+    return this.scheduleRecordOperation(fn, timeoutMs, recId);
+  }
+  scheduleRecordOperation (fn, timeoutMs, recId=-1) {
+    if (recId === -1) {
+      recId = this.cursor.current?.id;
+      if (!recId) { throw new Error(`scheduleRecordOperation() called with recId = -1 but current cursor is falsy (which probably shouldn't be happening!) - can't determine which record to link the operation ${fn} to.`); }
+    }
+    const key = recId || 'new';
+    if (this.#recordOps[key]) {
+      window.clearTimeout(this.#recordOps[key].timeoutHandle);
+      delete this.#recordOps[key];
+    }
+    this.#recordOps[key] = { fn: fn, timeoutHandle: window.setTimeout(fn, timeoutMs) };
+  }
+  async runScheduledRecordOperationsNow (recIds) {
+    for (const [recId, info] of Object.entries(this.#recordOps)) {
+      if (!recIds || (recIds.includes && recIds.includes(recId)) {
+        await info.fn(); // 'await' works for sync functions, too; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#conversion_to_promise
+        delete this.#recordOps[recId];
+      }
+    }
   }
   get currentRecId () { return this.cursor.current?.id; }
   get prevRecId () { return this.cursor.prev?.id; }
