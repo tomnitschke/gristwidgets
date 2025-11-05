@@ -26,11 +26,14 @@ class GristMonaco {
     MonacoLoader.config({
       monaco: Monaco,
       paths: {
-        vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs/',
+        vs: 'https://esm.sh/monaco-editor@0.54.0/esm/vs/',
       },
     });
     this.api = await MonacoLoader.init();
     this.editorModel = Monaco.editor.createModel('', 'javascript');
+    this.editorModel.onDidChangeContent((evt) => {
+      this.debug("model content changed",evt,"current content:",this.editorModel.getValue());
+    });
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
       automaticLayout: true,
@@ -41,9 +44,6 @@ class GristMonaco {
       placeholder: 'Enter code here...',
     });
     this.debug("monaco loaded:",this.editor);
-    /*this.editorModel.onDidChangeContent((evt) => {
-      this.debug("model content changed",evt);
-    });*/
     this.editorModel.updateOptions({ tabSize: 3 });
   }
   async load (content) {
