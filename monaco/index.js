@@ -26,8 +26,6 @@ class GristMonaco {
       paths: {
         vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs/',
       },
-      value: 'BLA!',
-      language: 'javascript',
     });
     this.monaco = await MonacoLoader.init();
     /*this.monaco = Monaco.editor.create(this.eContainer, {
