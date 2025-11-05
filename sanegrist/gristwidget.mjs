@@ -224,13 +224,3 @@ export class GristWidget extends EventTarget {
   get currentRecId () { return this.cursor.current?.id; }
   get prevRecId () { return this.cursor.prev?.id; }
 };
-
-
-/********************************************************************************************************************************************/
-// EXAMPLE USAGE:
-/*Util.onDOMReady(() => {
-  const widget = new GristWidget('MyAwesomeWidget', { requiredAccess: 'full', columns: [
-    { name: 'name', title: 'Name', type: 'Text', strictType: false },
-  ]});
-  widget.addEventListener('ready', (records, cursor, colMappings) => {}); // Do something useful with the events exposed by GristWidget...
-});*/
