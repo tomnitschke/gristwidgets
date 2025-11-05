@@ -16,7 +16,7 @@ class GristMonaco {
       await this.init();
       await this.load(readyEvent.cursor[readyEvent.colMappings.content]);
     });
-    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => await this.load(cursorMovedEvent.cursor[cursorMovedEvent.colMappings.content]));
+    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => await this.load(cursorMovedEvent.cursor.?[cursorMovedEvent.colMappings.content]));
   }
   async init () {
     this.debug("init");
