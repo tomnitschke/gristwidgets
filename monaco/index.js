@@ -32,7 +32,13 @@ class GristMonaco {
     this.api = await MonacoLoader.init();
     this.editorModel = Monaco.editor.createModel('', 'javascript');
     this.editor = this.api.editor.create(this.eContainer, {
-      model: this.editorModel;
+      model: this.editorModel,
+      automaticLayout: true,
+      fontSize: '13px',
+      wordWrap: 'off',
+      lineNumbers: 'on',
+      folding: true,
+      placeholder: 'Enter code here...',
     });
     this.debug("monaco loaded:",this.editor);
     this.editorModel.onDidChangeContent((evt) => {
