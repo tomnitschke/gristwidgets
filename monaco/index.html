@@ -1,7 +1,12 @@
 <html>
 <head>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  
   <link rel="stylesheet" href="https://esm.sh/monaco-editor@0.54.0/min/vs/editor/editor.main.css" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+
   <script type="module" src="./index.js"></script>
   <style>
     html,
@@ -13,5 +18,14 @@
 </head>
 <body style="height: 100%; display: flex; flex-direction: column; margin: 0px; overflow: hidden;">
   <div id="monaco" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
+  <sl-dialog id="config" label="Config" style="border:solid 10px red;">
+    <div>
+      <sl-input id="config.autosaveTimeoutMs" label="Autosave timeout (ms)" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds." placeholder="" clearable size="small"></sl-input>
+    </div>
+    <sl-button-group slot="footer">
+      <sl-button size="small" variant="primary" onclick="document.querySelector('#config').hide();">Save</sl-button>
+      <sl-button size="small" onclick="document.querySelector('#config').hide();">Close</sl-button>
+    </sl-button-group>
+  </sl-dialog>
 </body>
 </html>
