@@ -87,7 +87,7 @@ class GristMonaco {
   }
   async openConfigPanel () {
     this.eConfigPanel.show();
-    for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of this.#getConfigElements()) {
+    for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
       if (elemType == 'input') {
         elem.placeholder = configValue;
         elem.value = storedValue || '';
