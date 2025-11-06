@@ -60,12 +60,12 @@ class GristMonaco {
     this.#setEditorContent(content);
   }
   async #onConfigItemChanged (eConfigItem) {
-    //await grist.setOption(
     const configKey = eConfigItem.id.slice(7);
     let value = eConfigItem.value;
-    if (eConfigItem.tagName === 'sl-checkbox') { value = Boolean(eConfigItem.checked); }
+    if (eConfigItem.tagName === 'sl-checkbox') { value = eConfigItem.hasAttribute('checked'); }  // I have absolutely no idea why eConfigItem.checked insists on being undefined, whereas this works correctly for some reason. God damn it.
     else if (eConfigItem.type === 'number') { value = isNaN(eConfigItem.valueAsNumber) ? 0 : eConfigItem.valueAsNumber; }
-    this.debug("save config item", configKey, eConfigItem, value, typeof value, eConfigItem.getAttribute('checked'), eConfigItem.hasAttribute('checked'));
+    await grist.setOption(configKey, value);
+    //this.debug("save config item", configKey, eConfigItem, value, typeof value, eConfigItem.getAttribute('checked'), );
   }
   async #getConfigElements () {
     const elems = [];
