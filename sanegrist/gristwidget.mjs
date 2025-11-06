@@ -227,7 +227,7 @@ export class GristWidget extends EventTarget {
     }
     this.#recordOps[key] = { fn: fn, timeScheduled: now, timeoutMs: timeoutMs, timeoutHandle: window.setTimeout(fn, timeoutMs) };
   }
-  async runScheduledRecordOperationsNow (recIds) {
+  async runScheduledRecordOperationsNow (recIds=undefined) {
     this.debug("runScheduledRecordOperationsNow",recIds);
     for (const [recId, info] of Object.entries(this.#recordOps)) {
       if (!recIds || (recIds.includes && recIds.includes(recId))) {
