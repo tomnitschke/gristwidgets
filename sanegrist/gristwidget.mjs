@@ -71,6 +71,7 @@ export class GristWidget extends EventTarget {
     this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
     this.#recordOps = {};
     this.tableName = grist.getSelectedTableIdSync();
+    this.tableOps = grist.getTable();
     this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] }; this.options = { prev: {}, current: {} };
     grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...gristOptions });
       grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
@@ -200,9 +201,8 @@ export class GristWidget extends EventTarget {
       if (!recId) { throw new Error(`writeRecord() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to write to.`); }
     }
     this.debug("writeRecord",recId || 'new',fields,gristOpOptions);
-    const tableOps = grist.getTable();
-    if (!recId) { return await tableOps.create({fields: fields}, gristOpOptions); }
-    await tableOps.update({id: recId, fields: fields}); return recId;
+    if (!recId) { return await this.tableOps.create({fields: fields}, gristOpOptions); }
+    await this.tableOps.update({id: recId, fields: fields}); return recId;
   }
   scheduleWriteRecord (fields, timeoutMs, recId=-1, gristOpOptions=undefined) {
     if (recId === -1 && typeof this.cursor.current !== 'undefined') {
