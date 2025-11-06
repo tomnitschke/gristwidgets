@@ -1,3 +1,5 @@
+'use strict';
+
 import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 //import * as Monaco from 'https://esm.sh/monaco-editor@0.54.0/?dev';
 import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
@@ -36,7 +38,7 @@ class GristMonaco {
         this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
       }, 2000);
       this.widget.scheduleWriteRecord({
-        [this.colMappings.current.content]: this.editorModel.getValue(),
+        [this.widget.colMappings.current.content]: this.editorModel.getValue(),
       }, 2000);
     });
     this.editor = this.api.editor.create(this.eContainer, {
