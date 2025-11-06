@@ -7,7 +7,7 @@ import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 /*****************************************************************************************************/
 const Config = {
-  autosaveTimeoutMs: 500,
+  autosaveDelayMs: 500,
   defaultCodeLang: 'javascript',
 }
 
@@ -31,11 +31,10 @@ class GristMonaco {
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
-    this.eContainer = document.querySelector('#monaco');
-    this.setPanel('editor');
+    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config');
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
-    this.widget.addEventListener('optionsEditorOpened', (evt) => this.setPanel('config'));
+    this.widget.addEventListener('optionsEditorOpened', (evt) => await this.openConfigPanel());
   }
   async init () {
     this.api = await MonacoLoader.init();
@@ -54,18 +53,20 @@ class GristMonaco {
     this.debug("load",content);
     this.#setEditorContent(content);
   }
-  setPanel (name) {
-    const eTargetPanel = document.querySelector(`#${name}.panel`);
-    if (!eTargetPanel) { return; }
-    for (const ePanel of document.querySelectorAll('.panel')) {
-      ePanel.style.display = 'none';
+  async openConfigPanel () {
+    this.eConfigPanel.show();
+    for (const [configKey, configValue] of Object.entries(this.config)) {
+      const eInput = this.eConfigPanel.querySelector(`#config.${configKey}`);
+      if (eInput) {
+        eInput.placeholder = configValue;
+        eInput.value = await grist.getOption(configKey) || '';
+      }
     }
-    eTargetPanel.style.display = 'initial';
   }
   #onDidChangeModelContent (evt) {
     this.widget.scheduleWriteRecord({
       [this.widget.colMappings.current.content]: this.editorModel.getValue(),
-    }, this.config.autosaveTimeoutMs);
+    }, this.config.autosaveDelayMs);
   }
   #setEditorContent (content=undefined, codeLang=undefined, modelOptions=null) {
     codeLang = codeLang || this.widget.cursor.current?.[this.widget.colMappings.current.codeLang] || this.config.defaultCodeLang;
