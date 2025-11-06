@@ -85,6 +85,7 @@ export class GristWidget extends EventTarget {
     }
   }
   async #onPageVisibilityChanged () {
+    this.debug("onPageVisibilityChanged",document.visibilityState);
     if (document.visibilityState === 'hidden') {
       this.dispatchEvent(new GristWidget.WidgetHiddenEvent());
     } else if (document.visibilityState === 'visible') {
