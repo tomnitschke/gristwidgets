@@ -202,7 +202,7 @@ export class GristWidget extends EventTarget {
     if (!recId) { return await tableOps.create({fields: fields}, gristOpOptions); }
     await tableOps.update({id: recId, fields: fields}); return recId;
   }
-  scheduleWriteRecord (timeoutMs, fields, recId=-1, gristOpOptions=undefined) {
+  scheduleWriteRecord (fields, timeoutMs, recId=-1, gristOpOptions=undefined) {
     const fn = async () => this.writeRecord(fields, recId, gristOpOptions);
     return this.scheduleRecordOperation(fn, timeoutMs, recId);
   }
