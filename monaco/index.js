@@ -15,6 +15,10 @@ const Config = {
 /*****************************************************************************************************/
 class GristMonaco {
   constructor (config=null) {
+    this.config = {
+      ...Config,
+      ...config,
+    };
     this.widget = new GristWidget('GristMonaco', {
       requiredAccess: 'full',
       columns: [
@@ -23,10 +27,6 @@ class GristMonaco {
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
-    this.config = {
-      ...Config,
-      ...config,
-    };
     this.api = null;
     this.editor = null;
     this.editorModel = null;
