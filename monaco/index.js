@@ -31,14 +31,14 @@ class GristMonaco {
     });*/
     this.api = await MonacoLoader.init();
     this.editorModel = this.api.editor.createModel('', 'javascript');
-    this.editorModel.onDidChangeContent((evt) => {
+    /*this.editorModel.onDidChangeContent((evt) => {
       this.widget.scheduleRecordOperation(() => {
         this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
       }, 2000);
       this.widget.scheduleWriteRecord({
         [this.widget.colMappings.current.content]: this.editorModel.getValue(),
       }, 2000);
-    });
+    });*/
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
       automaticLayout: true,
@@ -46,7 +46,9 @@ class GristMonaco {
       wordWrap: 'off',
       lineNumbers: 'on',
       folding: true,
-      placeholder: 'Enter code here...',
+    });
+    this.editor.onDidChangeModelContent((evt) => {
+      this.debug("onDidChangeModelContent",evt,"current content:",this.editorModel.getValue());
     });
     this.debug("monaco loaded:",this.editor);
     this.editorModel.updateOptions({ tabSize: 3 });
@@ -54,14 +56,14 @@ class GristMonaco {
   async load (content) {
     this.debug("load",content);
     this.editorModel = this.api.editor.createModel(content || '', 'javascript');
-    this.editorModel.onDidChangeContent((evt) => {
+    /*this.editorModel.onDidChangeContent((evt) => {
       this.widget.scheduleRecordOperation(() => {
         this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
       }, 2000);
       this.widget.scheduleWriteRecord({
         [this.widget.colMappings.current.content]: this.editorModel.getValue(),
       }, 2000);
-    });
+    });*/
     this.editor.setModel(this.editorModel);
   }
 }
