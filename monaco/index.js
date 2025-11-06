@@ -17,11 +17,9 @@ class GristMonaco {
     this.editor = null;
     this.editorModel = null;
     this.eContainer = document.querySelector('#monaco');
-    this.widget.addEventListener('ready', async (readyEvent) => {
-      await this.init();
-      await this.load(readyEvent.cursor?.[readyEvent.colMappings.content]);
-    });
-    this.widget.addEventListener('cursorMoved', async (cursorMovedEvent) => await this.load(cursorMovedEvent.cursor?.[cursorMovedEvent.colMappings.content]));
+    this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
+    this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
+    this.widget.addEventListener('widgetHidden', async (evt) => await this.widget.runScheduledRecordOperationsNow());
   }
   async init () {
     this.debug("init");
