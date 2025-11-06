@@ -19,17 +19,8 @@ class GristMonaco {
       ...Config,
       ...config,
     };
-    this.api = await MonacoLoader.init();
-    this.editor = this.api.editor.create(this.eContainer, {
-      model: this.editorModel,
-      automaticLayout: true,
-      fontSize: '13px',
-      wordWrap: 'off',
-      lineNumbers: 'on',
-      folding: true,
-    });
-    this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
-    this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
+    this.api = null;
+    this.editor = null;
     this.editorModel = null;
     this.widget = new GristWidget('GristMonaco', {
       requiredAccess: 'full',
@@ -41,9 +32,22 @@ class GristMonaco {
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
     this.eContainer = document.querySelector('#monaco');
-    this.widget.addEventListener('ready', async (evt) => { await this.load(evt.cursor?.[evt.colMappings.content]); });
+    this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
     this.widget.addEventListener('widgetHidden', async (evt) => await this.widget.runScheduledRecordOperationsNow());
+  }
+  async init () {
+    this.api = await MonacoLoader.init();
+    this.editor = this.api.editor.create(this.eContainer, {
+      model: this.editorModel,
+      automaticLayout: true,
+      fontSize: '13px',
+      wordWrap: 'off',
+      lineNumbers: 'on',
+      folding: true,
+    });
+    this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
+    this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
   async load (content) {
     this.debug("load",content);
