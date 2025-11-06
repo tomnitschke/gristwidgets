@@ -59,7 +59,7 @@ class GristMonaco {
     this.eConfigPanel.show();
     for (const [configKey, configValue] of Object.entries(this.config)) {
       const eInput = this.eConfigPanel.querySelector(`sl-input#config.${configKey}`);
-      const storedValue = grist.getOption(configKey);
+      const storedValue = await grist.getOption(configKey);
       this.debug("getting stored option",configKey,storedValue);
       if (eInput) {
         eInput.placeholder = configValue;
