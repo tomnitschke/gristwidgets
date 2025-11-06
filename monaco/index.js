@@ -35,7 +35,7 @@ class GristMonaco {
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); /*this.eConfigSaveBtn = document.querySelector('#configSaveBtn');*/
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
-      eConfigItem.addEventListener('sl-change', async (evt) => this.#onConfigItemChanged(evt.target));
+      eConfigItem.addEventListener('sl-input', async (evt) => this.#onConfigItemChanged(evt.target));
     }
     //this.eConfigSaveBtn.addEventListener('click', async () => await this.commitConfigPanel());
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
@@ -61,7 +61,7 @@ class GristMonaco {
   }
   async #onConfigItemChanged (eConfigItem) {
     //await grist.setOption(
-    this.debug("save config item", eConfigItem.id.slice(7), eConfigItem.tagName === 'sl-checkbox' ? eConfigItem.checked : eConfigItem.value, typeof (eConfigItem.tagName === 'sl-checkbox' ? eConfigItem.checked : eConfigItem.value));
+    this.debug("save config item", eConfigItem.id.slice(7), eConfigItem.tagName === 'sl-checkbox' ? Boolean(eConfigItem.checked) : eConfigItem.value, typeof (eConfigItem.tagName === 'sl-checkbox' ? eConfigItem.checked : eConfigItem.value));
   }
   async #getConfigElements () {
     const elems = [];
