@@ -9,6 +9,8 @@ import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 const Config = {
   autosaveDelayMs: 500,
   defaultCodeLang: 'javascript',
+  tabSize: 3,
+  enableCodeFolding: true,
 }
 
 
@@ -44,7 +46,7 @@ class GristMonaco {
       fontSize: '13px',
       wordWrap: 'off',
       lineNumbers: 'on',
-      folding: true,
+      folding: this.config.enableCodeFolding,
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
@@ -56,10 +58,17 @@ class GristMonaco {
   async openConfigPanel () {
     this.eConfigPanel.show();
     for (const [configKey, configValue] of Object.entries(this.config)) {
-      const eInput = this.eConfigPanel.querySelector(`#config.${configKey}`);
+      const eInput = this.eConfigPanel.querySelector(`sl-input#config.${configKey}`);
+      const storedValue = grist.getOption(configKey);
+      this.debug("getting stored option",configKey,storedValue);
       if (eInput) {
         eInput.placeholder = configValue;
-        eInput.value = await grist.getOption(configKey) || '';
+        eInput.value = storedValue || '';
+      }
+      const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config.${configKey}`);
+      if (eCheckbox) {
+        eCheckbox.value = configValue.toString();
+        eCheckbox.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
       }
     }
   }
@@ -72,7 +81,7 @@ class GristMonaco {
     codeLang = codeLang || this.widget.cursor.current?.[this.widget.colMappings.current.codeLang] || this.config.defaultCodeLang;
     this.editorModel = this.api.editor.createModel(content || '', codeLang);
     this.editor.setModel(this.editorModel);
-    this.editorModel.updateOptions({ tabSize: 3, ...modelOptions });
+    this.editorModel.updateOptions({ tabSize: this.config.tabSize, ...modelOptions });
   }
 }
 
