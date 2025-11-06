@@ -65,7 +65,7 @@ class GristMonaco {
     let value = eConfigItem.value;
     if (eConfigItem.tagName === 'sl-checkbox') { value = Boolean(eConfigItem.checked); }
     else if (eConfigItem.type === 'number') { value = isNaN(eConfigItem.valueAsNumber) ? 0 : eConfigItem.valueAsNumber; }
-    this.debug("save config item", configKey, eConfigItem, value, typeof value);
+    this.debug("save config item", configKey, eConfigItem, value, typeof value, document.querySelector(`#${eConfigItem.id}`).checked, eConfigItem.getAttribute('checked'), eConfigItem.hasAttribute('checked'));
   }
   async #getConfigElements () {
     const elems = [];
