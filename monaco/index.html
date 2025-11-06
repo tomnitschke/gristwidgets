@@ -20,7 +20,10 @@
   <div id="monaco" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
   <sl-dialog id="config" label="Config" style="border:solid 10px red;">
     <div>
-      <sl-input id="config.autosaveTimeoutMs" label="Autosave timeout (ms)" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds." placeholder="" clearable size="small"></sl-input>
+      <sl-input id="config.autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds." placeholder="" clearable size="small"></sl-input>
+      <sl-input id="config.defaultCodeLang" label="Default language" help-text="Which coding language to use by default if no 'Language' column is mapped." placeholder="" clearable size="small"></sl-input>
+      <sl-input id="config.tabSize" type="number" min="1" label="Tab size" placeholder="" clearable size="small"></sl-input>
+      <sl-checkbox id="config.enableCodeFolding" label="Enable code folding" size="small"></sl-checkbox>
     </div>
     <sl-button-group slot="footer">
       <sl-button size="small" variant="primary" onclick="document.querySelector('#config').hide();">Save</sl-button>
