@@ -34,15 +34,15 @@ class GristMonaco {
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); /*this.eConfigSaveBtn = document.querySelector('#configSaveBtn');*/
-    for (const eConfigItem of document.querySelectorAll('.configItem')) {
-      eConfigItem.addEventListener('sl-input', async (evt) => this.#onConfigItemChanged(evt.target));
-    }
     //this.eConfigSaveBtn.addEventListener('click', async () => await this.commitConfigPanel());
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
     this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
   }
   async init () {
+    for (const eConfigItem of document.querySelectorAll('.configItem')) {
+      eConfigItem.addEventListener('sl-input', async (evt) => this.#onConfigItemChanged(evt.target));
+    }
     this.api = await MonacoLoader.init();
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
