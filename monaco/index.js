@@ -6,7 +6,7 @@ import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 
 /*****************************************************************************************************/
-Config = {
+const Config = {
   autosaveTimeoutMs: 500,
   defaultCodeLang: 'javascript',
 }
