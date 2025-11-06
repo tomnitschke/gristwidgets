@@ -162,14 +162,14 @@ export class GristWidget extends EventTarget {
     this.#updateColMappings(colMappings); this.#updateCursor(undefined);
   }
   #updateRecords (records, disableEventDispatch=false) {
-    this.wereRecordsInitialized = true;
+    this.#wereRecordsInitialized = true;
     this.records.prev = this.records.current; this.records.current = records || [];
     const delta = this.getRecordsDelta(this.records.prev, this.records.current);
     this.debug("updateRecords, prevRecords:",this.records.prev,"currentRecords:",this.records.current,"delta:",delta);
     if (!disableEventDispatch && delta.hasAnyChanges) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
   }
   #updateCursor (record, disableEventDispatch=false) {
-    this.wasCursorInitialized = true;
+    this.#wasCursorInitialized = true;
     this.cursor.prev = this.cursor.current; this.cursor.current = record || null; const wasCursorChanged = Boolean(this.cursor.current?.id !== this.cursor.prev?.id);
     if (!disableEventDispatch && wasCursorChanged) { this.dispatchEvent(typeof record === 'undefined' ?
       new GristWidget.CursorMovedToNewEvent(this.cursor.prev, this.colMappings.current) : new GristWidget.CursorMovedEvent(this.cursor.prev, this.cursor.current, this.colMappings.current)); }
