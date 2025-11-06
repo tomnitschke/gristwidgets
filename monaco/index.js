@@ -1,7 +1,6 @@
 'use strict';
 
 import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
-//import * as Monaco from 'https://esm.sh/monaco-editor@0.54.0/?dev';
 import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 class GristMonaco {
@@ -23,22 +22,7 @@ class GristMonaco {
   }
   async init () {
     this.debug("init");
-    MonacoLoader.config({
-      //monaco: Monaco,
-      paths: {
-        vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs',
-      },
-    });
     this.api = await MonacoLoader.init();
-    this.editorModel = this.api.editor.createModel('', 'javascript');
-    /*this.editorModel.onDidChangeContent((evt) => {
-      this.widget.scheduleRecordOperation(() => {
-        this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
-      }, 2000);
-      this.widget.scheduleWriteRecord({
-        [this.widget.colMappings.current.content]: this.editorModel.getValue(),
-      }, 2000);
-    });*/
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
       automaticLayout: true,
@@ -48,23 +32,22 @@ class GristMonaco {
       folding: true,
     });
     this.editor.onDidChangeModelContent((evt) => {
-      this.debug("onDidChangeModelContent",evt,"current content:",this.editorModel.getValue());
-    });
-    this.debug("monaco loaded:",this.editor);
-    this.editorModel.updateOptions({ tabSize: 3 });
-  }
-  async load (content) {
-    this.debug("load",content);
-    this.editorModel = this.api.editor.createModel(content || '', 'javascript');
-    /*this.editorModel.onDidChangeContent((evt) => {
-      this.widget.scheduleRecordOperation(() => {
-        this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
-      }, 2000);
+      //this.debug("onDidChangeModelContent",evt,"current content:",this.editorModel.getValue());
       this.widget.scheduleWriteRecord({
         [this.widget.colMappings.current.content]: this.editorModel.getValue(),
       }, 2000);
-    });*/
+    });
+    this.debug("monaco loaded:",this.editor);
+    this.#setEditorContent();
+  }
+  async load (content) {
+    this.debug("load",content);
+    this.#setEditorContent(content);
+  }
+  #setEditorContent (content=undefined, language=undefined, modelOptions=null) {
+    this.editorModel = this.api.editor.createModel(content || '', language || 'javascript');
     this.editor.setModel(this.editorModel);
+    this.editorModel.updateOptions({ tabSize: 3, ...modelOptions });
   }
 }
 
