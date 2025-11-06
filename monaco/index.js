@@ -55,6 +55,16 @@ class GristMonaco {
   }
   async load (content) {
     this.debug("load",content);
+    this.editorModel = this.api.editor.createModel(content || '', 'javascript');
+    this.editorModel.onDidChangeContent((evt) => {
+      this.widget.scheduleRecordOperation(() => {
+        this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
+      }, 2000);
+      this.widget.scheduleWriteRecord({
+        [this.widget.colMappings.current.content]: this.editorModel.getValue(),
+      }, 2000);
+    });
+    this.editor.setModel(this.editorModel);
   }
 }
 
