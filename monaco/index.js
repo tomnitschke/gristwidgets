@@ -23,12 +23,12 @@ class GristMonaco {
   }
   async init () {
     this.debug("init");
-    /*MonacoLoader.config({
+    MonacoLoader.config({
       //monaco: Monaco,
       paths: {
         vs: 'https://esm.sh/monaco-editor@0.54.0/min/vs',
       },
-    });*/
+    });
     this.api = await MonacoLoader.init();
     this.editorModel = this.api.editor.createModel('', 'javascript');
     /*this.editorModel.onDidChangeContent((evt) => {
