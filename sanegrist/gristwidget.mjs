@@ -116,7 +116,7 @@ export class GristWidget extends EventTarget {
     this.debug('setOptions',options);
     return await grist.setOptions(options);
   }
-  get #isReadyEventInformationAssembled () { return (this.#wereColMappingsInitialized && this.#wereRecordsInitialized && this.wasCursorInitialized); }
+  get #isReadyEventInformationAssembled () { return (this.#wereColMappingsInitialized && this.#wereRecordsInitialized && this.#wasCursorInitialized); }
   #onRecords (records, colMappings) {
     this.debug("onRecords!",records,colMappings);
     if (!this.#eventControl.onRecords.wasEverTriggered) {
