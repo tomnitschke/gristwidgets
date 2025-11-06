@@ -61,7 +61,11 @@ class GristMonaco {
   }
   async #onConfigItemChanged (eConfigItem) {
     //await grist.setOption(
-    this.debug("save config item", eConfigItem.id.slice(7), eConfigItem.tagName === 'sl-checkbox' ? Boolean(eConfigItem.checked) : eConfigItem.value, typeof (eConfigItem.tagName === 'sl-checkbox' ? eConfigItem.checked : eConfigItem.value));
+    const configKey = eConfigItem.id.slice(7);
+    let value = eConfigItem.value;
+    if (eConfigItem.tagName === 'sl-checkbox') { value = Boolean(eConfigItem.checked); }
+    else if (eConfigItem.type === 'number') { value = isNaN(eConfigItem.valueAsNumber) ? 0 : eConfigItem.valueAsNumber;
+    this.debug("save config item", configKey, eConfigItem, value, typeof value);
   }
   async #getConfigElements () {
     const elems = [];
