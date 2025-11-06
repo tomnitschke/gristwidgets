@@ -204,6 +204,11 @@ export class GristWidget extends EventTarget {
     await tableOps.update({id: recId, fields: fields}); return recId;
   }
   scheduleWriteRecord (fields, timeoutMs, recId=-1, gristOpOptions=undefined) {
+    if (recId === -1 && typeof this.cursor.current !== 'undefined') {
+      recId = this.cursor.current?.id;
+      if (!recId) { throw new Error(`scheduleWriteRecord() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to write to.`); }
+    }
+    this.debug("schedule writeRecord",recId || 'new',fields,gristOpOptions);
     const fn = async () => await this.writeRecord(fields, recId, gristOpOptions);
     return this.scheduleRecordOperation(fn, timeoutMs, recId);
   }
@@ -222,8 +227,10 @@ export class GristWidget extends EventTarget {
     this.#recordOps[key] = { fn: fn, timeScheduled: now, timeoutMs: timeoutMs, timeoutHandle: window.setTimeout(fn, timeoutMs) };
   }
   async runScheduledRecordOperationsNow (recIds) {
+    this.debug("runScheduledRecordOperationsNow",recIds);
     for (const [recId, info] of Object.entries(this.#recordOps)) {
       if (!recIds || (recIds.includes && recIds.includes(recId))) {
+        this.debug("--running scheduled op NOW:",recId,info);
         await info.fn(); // 'await' works for sync functions, too; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#conversion_to_promise
         delete this.#recordOps[recId];
       }
