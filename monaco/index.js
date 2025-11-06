@@ -32,10 +32,12 @@ class GristMonaco {
     this.api = await MonacoLoader.init();
     this.editorModel = this.api.editor.createModel('', 'javascript');
     this.editorModel.onDidChangeContent((evt) => {
-      this.debug("schedule content changed handler");
       this.widget.scheduleRecordOperation(() => {
         this.debug("EVENT model content changed",evt,"current content:",this.editorModel.getValue());
-      }, 500);
+      }, 2000);
+      this.widget.scheduleWriteRecord({
+        [this.colMappings.current.content]: this.editorModel.getValue(),
+      }, 2000);
     });
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
