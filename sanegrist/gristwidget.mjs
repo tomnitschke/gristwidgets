@@ -198,12 +198,13 @@ export class GristWidget extends EventTarget {
       recId = this.cursor.current?.id;
       if (!recId) { throw new Error(`writeRecord() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to write to.`); }
     }
+    this.debug("writeRecord",recId || 'new',fields,gristOpOptions);
     const tableOps = grist.getTable();
     if (!recId) { return await tableOps.create({fields: fields}, gristOpOptions); }
     await tableOps.update({id: recId, fields: fields}); return recId;
   }
   scheduleWriteRecord (fields, timeoutMs, recId=-1, gristOpOptions=undefined) {
-    const fn = async () => this.writeRecord(fields, recId, gristOpOptions);
+    const fn = async () => await this.writeRecord(fields, recId, gristOpOptions);
     return this.scheduleRecordOperation(fn, timeoutMs, recId);
   }
   scheduleRecordOperation (fn, timeoutMs, recId=-1) {
