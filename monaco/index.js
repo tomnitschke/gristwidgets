@@ -33,10 +33,14 @@ class GristMonaco {
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
-    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config');
+    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); /*this.eConfigSaveBtn = document.querySelector('#configSaveBtn');*/
+    for (const eConfigItem of document.querySelectorAll('.configItem')) {
+      eConfigItem.addEventListener('click', async (evt) => window.alert(evt.target.id.slice(7)));
+    }
+    //this.eConfigSaveBtn.addEventListener('click', async () => await this.commitConfigPanel());
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
-    this.widget.addEventListener('optionsEditorOpened', async (evt) => await this.openConfigPanel());
+    this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
   }
   async init () {
     this.api = await MonacoLoader.init();
@@ -55,9 +59,37 @@ class GristMonaco {
     this.debug("load",content);
     this.#setEditorContent(content);
   }
+  async #getConfigElements () {
+    const elems = [];
+    for (const [configKey, configValue] of Object.entries(this.config)) {
+      const storedValue = await grist.getOption(configKey);
+      const eInput = this.eConfigPanel.querySelector(`sl-input#config.${configKey}`);
+      const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config.${configKey}`);
+      if (!eInput && !eCheckbox) { continue; }
+      elems.push({
+        elem: eInput || eCheckbox,
+        elemType: eInput ? 'input' : eCheckbox ? 'checkbox' : 'unknown',
+        elemValue: (eInput || eCheckbox).value,
+        storedValue: storedValue,
+        configKey: configKey,
+        configValue: configValue,
+      });
+    }
+    return elems;
+  }
   async openConfigPanel () {
     this.eConfigPanel.show();
-    for (const [configKey, configValue] of Object.entries(this.config)) {
+    for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of Object.values(this.#getConfigElements)) {
+      if (elemType == 'input') {
+        elem.placeholder = configValue;
+        elem.value = storedValue || '';
+      }
+      if (elemType == 'checkbox') {
+        elem.value = configValue;
+        elem.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
+      }
+    }
+    /*for (const [configKey, configValue] of Object.entries(this.config)) {
       const eInput = this.eConfigPanel.querySelector(`sl-input#config.${configKey}`);
       const storedValue = await grist.getOption(configKey);
       this.debug("getting stored option",configKey,storedValue);
@@ -70,8 +102,18 @@ class GristMonaco {
         eCheckbox.value = configValue.toString();
         eCheckbox.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
       }
-    }
+    }*/
   }
+  /*async commitConfigPanel () {
+    for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of Object.values(this.#getConfigElements)) {
+      if (elemType == 'input' && (elem.value || elem.value === 0)) {
+        this.config[configKey] = elem.value;
+      }
+      if (elemType == 'checkbox') {
+        this.config[configKey] = elem.checked;
+      }
+    }
+  }*/
   #onDidChangeModelContent (evt) {
     this.widget.scheduleWriteRecord({
       [this.widget.colMappings.current.content]: this.editorModel.getValue(),
