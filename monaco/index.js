@@ -71,8 +71,8 @@ class GristMonaco {
     const elems = [];
     for (const [configKey, configValue] of Object.entries(this.config)) {
       const storedValue = await grist.getOption(configKey);
-      const eInput = this.eConfigPanel.querySelector(`sl-input#config.${configKey}`);
-      const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config.${configKey}`);
+      const eInput = this.eConfigPanel.querySelector(`sl-input#config_${configKey}`);
+      const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config_${configKey}`);
       if (!eInput && !eCheckbox) { continue; }
       elems.push({
         elem: eInput || eCheckbox,
@@ -97,20 +97,6 @@ class GristMonaco {
         elem.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
       }
     }
-    /*for (const [configKey, configValue] of Object.entries(this.config)) {
-      const eInput = this.eConfigPanel.querySelector(`sl-input#config.${configKey}`);
-      const storedValue = await grist.getOption(configKey);
-      this.debug("getting stored option",configKey,storedValue);
-      if (eInput) {
-        eInput.placeholder = configValue;
-        eInput.value = storedValue || '';
-      }
-      const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config.${configKey}`);
-      if (eCheckbox) {
-        eCheckbox.value = configValue.toString();
-        eCheckbox.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
-      }
-    }*/
   }
   /*async commitConfigPanel () {
     for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of Object.values(this.#getConfigElements)) {
