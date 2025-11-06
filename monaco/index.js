@@ -46,7 +46,7 @@ class GristMonaco {
       lineNumbers: 'on',
       folding: true,
     });
-    this.editor.onDidChangeModelContent(this.onDidChangeModelContent.bind(this));
+    this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
     this.#setEditorContent();
   }
