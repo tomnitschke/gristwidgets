@@ -32,9 +32,10 @@ class GristMonaco {
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
     this.eContainer = document.querySelector('#monaco');
+    this.setPanel('editor');
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
-    this.widget.addEventListener('widgetHidden', async (evt) => await this.widget.runScheduledRecordOperationsNow());
+    this.widget.addEventListener('optionsEditorOpened', (evt) => this.setPanel('config'));
   }
   async init () {
     this.api = await MonacoLoader.init();
@@ -52,6 +53,14 @@ class GristMonaco {
   async load (content) {
     this.debug("load",content);
     this.#setEditorContent(content);
+  }
+  setPanel (name) {
+    const eTargetPanel = document.querySelector(`#${name}.panel`);
+    if (!eTargetPanel) { return; }
+    for (const ePanel of document.querySelectorAll('.panel')) {
+      ePanel.style.display = 'none';
+    }
+    eTargetPanel.style.display = 'initial';
   }
   #onDidChangeModelContent (evt) {
     this.widget.scheduleWriteRecord({
