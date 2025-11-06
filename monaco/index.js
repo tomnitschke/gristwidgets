@@ -34,7 +34,7 @@ class GristMonaco {
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config');
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
-    this.widget.addEventListener('optionsEditorOpened', (evt) => await this.openConfigPanel());
+    this.widget.addEventListener('optionsEditorOpened', async (evt) => await this.openConfigPanel());
   }
   async init () {
     this.api = await MonacoLoader.init();
