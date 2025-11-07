@@ -30,7 +30,7 @@ export const RecordUtil {
     for (const recordFromB of recordsListB) {
       const recordFromA = recordsListA.find((rec) => rec.id === recordFromB.id);
       if (!recordFromA) { delta.added[recordFromB.id] = { added: {...recordFromB}, changed: {}, removed: {} }; continue; }
-      const fieldsDelta = RecordUtils.compareRecords(recordFromA, recordFromB);
+      const fieldsDelta = RecordUtil.compareRecords(recordFromA, recordFromB);
       if (fieldsDelta.hasAnyChanges) { delta.changed[recordFromB.id] = fieldsDelta; continue; }
     }
     for (const recordFromA of recordsListA) {
