@@ -1,37 +1,120 @@
 'use strict';
 
 
-import { Logger } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
+import { Util, Logger } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
 import { DBUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/dbutil.mjs';
 
 
 export class GristDBAdapter {
   #isInitialized;
-  #validTableNames;
+  #knownTableNames;
+  #metaRecords;
+  #docInfo;
+  #rawTables;
+  #schemata;
   #tables;
   constructor () {
     this.#isInitialized = false;
-    this.#validTableNames = [];
+    this.#knownTableNames = [];
+    this.#metaRecords = {};
+    this.#docInfo = {};
+    this.#rawTables = {};
+    this.#schemata = {};
     this.#tables = {};
   }
-  #checkInited () { if (!this.#isInitialized) { throw new Error(`Not initialized yet. Call init() first!`); } }
+  #assertInited () { if (!this.#isInitialized) { throw new Error(`Not initialized yet. Call init() first!`); } }
   async init () {
     if (this.#isInitialized) { return; }
     this.#isInitialized = true;
     await Promise.all([
-      this.refreshValidTableNames(),
-      this.refreshSchema(),
+      this.refreshKnownTableNames(),
+      this.refreshMetaRecords(),
+      this.refreshDocInfo(),
     ]);
   }
-  async refreshValidTableNames() { this.#validTableNames = await grist.docApi.listTables(); }
-  async getTable (tableName, forceReload=false) {
-    this.#checkInited();
-    this.debug("getTable",tableName,"forceReload:",forceReload);
-    if (!this.#validTableNames.includes(tableName)) { throw new Error(`Unknown table '${tableName}'.`); }
-    if (forceReload || !(tableName in this.#tables)) {
-      this.#tables[tableName] = 
+  async refreshMetaRecords () {
+    await this.getMetaRecords(true);
+  }
+  async refreshDocInfo () {
+    this.#docInfo = await DBUtil.fetchDocInfo();
+  }
+  async refreshKnownTableNames () {
+    this.#knownTableNames = await grist.docApi.listTables();
+  }
+  async getMetaRecords (forceReload=false) {
+    const wereMetaRecordsReloaded = await DBUtil.fetchMetaRecords(this.#metaRecords, forceReload);
+    if (wereMetaRecordsReloaded) {
+      this.#rebuildSchemata();
+    }
+    return this.#metaRecords;
+  }
+  #rebuildSchemata () {
+    for (const tableRec of this.#metaRecords.tableRecs) {
+      const tableName = tableRec.tableId;
+      const schema = new Schema(this, tableName, tableRec);
+      for (const colRec of this.#metaRecords.colRecs) { if (colRec.parentId === tableRec.id && colRec.id !== 'id') {
+        const colName = colRec.colId;
+        const [isRef, refType, reffedTableName] = DBUtil.getRefInfo(colRec);
+        const refInfo = isRef ? new RefInfo(this, refType, reffedTableName) : undefined;
+        const widgetOptions = Util.jsonDecode(colRec.widgetOptions, {});
+        schema.columns[colName] = new Column(this, colName, colRec.label, colRec, tableName, tableRec, colRec.type, DBUtil.isInternalColName(colName), isRef, refInfo, widgetOptions);
+      }}
+      this.#schemata[tableName] = schema;
+    }
+    for (const [tableName, schema] of Object.entries(this.#schemata)) {
+      for (const [colName, column] of Object.entries(schema)) { if (column.isRef) {
+        const colRecIdOfVisibleCol = column.colRec.visibleCol;
+        const refInfo = column.refInfo;
+        const reffedTableSchema = this.#schemata[refInfo.reffedTableName];
+        refInfo.reffedTableSchema = reffedTableSchema;
+        if (colRecIdOfVisibleCol) {
+          refInfo.reffedColInfo = Object.values(reffedTableSchema)
+            .find((otherColInfo) => otherColInfo.colRec.id === colRecIdOfVisibleCol && otherColInfo.colId !== 'id')
+            || null;
+        } else {
+          column.refInfo.reffedColInfo = reffedTableSchema.columns['id'];
+        }
+      }}
     }
   }
+  async getTable (tableName, forceReload=false, shouldForceReloadAffectReffedTables=true) {
+    this.#assertInited();
+    this.debug("getTable",tableName,"forceReload:",forceReload);
+    if (forceReload || !(tableName in this.#rawTables)) {
+      const rawRecords = await DBUtil.fetchRecords(tableName);
+      const schema = this.#schemata[tableName];
+      const records = {};
+      for (const rawRecord of rawRecords) {
+        const fields = {};
+        const recordId = rawRecord.id;
+        const record = new Record(this, tableName, schema, recordId, rawRecord);
+        for (const [colName, rawValue] of Object.entries(rawRecord)) {
+          const column = schema.columns[colName];
+          ///TODO populate all of the below fields, fetching any reffed tables as necessary
+          const field = new Field(this, record, colName, column, rawValue, saneValue, displayValue, isAltText, isMarkdown, isRef, reffedRecord);
+          fields[colName] = field;
+        }
+        record.fields = fields;
+        records[recordId] = record;
+      }
+      ///TODO second pass over 'records', see old _buildData()
+      this.#rawTables[tableName] = rawRecords;
+      this.#tables[tableName] = records;
+    }
+  }
+}
+
+class Field { constructor (db, record, colName, column, rawValue, saneValue, displayValue, isAltText=false, isMarkdown=false, isRef=false, reffedRecord=undefined) {
+    Object.assign(this, {db, record, colName, column, rawValue, saneValue, displayValue, isAltText, isMarkdown, isRef, reffedRecord || undefined}); }}
+class Record { constructor (db, tableName, tableSchema, id, rawRecord, fields=undefined) {
+    Object.assign(this, {db, tableName, tableSchema, id, rawRecord, fields: fields || {}}); }}
+class RefInfo { constructor (db, refType, reffedTableName, reffedTableSchema=undefined, reffedColInfo=undefined) {
+    Object.assign(this, {db, refType, reffedTableName, reffedTableSchema || undefined, reffedColInfo || undefined}); }}
+class Column { constructor (db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
+    Object.assign(this, {db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo || undefined, widgetOptions: widgetOptions || {}}); }}
+class Schema { constructor (db, tableName, tableRec) {
+    Object.assign(this, {db, tableName, tableRec});
+    this.columns = {id: new Column('id', 'id', null, tableName, tableRec, 'id', true, false)}; }}
 
 
 
@@ -67,12 +150,12 @@ export class GristDBAdapter {
 
 
 
-  static TableInfo = class TableInfo{constructor(tableId,tableRec,cols=null){ Object.assign(this,{tableId,tableRec}); this.cols = cols || {}; }}
-  static ColInfo = class ColInfo{constructor(colId,label,colRec,tableId,tableRec,type,isInternal,isRef,refInfo=undefined,widgetOptions=null){ Object.assign(this,{colId,label,colRec,tableId,tableRec,type,isInternal,isRef});
+  static TableInfo = class TableInfo{constructor(tableId,tableRec,columns=null){ Object.assign(this,{tableId,tableRec}); this.columns = columns || {}; }}
+  static Column = class Column{constructor(colId,label,colRec,tableId,tableRec,type,isInternal,isRef,refInfo=undefined,widgetOptions=null){ Object.assign(this,{colId,label,colRec,tableId,tableRec,type,isInternal,isRef});
     this.widgetOptions = widgetOptions || {}; if (refInfo) { this.refInfo = refInfo; } }}
   static RefInfo = class RefInfo{constructor(refType,reffedTableName,reffedCol=null){ Object.assign(this,{refType,reffedTableName,reffedCol}); } }
   static DataRecord = class DataRecord{constructor(rawRecord,id,idAsStr,tableRec,fields=null){ Object.assign(this,{rawRecord,id,idAsStr,tableRec}); this.fields = fields || {}; }}
-  static FieldInfo = class FieldInfo{constructor(colInfo,rawValue,saneValue,isAltText=false,isBlankRef=false,isMarkdown=false){ Object.assign(this,{colInfo,rawValue,saneValue,isAltText,isBlankRef,isMarkdown}); }}
+  static FieldInfo = class FieldInfo{constructor(column,rawValue,saneValue,isAltText=false,isBlankRef=false,isMarkdown=false){ Object.assign(this,{column,rawValue,saneValue,isAltText,isBlankRef,isMarkdown}); }}
   static GristTransaction = class GristTransaction{constructor(tableName,wasSchemaUpdated,addedRecords=null,updatedRecords=null,removedRecords=null){ Object.assign(this,{tableName,wasSchemaUpdated});
     this.addedRecords = addedRecords?.length ? addedRecords : []; this.updatedRecords = updatedRecords?.length ? updatedRecords : []; this.removedRecords = removedRecords?.length ? removedRecords : []; }}
   static UpdateSpec = class UpdateSpec{constructor(tableName,recId,fieldsAndValues){ Object.assign(this,{tableName,recId,fieldsAndValues});
@@ -149,20 +232,20 @@ export class GristDBAdapter {
     const schema = {};
     for (const tableRec of tableRecs) {
       const tableId = tableRec.tableId; schema[tableId] = new GristDBAdapter.TableInfo(tableId, tableRec); const tableInfo = schema[tableId];
-      tableInfo.cols['id'] = new GristDBAdapter.ColInfo('id', 'id', null, tableId, tableRec, 'id', true, false);
+      tableInfo.columns['id'] = new GristDBAdapter.Column('id', 'id', null, tableId, tableRec, 'id', true, false);
       for (const colRec of colRecs) { if (colRec.colId !== 'id' && colRec.parentId === tableRec.id) {
         const [isRef, refType, reffedTableName] = DBUtil.getRefInfo(colRec);
-        const colInfo = new GristDBAdapter.ColInfo(colRec.colId, colRec.label, colRec, tableId, tableRec, colRec.type, DBUtil.isInternalColName(colRec.colId), isRef);
-        try { colInfo.widgetOptions = JSON.parse(colRec.widgetOptions); } catch {}
-        if (isRef) { colInfo.refInfo = new GristDBAdapter.RefInfo(refType, reffedTableName); }
-        tableInfo.cols[colRec.colId] = colInfo;
+        const column = new GristDBAdapter.Column(colRec.colId, colRec.label, colRec, tableId, tableRec, colRec.type, DBUtil.isInternalColName(colRec.colId), isRef);
+        try { column.widgetOptions = JSON.parse(colRec.widgetOptions); } catch {}
+        if (isRef) { column.refInfo = new GristDBAdapter.RefInfo(refType, reffedTableName); }
+        tableInfo.columns[colRec.colId] = column;
       }}
     }
-    for (const tableInfo of Object.values(schema)) { for (const colInfo of Object.values(tableInfo.cols)) { if (colInfo.isRef) {
-      if (colInfo.colRec.visibleCol) { colInfo.refInfo.reffedCol = Object.values(schema[colInfo.refInfo.reffedTableName].cols).find(
-        (otherColInfo) => otherColInfo.colId !== 'id' && otherColInfo.colRec.id === colInfo.colRec.visibleCol) || null;
+    for (const tableInfo of Object.values(schema)) { for (const column of Object.values(tableInfo.columns)) { if (column.isRef) {
+      if (column.colRec.visibleCol) { column.refInfo.reffedCol = Object.values(schema[column.refInfo.reffedTableName].columns).find(
+        (otherColInfo) => otherColInfo.colId !== 'id' && otherColInfo.colRec.id === column.colRec.visibleCol) || null;
       } else {
-        colInfo.refInfo.reffedCol = schema[colInfo.refInfo.reffedTableName].cols['id'];
+        column.refInfo.reffedCol = schema[column.refInfo.reffedTableName].columns['id'];
       }
     }}}
     this.debug("_buildSchema done, result:", schema);
@@ -178,10 +261,10 @@ export class GristDBAdapter {
       for (const rawRecord of rawRecords) {
         const dataRecord = new GristDBAdapter.DataRecord(rawRecord, rawRecord.id, DBUtil.idAsStr(rawRecord.id), tableInfo);
         for (const [colName, rawValue] of Object.entries(rawRecord)) {
-          const colInfo = tableInfo.cols[colName];
-          const fieldInfo = new GristDBAdapter.FieldInfo(colInfo, rawValue, rawValue);
-          if (colInfo.isRef) { fieldInfo.isAltText = DBUtil.isAltTextInsteadOfId(rawValue); }
-          if (colInfo.type == 'Text' && colInfo.widgetOptions?.widget == 'Markdown') { fieldInfo.isMarkdown = true; }
+          const column = tableInfo.columns[colName];
+          const fieldInfo = new GristDBAdapter.FieldInfo(column, rawValue, rawValue);
+          if (column.isRef) { fieldInfo.isAltText = DBUtil.isAltTextInsteadOfId(rawValue); }
+          if (column.type == 'Text' && column.widgetOptions?.widget == 'Markdown') { fieldInfo.isMarkdown = true; }
           dataRecord.fields[colName] = fieldInfo;
         }
         data[tableName].push(dataRecord);
@@ -190,9 +273,9 @@ export class GristDBAdapter {
     for (const [tableName, dataRecords] of Object.entries(data)) {
       for (const dataRecord of dataRecords) {
         for (const [colName, fieldInfo] of Object.entries(dataRecord.fields)) {
-          const colInfo = fieldInfo.colInfo;
-          if (colInfo.isRef) {
-            fieldInfo.saneValue = this._getRefDisplayValue(data, colInfo, fieldInfo.rawValue);
+          const column = fieldInfo.column;
+          if (column.isRef) {
+            fieldInfo.saneValue = this._getRefDisplayValue(data, column, fieldInfo.rawValue);
             fieldInfo.isBlankRef = fieldInfo.rawValue && !fieldInfo.saneValue;
           }
         }
@@ -200,11 +283,11 @@ export class GristDBAdapter {
     }
     return data;
   }
-  _getRefDisplayValue (records, colInfo, recId) {
-    if (!colInfo.isRef || !DBUtil.isValidId(recId)) { return recId; } // If the recId is not in fact an ID, it's probably a Grist 'AltText' object. In that case, that's what we want to display.
-    if (!recId) { return 'FALSY RECID'; } const reffedRecord = records[colInfo.refInfo.reffedTableName]?.find((rec) => rec.id === recId); if (!reffedRecord) { return 'FALSY REFFEDREC'; }
-    const reffedCol = colInfo.refInfo.reffedCol; const reffedField = reffedRecord.fields[reffedCol.colId]; if (!reffedCol) { return 'MISSING REFFED COL'; }
-    return reffedCol.colId === 'id' || !reffedField ? `${colInfo.refInfo.reffedTableName}[${recId}]` : (reffedField.saneValue || '');
+  _getRefDisplayValue (records, column, recId) {
+    if (!column.isRef || !DBUtil.isValidId(recId)) { return recId; } // If the recId is not in fact an ID, it's probably a Grist 'AltText' object. In that case, that's what we want to display.
+    if (!recId) { return 'FALSY RECID'; } const reffedRecord = records[column.refInfo.reffedTableName]?.find((rec) => rec.id === recId); if (!reffedRecord) { return 'FALSY REFFEDREC'; }
+    const reffedCol = column.refInfo.reffedCol; const reffedField = reffedRecord.fields[reffedCol.colId]; if (!reffedCol) { return 'MISSING REFFED COL'; }
+    return reffedCol.colId === 'id' || !reffedField ? `${column.refInfo.reffedTableName}[${recId}]` : (reffedField.saneValue || '');
   }
   async massUpdate (massUpdateSpecs, dontUpdateInternalDataState=false) {
     if (!massUpdateSpecs?.length) { return false; }
