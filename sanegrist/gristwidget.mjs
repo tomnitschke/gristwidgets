@@ -1,7 +1,8 @@
 'use strict';
 
 
-import { Util, Logger } from './util.mjs';
+import { Util, Logger } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
+import { RecordUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/recordutil.mjs';
 
 
 /********************************************************************************************************************************************/
@@ -130,7 +131,8 @@ export class GristWidget extends EventTarget {
     return wereColMappingsChanged; }
   #updateOptions (options) { this.options.prev = this.options.current; this.options.current = options; }
   getRecordsDelta (prevRecords, currentRecords) {
-    const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: {}, changed: {}, removed: {} };
+    return RecordUtil.compareRecordLists(prevRecords, currentRecords);
+    /*const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: {}, changed: {}, removed: {} };
     for (const currentRecord of currentRecords) {
       const prevRecord = prevRecords.find((rec) => rec.id === currentRecord.id);
       if (!prevRecord) { delta.added[currentRecord.id] = { added: {...currentRecord}, changed: {}, removed: {} }; continue; }
@@ -141,7 +143,7 @@ export class GristWidget extends EventTarget {
       const currentRecord = currentRecords.find((rec) => rec.id === prevRecord.id);
       if (!currentRecord) { delta.removed[prevRecord.id] = { added: {}, changed: {}, removed: {...prevRecord} }; continue; }
     }
-    return delta;
+    return delta;*/
   }
   /******************* TODO: document all below *************************/
   async moveCursor (newCursor) {
