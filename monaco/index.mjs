@@ -41,7 +41,7 @@ class GristMonaco {
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
     this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
-    this.widget.addEventListener('optionsChanged', async () => await this.applyConfig());
+    this.widget.addEventListener('optionsChanged', (evt) => this.applyConfig(evt.options));
   }
   async init () {
     this.api = await MonacoLoader.init();
@@ -99,11 +99,10 @@ class GristMonaco {
       }
     }
   }
-  async applyConfig () {
-    const storedConfig = grist.getOptions();
+  applyConfig (configToApply) {
     this.config = {
       ...this.config,
-      ...storedConfig,
+      ...configToApply,
     };
     this.debug("applied config",this.config);      
   }
