@@ -11,6 +11,9 @@ const Config = {
   defaultCodeLang: 'javascript',
   tabSize: 3,
   enableCodeFolding: true,
+  fontSize: 13,
+  enableCodeFolding: true,
+  enableWordWrap: true,
 }
 
 
@@ -48,8 +51,8 @@ class GristMonaco {
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
       automaticLayout: true,
-      fontSize: '13px',
-      wordWrap: 'off',
+      fontSize: `${this.config.fontSize}px`,
+      wordWrap: this.config.enableWordWrap ? 'on' : 'off',
       lineNumbers: 'on',
       folding: this.config.enableCodeFolding,
     });
