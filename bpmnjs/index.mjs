@@ -4,7 +4,8 @@
 ***/
 'use strict';
 
-import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
 import BpmnJsColorPicker from 'https://cdn.jsdelivr.net/npm/bpmn-js-color-picker@0.7.2/+esm';
 
 const AUTOSAVE_INTERVAL = 10000;
