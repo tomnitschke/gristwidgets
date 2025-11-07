@@ -1,8 +1,8 @@
 'use strict';
 
 
-import { Logger } from './util.mjs';
-import { DBUtil } from './dbutil.mjs';
+import { Logger } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
+import { DBUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/dbutil.mjs';
 
 
 export class GristDBAdapter {
