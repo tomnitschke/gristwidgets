@@ -1,8 +1,11 @@
+'use strict';
 
-export class Delta {
+
+class Delta {
   constructor (added=undefined, changed=undefined, removed=undefined) { Object.assign(this, { added: added || {}, changed: changed || {}, removed: removed || {} }); }
   get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }
 }
+
 
 export const RecordUtils {
   compareRecords (recordA, recordB) {
