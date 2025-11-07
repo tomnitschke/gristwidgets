@@ -77,7 +77,7 @@ export class GristDBAdapter {
       }}
     }
   }
-  async getTable (tableName, forceReload=false, shouldForceReloadAffectReffedTables=true) {
+  async getTable (tableName, forceReload=false, shouldForceReloadAffectReffedTables=true, loadReffedTablesMaxDepth=1, _depth=0) {
     this.#assertInited();
     this.debug("getTable",tableName,"forceReload:",forceReload);
     if (forceReload || !(tableName in this.#rawTables)) {
@@ -90,28 +90,48 @@ export class GristDBAdapter {
         const record = new Record(this, tableName, schema, recordId, rawRecord);
         for (const [colName, rawValue] of Object.entries(rawRecord)) {
           const column = schema.columns[colName];
-          ///TODO populate all of the below fields, fetching any reffed tables as necessary
-          const field = new Field(this, record, colName, column, rawValue, saneValue, displayValue, isAltText, isMarkdown, isRef, reffedRecord);
+          let displayValue = rawValue;
+          const isAltText = DBUtil.isAltTextInsteadOfId(rawValue);
+          const isMarkdown = (column.type == 'Text' && column.widgetOptions?.widget === 'Markdown');
+          const field = new Field(this, record, colName, column, rawValue, displayValue, isAltText, isMarkdown);
           fields[colName] = field;
         }
         record.fields = fields;
         records[recordId] = record;
       }
-      ///TODO second pass over 'records', see old _buildData()
+      for (const record of Object.values(records)) {
+        for (const field of Object.values(record.fields)) {
+          const column = field.column;
+          if (column.isRef) {
+            const refInfo = column.refInfo;
+            if (_depth < loadReffedTablesMaxDepth) {
+              
+            } else {
+              field.getReffedTable
+            }
+            const reffedTable = await this.getTable(refInfo.reffedTableName, forceReload && shouldForceReloadAffectReffedTables, loadReffedTablesMaxDepth, _depth + 1);
+            saneValue = this._getRefDisplayValue(data, column, fieldInfo.rawValue);
+            fieldInfo.isBlankRef = fieldInfo.rawValue && !fieldInfo.saneValue;
+      }
       this.#rawTables[tableName] = rawRecords;
       this.#tables[tableName] = records;
     }
   }
 }
 
-class Field { constructor (db, record, colName, column, rawValue, saneValue, displayValue, isAltText=false, isMarkdown=false, isRef=false, reffedRecord=undefined) {
-    Object.assign(this, {db, record, colName, column, rawValue, saneValue, displayValue, isAltText, isMarkdown, isRef, reffedRecord || undefined}); }}
+class Field { constructor (db, record, colName, column, rawValue, displayValue, isAltText=false, isMarkdown=false, reffedRecord=undefined) {
+    Object.assign(this, {db, record, colName, column, rawValue, displayValue, isAltText, isMarkdown, reffedRecord || undefined}); }}
 class Record { constructor (db, tableName, tableSchema, id, rawRecord, fields=undefined) {
     Object.assign(this, {db, tableName, tableSchema, id, rawRecord, fields: fields || {}}); }}
-class RefInfo { constructor (db, refType, reffedTableName, reffedTableSchema=undefined, reffedColInfo=undefined) {
-    Object.assign(this, {db, refType, reffedTableName, reffedTableSchema || undefined, reffedColInfo || undefined}); }}
+class RefInfo {
+  constructor (db, refType, reffedTableName, reffedTableSchema=undefined, reffedColInfo=undefined) {
+    Object.assign(this, {db, refType, reffedTableName, reffedTableSchema || undefined, reffedColInfo || undefined}); }
+  async getReffedTable (forceReload) {
+    if (forceReload || !this.reffedTable) { this.reffedTable = await this.db.getTable(this.reffedTableName, forceReload); }
+    return this.reffedTable;
+  }}
 class Column { constructor (db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
-    Object.assign(this, {db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo || undefined, widgetOptions: widgetOptions || {}}); }}
+    Object.assign(this, {db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo || undefined, widgetOptions: widgetOptions || {}}); }
 class Schema { constructor (db, tableName, tableRec) {
     Object.assign(this, {db, tableName, tableRec});
     this.columns = {id: new Column('id', 'id', null, tableName, tableRec, 'id', true, false)}; }}
