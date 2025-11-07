@@ -1,5 +1,9 @@
+'use strict';
+
+
 import { Logger } from './util.mjs';
 import { DBUtil } from './dbutil.mjs';
+
 
 class GristDBAdapter {
   static TableInfo = class TableInfo{constructor(tableId,tableRec,cols=null){ Object.assign(this,{tableId,tableRec}); this.cols = cols || {}; }}
