@@ -15,7 +15,7 @@
 </head>
 <body style="height: 100%; display: flex; flex-direction: column; margin: 0px; overflow: hidden;">
   <div id="monaco" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
-  <sl-dialog id="config" label="Config" style="border:solid 10px red;">
+  <sl-dialog id="config" label="Config">
     <div>
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
       <sl-input class="configItem" id="config_defaultCodeLang" label="Default language" placeholder="" clearable size="small" help-text="Which coding language to use by default if no 'Language' column is mapped."></sl-input>
