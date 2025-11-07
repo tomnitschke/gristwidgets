@@ -81,16 +81,15 @@ export class GristWidget extends EventTarget {
       grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
     window.addEventListener('visibilitychange', this.#onPageVisibilityChanged.bind(this));
     if (isDebugMode) {
-      this.addEventListener('ready',(evt) => this.debug(evt.type, evt));
-      this.addEventListener('cursorMoved',(evt) => this.debug(evt.type, evt));
-      this.addEventListener('cursorMovedToNew',(evt) => this.debug(evt.type, evt));
-      this.addEventListener('recordsModified',(evt) => this.debug(evt.type, evt));
-      this.addEventListener('optionsEditorOpened',(evt) => this.debug(evt.type, evt));
-      this.addEventListener('optionsChanged',(evt) => this.debug(evt.type, evt));
+      this.addEventListener('ready',(evt) => this.debug("event", evt.type, evt));
+      this.addEventListener('cursorMoved',(evt) => this.debug("event", evt.type, evt));
+      this.addEventListener('cursorMovedToNew',(evt) => this.debug("event", evt.type, evt));
+      this.addEventListener('recordsModified',(evt) => this.debug("event", evt.type, evt));
+      this.addEventListener('optionsEditorOpened',(evt) => this.debug("event", evt.type, evt));
+      this.addEventListener('optionsChanged',(evt) => this.debug("event", evt.type, evt));
     }
   }
   async #onPageVisibilityChanged () {
-    this.debug("onPageVisibilityChanged",document.visibilityState);
     if (document.visibilityState === 'hidden') {
       this.dispatchEvent(new GristWidget.WidgetHiddenEvent());
     } else if (document.visibilityState === 'visible') {
@@ -98,16 +97,16 @@ export class GristWidget extends EventTarget {
     }
   }
   #onEditOptions () {
-    this.debug('#onEditOptions');
+    this.debug('Grist message onEditOptions');
     this.dispatchEvent(new GristWidget.OptionsEditorOpenedEvent(this.options.prev, this.options.current));
   }
   #onOptions (options, interactionOptions) {
-    this.debug('#onOptions',options,interactionOptions);
+    this.debug('Grist message onOptions',options,interactionOptions);
     this.#updateOptions({ ...options, interactionOptions: interactionOptions });
     if (!this.#wasReadyEventDispatched) { return; }
     this.dispatchEvent(new GristWidget.OptionsChangedEvent(this.options.prev, this.options.current));
   }
-  async setOption (name, value) {
+  /*async setOption (name, value) {
     this.debug('setOption',name,value);
     return await grist.setOption(name, value);
   }
@@ -115,10 +114,10 @@ export class GristWidget extends EventTarget {
     options = options || {};
     this.debug('setOptions',options);
     return await grist.setOptions(options);
-  }
+  }*/
   get #isReadyEventInformationAssembled () { return (this.#wereColMappingsInitialized && this.#wereRecordsInitialized && this.#wasCursorInitialized); }
   #onRecords (records, colMappings) {
-    this.debug("onRecords!",records,colMappings);
+    this.debug("Grist message onRecords",records,colMappings);
     if (!this.#eventControl.onRecords.wasEverTriggered) {
       this.#eventControl.onRecords.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateRecords(records, true);
@@ -130,10 +129,7 @@ export class GristWidget extends EventTarget {
     this.#updateColMappings(colMappings); this.#updateRecords(records);
   }
   #onRecord (record, colMappings) {
-    this.debug("onRecord!",record,colMappings);
-    /*if (!this.hasOnRecordsEverFired || !this.#wasReadyEventDispatched) { this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
-      if (!this.#wasReadyEventDispatched) { //this.debug("dispatching ready-event from onRecord");
-        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); return; }}*/
+    this.debug("Grist message onRecord!",record,colMappings);
     if (!this.#eventControl.onRecord.wasEverTriggered) {
       this.#eventControl.onRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
@@ -146,10 +142,7 @@ export class GristWidget extends EventTarget {
     this.#updateColMappings(colMappings); this.#updateCursor(record);
   }
   #onNewRecord (colMappings) {
-    this.debug("onNewRecord!",colMappings);
-    /*if (!this.hasOnRecordsEverFired || !this.#wasReadyEventDispatched) { this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
-      if (!this.#wasReadyEventDispatched) { //this.debug("dispatched ready-event from onNewRecord");
-        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }}*/
+    this.debug("Grist message onNewRecord",colMappings);
     if (!this.#eventControl.onNewRecord.wasEverTriggered) {
       this.#eventControl.onNewRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
@@ -165,7 +158,6 @@ export class GristWidget extends EventTarget {
     this.#wereRecordsInitialized = true;
     this.records.prev = this.records.current; this.records.current = records || [];
     const delta = this.getRecordsDelta(this.records.prev, this.records.current);
-    this.debug("updateRecords, prevRecords:",this.records.prev,"currentRecords:",this.records.current,"delta:",delta);
     if (!disableEventDispatch && delta.hasAnyChanges) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
   }
   #updateCursor (record, disableEventDispatch=false) {
@@ -219,7 +211,7 @@ export class GristWidget extends EventTarget {
       recId = this.cursor.current?.id;
       if (!recId) { throw new Error(`scheduleWriteRecord() called with recId = -1 but current cursor isn't set (which probably shouldn't be happening!) - can't determine which record to write to.`); }
     }
-    this.debug("schedule writeRecord",recId || 'new',fields,gristOpOptions);
+    this.debug("scheduleWriteRecord",recId || 'new',fields,gristOpOptions);
     const fn = async () => await this.writeRecord(fields, recId, gristOpOptions);
     return this.scheduleRecordOperation(fn, timeoutMs, recId);
   }
