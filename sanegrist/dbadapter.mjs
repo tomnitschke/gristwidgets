@@ -6,6 +6,67 @@ import { DBUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/dbu
 
 
 export class GristDBAdapter {
+  #isInitialized;
+  #validTableNames;
+  #tables;
+  constructor () {
+    this.#isInitialized = false;
+    this.#validTableNames = [];
+    this.#tables = {};
+  }
+  #checkInited () { if (!this.#isInitialized) { throw new Error(`Not initialized yet. Call init() first!`); } }
+  async init () {
+    if (this.#isInitialized) { return; }
+    this.#isInitialized = true;
+    await Promise.all([
+      this.refreshValidTableNames(),
+      this.refreshSchema(),
+    ]);
+  }
+  async refreshValidTableNames() { this.#validTableNames = await grist.docApi.listTables(); }
+  async getTable (tableName, forceReload=false) {
+    this.#checkInited();
+    this.debug("getTable",tableName,"forceReload:",forceReload);
+    if (!this.#validTableNames.includes(tableName)) { throw new Error(`Unknown table '${tableName}'.`); }
+    if (forceReload || !(tableName in this.#tables)) {
+      this.#tables[tableName] = 
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   static TableInfo = class TableInfo{constructor(tableId,tableRec,cols=null){ Object.assign(this,{tableId,tableRec}); this.cols = cols || {}; }}
   static ColInfo = class ColInfo{constructor(colId,label,colRec,tableId,tableRec,type,isInternal,isRef,refInfo=undefined,widgetOptions=null){ Object.assign(this,{colId,label,colRec,tableId,tableRec,type,isInternal,isRef});
     this.widgetOptions = widgetOptions || {}; if (refInfo) { this.refInfo = refInfo; } }}
@@ -17,49 +78,53 @@ export class GristDBAdapter {
   static UpdateSpec = class UpdateSpec{constructor(tableName,recId,fieldsAndValues){ Object.assign(this,{tableName,recId,fieldsAndValues});
     if (!tableName || !recId || !fieldsAndValues || !Object.keys(fieldsAndValues)?.length) { throw new Error("GristDBAdapter.UpdateSpec malformed, check parameters!"); }}}
   static MassUpdateSpec = class MassUpdateSpec{constructor(tableName,colName,recIds,values){ Object.assign(this,{tableName,colName}); this.recIds = recIds || []; this.values = values || []; }}
+
+  #docInfo;
+  #loadedTables;
   constructor (config, isDebugMode=false) {
     this.logger = new Logger('GristDBAdapter', isDebugMode); this.debug = this.logger.debug.bind(this.logger); this.err = this.logger.err.bind(this.logger);
     this.config = {
       ...config
     };
     this.isInitialLoadDone = false;
-    this.docInfo = null;    //doc info gathered from '_grist_DocInfo'
-    this.metaRecords = {};  //raw Grist table records (from '_grist_Tables') and column records (from '_grist_Tables_column')
-    this.schema = null;     //'rich' schema (tableInfos and colInfos), built from metaRecords
-    this.rawData = {};      //raw Grist records, by table
-    this.data = {};         //DataRecord objects, by table, built from rawData
+    this.#docInfo = null;        //doc info gathered from '_grist_DocInfo'
+    this.metaRecords = {};      //raw Grist table records (from '_grist_Tables') and column records (from '_grist_Tables_column')
+    this.schema = null;         //'rich' schema (tableInfos and colInfos), built from metaRecords
+    this.#loadedTables = {};    //raw Grist records, by table
+    this.data = {};             //DataRecord objects, by table, built from rawData
   }
   async reloadAll () {
     this.isInitialLoadDone = true;
     this.debug("DB.reloadAll!");
     const wasSchemaRefetched = await this.loadSchema();
-    const wasAnyDataRefetched = await this.loadData();
+    const wasAnyDataRefetched = await this.loadTables();
     return [wasSchemaRefetched, wasAnyDataRefetched];
   }
   async loadSchema (tableName=null, forceRefetch=false) {
     this.debug("DB.loadSchema!",tableName,forceRefetch);
     const [docInfo, wasSchemaRefetched] = await Promise.all([DBUtil.fetchDocInfo(), DBUtil.fetchMetaRecords(this.metaRecords, forceRefetch)]);
-    this.debug("   loaded docInfo:", this.docInfo, "loaded metaRecords:", this.metaRecords);
+    this.debug("   loaded docInfo:", this.#docInfo, "loaded metaRecords:", this.metaRecords);
     if (wasSchemaRefetched) { const newSchema = this._buildSchema(this.metaRecords.tableRecs, this.metaRecords.colRecs, tableName); this.schema = tableName ? {...this.schema, ...newSchema} : newSchema; }
     return wasSchemaRefetched;
   }
-  async loadData (tableNames=null, forceRefetch=false) {
-    this.debug("DB.loadData!",tableNames,forceRefetch);
-    tableNames = tableNames?.length ? tableNames : await grist.docApi.listTables(); const tableNamesToReload = forceRefetch ? tableNames : tableNames.filter((tableName) => !Object.keys(this.rawData).includes(tableName));
+  async OLD_____loadTables (tableNames=null, forceRefetch=false) {
+    this.debug("DB.loadTables",tableNames,forceRefetch);
+    tableNames = tableNames?.length ? tableNames : await grist.docApi.listTables(); const tableNamesToReload = forceRefetch ? tableNames : tableNames.filter((tableName) => !Object.keys(this.#loadedTables).includes(tableName));
     let wasAnyDataRefetched = false;
     if (tableNamesToReload) { wasAnyDataRefetched = true; const rawRecords = await Promise.all(tableNamesToReload.map((tableName) => DBUtil.fetchRecords(tableName)));
-      for (const [idx, rawRecordsForTable] of Object.entries(rawRecords)) { this.rawData[tableNamesToReload[idx]] = rawRecordsForTable; } }
-    //this.debug("   done fetching rawData:", this.rawData);
-    if (wasAnyDataRefetched) { if (forceRefetch) { this.data = this._buildData(this.rawData, this.schema); } else { this.data = {...this.data, ...this._buildData(this.rawData, this.schema, tableNamesToReload) }; } }
+      for (const [idx, rawRecordsForTable] of Object.entries(rawRecords)) { this.#loadedTables[tableNamesToReload[idx]] = rawRecordsForTable; } }
+    if (wasAnyDataRefetched) { if (forceRefetch) { this.data = this._buildData(this.#loadedTables, this.schema); } else { this.data = {...this.data, ...this._buildData(this.#loadedTables, this.schema, tableNamesToReload) }; } }
     this.debug("   done building data:", this.data);
     return wasAnyDataRefetched;
   }
-  async refresh (tableName, considerSpecialCols=null, returnOnlyAddTransaction=false, forceReloadAll=false) {
+  async OLD_____refresh (tableName, considerSpecialCols=null, returnOnlyAddTransaction=false, forceReloadAll=false) {
     considerSpecialCols = considerSpecialCols || [];
-    if (forceReloadAll || !this.isInitialLoadDone) { const [wasSchemaRefetched, wasAnyDataRefetched] = await this.reloadAll(); return new GristDBAdapter.GristTransaction(tableName, wasSchemaRefetched, this.data[tableName]); }
-    const oldData = this.data[tableName]; await this.loadData([tableName], true); const newData = this.data[tableName];
+    if (forceReloadAll || !this.isInitialLoadDone) {
+      const [wasSchemaRefetched, wasAnyDataRefetched] = await this.reloadAll();
+      return new GristDBAdapter.GristTransaction(tableName, wasSchemaRefetched, this.data[tableName]);
+    }
+    const oldData = this.data[tableName]; await this.loadTables([tableName], true); const newData = this.data[tableName];
     let gristTransaction = new GristDBAdapter.GristTransaction(tableName, false);
-    //this.debug("DB.refresh! old data:",oldData,"new data:",newData);
     if (oldData.length && newData.length) { if (Object.keys(oldData[0].rawRecord).length !== Object.keys(newData[0].rawRecord).length) { gristTransaction.wasSchemaUpdated = true; await this.loadSchema(tableName, true); } }
     if (returnOnlyAddTransaction) { gristTransaction.added = this.data[tableName]; return gristTransaction; }
     for (const [tableName, newDataRecord] of Object.entries(newData)) {
