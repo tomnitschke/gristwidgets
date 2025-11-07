@@ -37,7 +37,7 @@ class GristMonaco {
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
-    this.eConfigResetBtn.addEventListener('click', async () => await grist.setOptions({}); this.openConfigPanel());
+    this.eConfigResetBtn.addEventListener('click', async () => { await grist.setOptions({}); this.openConfigPanel() });
     this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
     this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
