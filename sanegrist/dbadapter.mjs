@@ -5,7 +5,7 @@ import { Logger } from './util.mjs';
 import { DBUtil } from './dbutil.mjs';
 
 
-class GristDBAdapter {
+export class GristDBAdapter {
   static TableInfo = class TableInfo{constructor(tableId,tableRec,cols=null){ Object.assign(this,{tableId,tableRec}); this.cols = cols || {}; }}
   static ColInfo = class ColInfo{constructor(colId,label,colRec,tableId,tableRec,type,isInternal,isRef,refInfo=undefined,widgetOptions=null){ Object.assign(this,{colId,label,colRec,tableId,tableRec,type,isInternal,isRef});
     this.widgetOptions = widgetOptions || {}; if (refInfo) { this.refInfo = refInfo; } }}
