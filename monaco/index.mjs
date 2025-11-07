@@ -1,6 +1,7 @@
 'use strict';
 
-import { GristWidget, Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
 import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 
@@ -31,8 +32,9 @@ class GristMonaco {
       requiredAccess: 'full',
       columns: [
         { name: 'content', title: 'Content', type: 'Text', strictType: true },
-        { name: 'columnRecord', optional: true, title: 'Column Record', type: 'Any', strictType: true, description: `Grist column record (from table '_grist_Tables_column'). If provided, the editor operates on this column's formula rather than the mapped 'Content' column.` },
-        { name: 'codeLang', optional: true, title: 'Language', type: 'Text', description: `Used for syntax highlighting and autocompletions on the currently loaded content. Defaults to '${this.config.defaultCodeLang}' if not mapped.` },
+        { name: 'columnRecord', title: 'Column Record', type: 'Any', strictType: true, optional: true, description: `Grist column record (from table '_grist_Tables_column'). If provided, the editor operates on this column's formula rather than the mapped 'Content' column.` },
+        { name: 'codeLang', title: 'Language', type: 'Text', optional: true, description: `Used for syntax highlighting and autocompletions on the currently loaded content. Defaults to '${this.config.defaultCodeLang}' if not mapped.` },
+        { name: 'monacoConfig', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
@@ -41,8 +43,8 @@ class GristMonaco {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
     this.eConfigResetBtn.addEventListener('click', async () => { await grist.setOptions({}); this.openConfigPanel() });
-    this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(evt.cursor?.[evt.colMappings.content]); });
-    this.widget.addEventListener('cursorMoved', async (evt) => await this.load(evt.cursor?.[evt.colMappings.content]));
+    this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.loadContent(); });
+    this.widget.addEventListener('cursorMoved', async (evt) => await this.loadContent());
     this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
     this.widget.addEventListener('optionsChanged', (evt) => this.applyConfig(evt.options));
   }
@@ -55,12 +57,19 @@ class GristMonaco {
       wordWrap: this.config.enableWordWrap ? 'on' : 'off',
       lineNumbers: 'on',
       folding: this.config.enableCodeFolding,
+      ...(this.widget.cursor.current[this.widget.colMappings.current.monacoConfig] || null),
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
-  async load (content) {
-    this.debug("load",content);
+  async loadContent () {
+    const isColumnMode = Boolean(this.widget.colMappings.current.columnRecord);
+    if (isColumnMode) {
+      ///TODO
+      return;
+    }
+    const content = this.widget.cursor.current[this.widget.colMappings.current.content];
+    this.debug("loadContent",content);
     this.#setEditorContent(content);
   }
   async #onConfigItemChanged (eConfigItem) {
