@@ -7,7 +7,7 @@ class Delta {
 }
 
 
-export const RecordUtils {
+export const RecordUtil {
   compareRecords (recordA, recordB) {
     recordA = recordA || {}; recordB = recordB || {};
     const delta = new Delta();
