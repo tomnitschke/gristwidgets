@@ -97,7 +97,7 @@ export class GristDBAdapter {
   getColumnById (colRecId) {
     this.#assertInited();
     for (const schema of Object.values(this.#schemata)) {
-      return schema.columns.find((col) => col.colRec.id === colRecId) || null;
+      return Object.values(schema.columns).find((col) => col.colRec.id === colRecId) || null;
     }
   }
   getTableName (tableRecId) {
