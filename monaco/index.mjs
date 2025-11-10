@@ -84,7 +84,7 @@ class GristMonaco {
         this.debug("loadContent",content);
         this.#setEditorContent(content);
       }
-    } finally { this.this.eLoadingOverlay.hide(); }
+    } finally { this.eLoadingOverlay.hide(); }
   }
   async #onConfigItemChanged (eConfigItem) {
     const configKey = eConfigItem.id.slice(7);
