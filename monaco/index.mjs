@@ -42,7 +42,7 @@ class GristMonaco {
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
     this.isColumnMode = false;
     this.db = new GristDBAdapter();
-    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn');
+    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn'); this.eLoadingOverlay = document.querySelector('#loadingOverlay');
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
@@ -67,21 +67,24 @@ class GristMonaco {
     //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
   async loadContent () {
-    this.isColumnMode = this.widget.isColMapped('columnRecord');
-    if (this.isColumnMode) {
-      this.#setEditorContent(undefined, undefined, null, {readOnly: true});
-      const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
-      if (content.rowId && content.tableId) {
-        await this.db.init();
-        const column = this.db.getColumnById(content.rowId);
-        this.debug("loadContent: formula from column",column,":",column.colRec.formula);
-        this.#setEditorContent(column.colRec.formula, 'python');
+    this.eLoadingOverlay.show();
+    try {
+      this.isColumnMode = this.widget.isColMapped('columnRecord');
+      if (this.isColumnMode) {
+        this.#setEditorContent(undefined, undefined, null, {readOnly: true});
+        const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
+        if (content.rowId && content.tableId) {
+          await this.db.init();
+          const column = this.db.getColumnById(content.rowId);
+          this.debug("loadContent: formula from column",column,":",column.colRec.formula);
+          this.#setEditorContent(column.colRec.formula, 'python');
+        }
+      } else {
+        const content = this.widget.cursor.current[this.widget.colMappings.current.content];
+        this.debug("loadContent",content);
+        this.#setEditorContent(content);
       }
-    } else {
-      const content = this.widget.cursor.current[this.widget.colMappings.current.content];
-      this.debug("loadContent",content);
-      this.#setEditorContent(content);
-    }
+    } finally { this.this.eLoadingOverlay.hide(); }
   }
   async #onConfigItemChanged (eConfigItem) {
     const configKey = eConfigItem.id.slice(7);
