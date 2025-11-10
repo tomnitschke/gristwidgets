@@ -24,7 +24,7 @@ export const RecordUtil = {
       if (!(key in recordA)) { delta.added.push({[key]: value}); continue; }
     }
     return delta;
-  }
+  },
   compareRecordLists: function (recordsListA, recordsListB) {
     const delta = new Delta();
     for (const recordFromB of recordsListB) {
