@@ -71,7 +71,8 @@ class GristMonaco {
       if (content.rowId || content.tableId) {
         await this.db.init();
         const colRec = await this.db.getMetaRecords().colRecs.find((cr) => cr.id === content.rowId);
-        this.debug("COL REC:",colRec);
+        const colRec2 = this.db.getColumnById(content.rowId);
+        this.debug("COL REC:",colRec,colRec2);
       }
       return;
     }
