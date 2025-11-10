@@ -44,9 +44,17 @@ export class GristDBAdapter {
   async getMetaRecords (forceReload=false) {
     const wereMetaRecordsReloaded = await DBUtil.fetchMetaRecords(this.#metaRecords, forceReload);
     if (wereMetaRecordsReloaded) {
+      this.#refreshTableRecIds();
       this.#rebuildSchemata();
     }
     return this.#metaRecords;
+  }
+  #refreshTableRecIds () {
+    this.#tableRecIds = {};
+    for (const tableRec of this.#metaRecords.tableRecs) {
+      const tableName = tableRec.tableId;
+      this.#tableRecIds[tableName] = tableRec.id;
+    }
   }
   #rebuildSchemata () {
     for (const tableRec of this.#metaRecords.tableRecs) {
@@ -76,6 +84,21 @@ export class GristDBAdapter {
         }
       }}
     }
+  }
+  getSchema (tableName) {
+    this.#assertInited();
+    const schema = this.#schemata[tableName];
+    if (!schema) { throw new Error(`No schema available for unknown table '${tableName}'`); }
+    return schema;
+  }
+  getSchemaById (tableRecId) { return this.getSchema(this.getTableName(tableRecId)); }
+  getTableName (tableRecId) {
+    const tableName = this.#tableRecIds[tableRecId];
+    if (!tableName) { throw new Error(`Cannot find table with meta record id '${tableRecId}'.`); }
+    return tableName;
+  }
+  async getTableById (tableRecId, forceReload=false, shouldForceReloadAffectPreloadedTables=true, preloadReffedTablesMaxDepth=1) {
+    return await this.getTable(this.getTableName(tableRecId), forceReload, shouldForceReloadAffectPreloadedTables, preloadReffedTablesMaxDepth);
   }
   async getTable (tableName, forceReload=false, shouldForceReloadAffectPreloadedTables=true, preloadReffedTablesMaxDepth=1, _depth=0) {
     this.#assertInited();
