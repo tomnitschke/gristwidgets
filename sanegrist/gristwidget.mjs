@@ -198,4 +198,5 @@ export class GristWidget extends EventTarget {
   }
   get currentRecId () { return this.cursor.current?.id; }
   get prevRecId () { return this.cursor.prev?.id; }
+  isColMapped (mappedColName) { return Boolean(this.colMappings.current[mappedColName]); }
 };
