@@ -1,8 +1,8 @@
 'use strict';
 
-import { GristWidget } from './gristwidget.mjs';
-import { Util } from './util.mjs';
-import { GristDBAdapter } from './dbadapter.mjs';
+import { GristWidget } from '../sanegrist/gristwidget.mjs';
+import { Util } from '../sanegrist/util.mjs';
+import { GristDBAdapter } from '../sanegrist/dbadapter.mjs';
 import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 
