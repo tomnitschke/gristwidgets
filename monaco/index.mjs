@@ -69,14 +69,13 @@ class GristMonaco {
   async loadContent () {
     this.isColumnMode = this.widget.isColMapped('columnRecord');
     if (this.isColumnMode) {
+      this.#setEditorContent(undefined, undefined, null, true);
       const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
       if (content.rowId || content.tableId) {
         await this.db.init();
         const column = this.db.getColumnById(content.rowId);
         this.debug("loadContent: formula from column",column,":",column.colRec.formula);
         this.#setEditorContent(column.colRec.formula, 'python');
-      } else {
-        this.#setEditorContent(undefined, undefined, null, true);
       }
     } else {
       const content = this.widget.cursor.current[this.widget.colMappings.current.content];
