@@ -35,10 +35,12 @@ class GristMonaco {
         { name: 'content', title: 'Content', type: 'Text', strictType: true },
         { name: 'columnRecord', title: 'Column Record', type: 'Any', strictType: true, optional: true, description: `Grist column record (from table '_grist_Tables_column'). If provided, the editor operates on this column's formula rather than the mapped 'Content' column.` },
         { name: 'codeLang', title: 'Language', type: 'Text', optional: true, description: `Used for syntax highlighting and autocompletions on the currently loaded content. Defaults to '${this.config.defaultCodeLang}' if not mapped.` },
+        { name: 'isReadonly', title: 'Readonly', type: 'Bool', optional: true, description: `Boolean to indicate whether the editor should act as a readonly viewer for the currently loaded content.` },
         { name: 'monacoConfig', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
+    this.isColumnMode = false;
     this.db = new GristDBAdapter();
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn');
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
@@ -65,19 +67,22 @@ class GristMonaco {
     //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
   async loadContent () {
-    const isColumnMode = this.widget.isColMapped('columnRecord');
-    if (isColumnMode) {
+    this.isColumnMode = this.widget.isColMapped('columnRecord');
+    if (this.isColumnMode) {
       const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
       if (content.rowId || content.tableId) {
         await this.db.init();
-        const colRec = this.db.getColumnById(content.rowId);
-        this.debug("COL REC:",colRec);
+        const column = this.db.getColumnById(content.rowId);
+        this.debug("loadContent: formula from column",column,":",column.colRec.formula);
+        this.#setEditorContent(column.colRec.formula, 'python');
+      } else {
+        this.#setEditorContent(undefined, undefined, null, true);
       }
-      return;
+    } else {
+      const content = this.widget.cursor.current[this.widget.colMappings.current.content];
+      this.debug("loadContent",content);
+      this.#setEditorContent(content);
     }
-    const content = this.widget.cursor.current[this.widget.colMappings.current.content];
-    this.debug("loadContent",content);
-    this.#setEditorContent(content);
   }
   async #onConfigItemChanged (eConfigItem) {
     const configKey = eConfigItem.id.slice(7);
@@ -126,15 +131,21 @@ class GristMonaco {
     this.debug("applied config",this.config);      
   }
   #onDidChangeModelContent (evt) {
-    this.widget.scheduleWriteRecord({
-      [this.widget.colMappings.current.content]: this.editorModel.getValue(),
-    }, this.config.autosaveDelayMs);
+    if (this.isColumnMode) {
+      ///TODO
+    } else {
+      this.widget.scheduleWriteRecord({
+        [this.widget.colMappings.current.content]: this.editorModel.getValue(),
+      }, this.config.autosaveDelayMs);
+    }
   }
-  #setEditorContent (content=undefined, codeLang=undefined, modelOptions=null) {
+  #setEditorContent (content=undefined, codeLang=undefined, modelOptions=null, editorOptions=null) {
     codeLang = codeLang || this.widget.cursor.current?.[this.widget.colMappings.current.codeLang] || this.config.defaultCodeLang;
+    const isReadonly = Boolean(this.widget.cursor.current?.[this.widget.colMappings.current.isReadonly]);
     this.editorModel = this.api.editor.createModel(content || '', codeLang);
     this.editor.setModel(this.editorModel);
-    this.editorModel.updateOptions({ tabSize: this.config.tabSize, ...modelOptions });
+    this.editorModel.updateOptions({ tabSize: this.config.tabSize, readOnly: isReadonly, ...modelOptions });
+    this.editor.updateOptions({ readOnly: isReadonly, ...editorOptions });
   }
 }
 
