@@ -10,19 +10,19 @@ export class GristDBAdapter {
   #knownTableNames;
   #metaRecords;
   #docInfo;
-  #rawData;
+  //#rawData;
   #tableRecIds;
   #tables;
-  #data;
+  //#data;
   constructor () {
     this.#isInitialized = false;
     this.#knownTableNames = [];
     this.#metaRecords = {};
     this.#docInfo = {};
-    this.#rawData = {};
+    //this.#rawData = {};
     this.#tableRecIds = {};
     this.#tables = {};
-    this.#data = {};
+    //this.#data = {};
   }
   #assertInited () { if (!this.#isInitialized) { throw new Error(`Not initialized yet. Call init() first!`); } }
   async init () {
@@ -67,7 +67,7 @@ export class GristDBAdapter {
         const [isRef, refType, reffedTableName] = DBUtil.getRefInfo(colRec);
         const refInfo = isRef ? new RefInfo(this, refType, reffedTableName) : undefined;
         const widgetOptions = Util.jsonDecode(colRec.widgetOptions, {});
-        table.columns[colName] = new Column(this, colName, colRec.label, colRec, tableName, tableRec, colRec.type, DBUtil.isInternalColName(colName), isRef, refInfo, widgetOptions);
+        table.columns[colName] = new Column(table, colName, colRec.label, colRec, tableName, tableRec, colRec.type, DBUtil.isInternalColName(colName), isRef, refInfo, widgetOptions);
       }}
       this.#tables[tableName] = table;
     }
@@ -108,7 +108,7 @@ export class GristDBAdapter {
     if (!tableName) { throw new Error(`Cannot find table with meta record id '${tableRecId}'.`); }
     return tableName;
   }
-  async getData (tableName, forceReload=false, shouldForceReloadAffectPreloadedTables=true, preloadReffedTablesMaxDepth=1, _depth=0) {
+  /*async getData (tableName, forceReload=false, shouldForceReloadAffectPreloadedTables=true, preloadReffedTablesMaxDepth=1, _depth=0) {
     this.#assertInited();
     this.debug("getData",tableName,"forceReload:",forceReload);
     if (forceReload || !(tableName in this.#rawData)) {
@@ -118,7 +118,7 @@ export class GristDBAdapter {
       for (const rawRecord of rawRecords) {
         const fields = {};
         const recordId = rawRecord.id;
-        const record = new Record(this, tableName, table, recordId, rawRecord);
+        const record = new Record(table, tableName, recordId, rawRecord);
         for (const [colName, rawValue] of Object.entries(rawRecord)) {
           const column = table.columns[colName];
           let displayValue = rawValue;
@@ -138,7 +138,7 @@ export class GristDBAdapter {
             const reffedDataset = await this.getData(refInfo.reffedTableName, forceReload && shouldForceReloadAffectPreloadedTables, preloadReffedTablesMaxDepth, _depth + 1);
             refInfo.reffedDataset = reffedDataset;
             field.reffedRecord = undefined;
-            await field.getReffedRecord();  // This will also refresh field.displayValue
+            await field.getReffedRecord();  // This will update field.reffedRecord as well as field.displayValue
           }
         }
       }
@@ -146,48 +146,85 @@ export class GristDBAdapter {
       this.#data[tableName] = records;
     }
     return this.#data[tableName];
-  }
+  }*/
 }
 
 class Field {
-  constructor (db, record, colName, column, rawValue, displayValue, isAltText=false, isMarkdown=false, refInfo=undefined, reffedRecord=undefined) {
-    Object.assign(this, {db, record, colName, column, rawValue, displayValue, isAltText, isMarkdown, refInfo: refInfo || undefined, reffedRecord: reffedRecord || undefined});
+  constructor (record, colName, column, rawValue, displayValue, isAltText=false, isMarkdown=false, refInfo=undefined, reffedRecord=undefined) {
+    Object.assign(this, { record, colName, column, rawValue, displayValue, isAltText, isMarkdown, refInfo: refInfo || undefined, reffedRecord: reffedRecord || undefined });
   }
   async getReffedRecord (forceReload) {
     if (forceReload || !this.reffedRecord) {
-      this.reffedRecord = (await this.refInfo.getReffedData(forceReload))[rawValue] || null;
+      this.reffedRecord = (await this.refInfo.getReffableRecords(forceReload))[rawValue] || null;
       if (this.reffedRecord) { this.displayValue = this.reffedRecord.fields[this.refInfo.reffedColumn.colName].displayValue; }
     }
     return this.reffedRecord;
   }
+  async refreshReffedRecord () { await this.getReffedRecord(true); }
 }
 
 class Record {
-  constructor (db, tableName, table, id, rawRecord, fields=undefined) {
-    Object.assign(this, {db, tableName, table, id, rawRecord, fields: fields || {}});
+  constructor (table, tableName, id, rawRecord, fields=undefined) {
+    Object.assign(this, { table, tableName, id, rawRecord, fields: fields || {} });
   }
 }
 
 class RefInfo {
-  constructor (db, refType, reffedTableName, reffedDataset=undefined, reffedTable=undefined, reffedColumn=undefined) {
-    Object.assign(this, {db, refType, reffedTableName, reffedDataset: reffedDataset || undefined, reffedTable: reffedTable || undefined, reffedColumn: reffedColumn || undefined});
+  constructor (table, refType, reffedTableName, reffableRecords=undefined, reffedTable=undefined, reffedColumn=undefined) {
+    Object.assign(this, { table, refType, reffedTableName, reffableRecords: reffableRecords || undefined, reffedTable: reffedTable || undefined, reffedColumn: reffedColumn || undefined });
   }
-  async getReffedData (forceReload) {
-    if (forceReload || !this.reffedDataset) { this.reffedDataset = await this.db.getData(this.reffedTableName, forceReload); }
-    return this.reffedDataset;
+  async getReffableRecords (forceReload) {
+    if (forceReload || !this.reffableRecords) { this.reffableRecords = await this.table.getRecords(forceReload); }
+    return this.reffableRecords;
   }
+  async refreshReffableRecords () { return await this.getReffableRecords(true); }
 }
 
 class Column {
-  constructor (db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
-    Object.assign(this, {db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo: refInfo || undefined, widgetOptions: widgetOptions || {}});
+  constructor (table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
+    Object.assign(this, { table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo: refInfo || undefined, widgetOptions: widgetOptions || {} });
   }
 }
 
 class Table {
   constructor (db, tableName, tableRec) {
-    Object.assign(this, {db, tableName, tableRec});
-    this.columns = {id: new Column('id', 'id', null, tableName, tableRec, 'id', true, false)};
+    Object.assign(this, { db, tableName, tableRec });
+    this.columns = {id: new Column(this, 'id', 'id', null, tableName, tableRec, 'id', true, false)};
+    this.rawRecords = null;
+    this.records = {};
+  }
+  async getRecords (forceReload, loadReffedTablesMaxDepth=1, _depth=0) {
+    if (forceReload || !this.rawRecords) {
+      this.rawRecords = await DBUtil.fetchRecords(this.tableName);
+      this.records = {};
+      for (const rawRecord of this.rawRecords) {
+        const fields = {};
+        const recId = rawRecord.id;
+        const record = new Record(this, this.tableName, recId, rawRecord);
+        for (const [colName, rawValue] of Object.entries(rawRecord)) {
+          const column = this.columns[colName];
+          const displayValue = rawValue;
+          const isAltText = DBUtil.isAltTextInsteadOfId(rawValue);
+          const isMarkdown = (column.type == 'Text' && column.widgetOptions?.widget === 'Markdown');
+          const field = new Field(record, colName, column, rawValue, displayValue, isAltText, isMarkdown, column.refInfo);
+          fields[colName] = field;
+        }
+        record.fields = fields;
+        this.records[recId] = record;
+      }
+      for (const record of Object.values(this.records)) {
+        for (const field of Object.values(record.fields)) {
+          const column = field.column;
+          if (column.isRef && _depth < loadReffedTablesMaxDepth) {
+            const refInfo = column.refInfo;
+            refInfo.reffableRecords = await column.table.getRecords(forceReload, loadReffedTablesMaxDepth, _depth + 1);
+            field.reffedRecord = undefined;
+            await field.getReffedRecord();  // This will also refresh field.displayValue
+          }
+        }
+      }
+    }
+    return this.records;
   }
 }
 
