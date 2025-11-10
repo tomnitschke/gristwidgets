@@ -94,7 +94,14 @@ export class GristDBAdapter {
     return schema;
   }
   getSchemaById (tableRecId) { return this.getSchema(this.getTableName(tableRecId)); }
+  getColumnById (colRecId) {
+    this.#assertInited();
+    for (const schema of Object.values(this.#schemata)) {
+      return schema.columns.find((col) => col.colRec.id === colRecId) || null;
+    }
+  }
   getTableName (tableRecId) {
+    this.#assertInited();
     const tableName = this.#tableRecIds[tableRecId];
     if (!tableName) { throw new Error(`Cannot find table with meta record id '${tableRecId}'.`); }
     return tableName;
@@ -144,7 +151,7 @@ export class GristDBAdapter {
 
 class Field {
   constructor (db, record, colName, column, rawValue, displayValue, isAltText=false, isMarkdown=false, refInfo=undefined, reffedRecord=undefined) {
-    Object.assign(this, {db, record, colName, column, rawValue, displayValue, isAltText, isMarkdown, refInfo || undefined, reffedRecord || undefined});
+    Object.assign(this, {db, record, colName, column, rawValue, displayValue, isAltText, isMarkdown, refInfo: refInfo || undefined, reffedRecord: reffedRecord || undefined});
   }
   async getReffedRecord (forceReload) {
     if (forceReload || !this.reffedRecord) {
@@ -158,7 +165,7 @@ class Record { constructor (db, tableName, tableSchema, id, rawRecord, fields=un
     Object.assign(this, {db, tableName, tableSchema, id, rawRecord, fields: fields || {}}); }}
 class RefInfo {
   constructor (db, refType, reffedTableName, reffedTable=undefined, reffedTableSchema=undefined, reffedColumn=undefined) {
-    Object.assign(this, {db, refType, reffedTableName, reffedTable || undefined, reffedTableSchema || undefined, reffedColumn || undefined});
+    Object.assign(this, {db, refType, reffedTableName, reffedTable: reffedTable || undefined, reffedTableSchema: reffedTableSchema || undefined, reffedColumn: reffedColumn || undefined});
   }
   async getReffedTable (forceReload) {
     if (forceReload || !this.reffedTable) { this.reffedTable = await this.db.getTable(this.reffedTableName, forceReload); }
@@ -166,7 +173,7 @@ class RefInfo {
   }
 }
 class Column { constructor (db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
-    Object.assign(this, {db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo || undefined, widgetOptions: widgetOptions || {}}); }}
+    Object.assign(this, {db, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo: refInfo || undefined, widgetOptions: widgetOptions || {}}); }}
 class Schema { constructor (db, tableName, tableRec) {
     Object.assign(this, {db, tableName, tableRec});
     this.columns = {id: new Column('id', 'id', null, tableName, tableRec, 'id', true, false)}; }}
