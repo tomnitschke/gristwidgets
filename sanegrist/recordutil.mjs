@@ -8,7 +8,7 @@ class Delta {
 
 
 export const RecordUtil = {
-  compareRecords (recordA, recordB) {
+  compareRecords: function (recordA, recordB) {
     recordA = recordA || {}; recordB = recordB || {};
     const delta = new Delta();
     for (const [key, value] of Object.entries(recordA)) {
@@ -25,7 +25,7 @@ export const RecordUtil = {
     }
     return delta;
   }
-  compareRecordLists (recordsListA, recordsListB) {
+  compareRecordLists: function (recordsListA, recordsListB) {
     const delta = new Delta();
     for (const recordFromB of recordsListB) {
       const recordFromA = recordsListA.find((rec) => rec.id === recordFromB.id);
