@@ -1,7 +1,8 @@
 'use strict';
 
-import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
-import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
+import { GristWidget } from './gristwidget.mjs';
+import { Util } from './util.mjs';
+import { GristDBAdapter } from './dbadapter.mjs';
 import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 
@@ -38,6 +39,7 @@ class GristMonaco {
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
+    this.db = new GristDBAdapter();
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn');
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
@@ -60,12 +62,17 @@ class GristMonaco {
       ...(this.widget.cursor.current[this.widget.colMappings.current.monacoConfig] || null),
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
-    this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
+    //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
   async loadContent () {
-    const isColumnMode = Boolean(this.widget.colMappings.current.columnRecord);
+    const isColumnMode = this.widget.isColMapped('columnRecord');
     if (isColumnMode) {
-      ///TODO
+      const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
+      if (content.rowId || content.tableId) {
+        await this.db.init();
+        const colRec = await this.db.getMetaRecords().colRecs.find((cr) => cr.id === content.rowId);
+        this.debug("COL REC:",colRec);
+      }
       return;
     }
     const content = this.widget.cursor.current[this.widget.colMappings.current.content];
