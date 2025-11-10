@@ -11,6 +11,7 @@ export class GristDBAdapter {
   #metaRecords;
   #docInfo;
   #rawTables;
+  #tableRecIds;
   #schemata;
   #tables;
   constructor () {
@@ -19,6 +20,7 @@ export class GristDBAdapter {
     this.#metaRecords = {};
     this.#docInfo = {};
     this.#rawTables = {};
+    this.#tableRecIds = {};
     this.#schemata = {};
     this.#tables = {};
   }
