@@ -1,16 +1,20 @@
 'use strict';
 
 
-class Delta {
+class RecordsDelta {
   constructor (added=undefined, changed=undefined, removed=undefined) { Object.assign(this, { added: added || {}, changed: changed || {}, removed: removed || {} }); }
   get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }
+}
+class FieldsDelta {
+  constructor (added=undefined, changed=undefined, removed=undefined) { Object.assign(this, { added: added || [], changed: changed || [], removed: removed || [] }); }
+  get hasAnyChanges () { return Boolean(this.added.length || this.changed.length || this.removed.length); }
 }
 
 
 export const RecordUtil = {
   compareRecords: function (recordA, recordB) {
     recordA = recordA || {}; recordB = recordB || {};
-    const delta = new Delta();
+    const delta = new FieldsDelta();
     for (const [key, value] of Object.entries(recordA)) {
       if (!(key in recordB)) { delta.removed.push({[key]: value}); continue; }
       if (Array.isArray(value)) {
@@ -26,7 +30,7 @@ export const RecordUtil = {
     return delta;
   },
   compareRecordLists: function (recordsListA, recordsListB) {
-    const delta = new Delta();
+    const delta = new RecordsDelta();
     for (const recordFromB of recordsListB) {
       const recordFromA = recordsListA.find((rec) => rec.id === recordFromB.id);
       if (!recordFromA) { delta.added[recordFromB.id] = { added: {...recordFromB}, changed: {}, removed: {} }; continue; }
