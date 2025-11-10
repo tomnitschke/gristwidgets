@@ -11,12 +11,11 @@
   <style>
     :not(:defined) { visibility: hidden; }
     html, body { var(--grist-theme-medium-font-size); font-family: var(--grist-theme-font-family); }
-    sl-dialog::part(close-button) { display: none; }
   </style>
 </head>
 <body style="height: 100%; display: flex; flex-direction: column; margin: 0px; overflow: hidden;">
   <div id="monaco" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
-  <sl-dialog id="config" label="Config">
+  <sl-dialog id="config" label="Config" no-header="true">
     <div>
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
       <sl-input class="configItem" id="config_defaultCodeLang" label="Default language" placeholder="" clearable size="small" help-text="Which coding language to use by default if no 'Language' column is mapped."></sl-input>
