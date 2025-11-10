@@ -211,7 +211,7 @@ class Schema { constructor (db, tableName, tableRec) {
 
 
 
-
+/*
   static TableInfo = class TableInfo{constructor(tableId,tableRec,columns=null){ Object.assign(this,{tableId,tableRec}); this.columns = columns || {}; }}
   static Column = class Column{constructor(colId,label,colRec,tableId,tableRec,type,isInternal,isRef,refInfo=undefined,widgetOptions=null){ Object.assign(this,{colId,label,colRec,tableId,tableRec,type,isInternal,isRef});
     this.widgetOptions = widgetOptions || {}; if (refInfo) { this.refInfo = refInfo; } }}
@@ -388,3 +388,4 @@ class Schema { constructor (db, tableName, tableRec) {
   _updateRawRecord (tableName, recId, fieldsAndValues) { const dataRecord = this.data[tableName].find((rec) => rec.id == recId); //this.debug("_updateRawRecord",tableName,recId,"FROM:",dataRecord?.rawRecord,"TO:",fieldsAndValues);
     if (dataRecord) { dataRecord.rawRecord = {...dataRecord.rawRecord, ...fieldsAndValues}; }}
 }
+*/
