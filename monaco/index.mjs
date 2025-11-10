@@ -69,7 +69,7 @@ class GristMonaco {
   async loadContent () {
     this.isColumnMode = this.widget.isColMapped('columnRecord');
     if (this.isColumnMode) {
-      this.#setEditorContent(undefined, undefined, null, true);
+      this.#setEditorContent(undefined, undefined, null, {readOnly: true});
       const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
       if (content.rowId && content.tableId) {
         await this.db.init();
