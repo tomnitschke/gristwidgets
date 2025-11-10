@@ -71,7 +71,7 @@ class GristMonaco {
     if (this.isColumnMode) {
       this.#setEditorContent(undefined, undefined, null, true);
       const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
-      if (content.rowId || content.tableId) {
+      if (content.rowId && content.tableId) {
         await this.db.init();
         const column = this.db.getColumnById(content.rowId);
         this.debug("loadContent: formula from column",column,":",column.colRec.formula);
