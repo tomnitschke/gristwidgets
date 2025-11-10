@@ -1,8 +1,8 @@
 'use strict';
 
-import { GristWidget } from '../sanegrist/gristwidget.mjs';
-import { Util } from '../sanegrist/util.mjs';
-import { GristDBAdapter } from '../sanegrist/dbadapter.mjs';
+import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
+import { GristDBAdapter } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/dbadapter.mjs';
 import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 
@@ -70,9 +70,8 @@ class GristMonaco {
       const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
       if (content.rowId || content.tableId) {
         await this.db.init();
-        const colRec = await this.db.getMetaRecords().colRecs.find((cr) => cr.id === content.rowId);
-        const colRec2 = this.db.getColumnById(content.rowId);
-        this.debug("COL REC:",colRec,colRec2);
+        const colRec = this.db.getColumnById(content.rowId);
+        this.debug("COL REC:",colRec);
       }
       return;
     }
