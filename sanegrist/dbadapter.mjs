@@ -97,8 +97,10 @@ export class GristDBAdapter {
   getColumnById (colRecId) {
     this.#assertInited();
     for (const schema of Object.values(this.#schemata)) {
-      return Object.values(schema.columns).find((col) => col.colRec.id === colRecId) || null;
+      const column = Object.values(schema.columns).find((col) => col.colRec.id === colRecId) || null;
+      if (column) { return column; }
     }
+    throw new Error(`Cannot find column with meta record id '${colRecId}.`);
   }
   getTableName (tableRecId) {
     this.#assertInited();
