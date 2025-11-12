@@ -139,8 +139,6 @@ class RefInfo {
 }
 
 class Column {
-  new Column(table, tableName, colRec, DBUtil.isInternalColName(colName), isRef, refInfo, widgetOptions);
-  //constructor (table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
   constructor (table, tableName, colRec) {
     Object.assign(this, { table, tableName, colRec });
     this.refreshInfo();
