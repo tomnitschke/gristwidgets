@@ -124,7 +124,16 @@ export class GristWidget extends EventTarget {
     return wasCursorChanged; }
   #updateColMappings (colMappings, disableEventDispatch=false) {
     this.#wereColMappingsInitialized = true;
-    this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappings || {};
+    // When a column gets unmapped that was previously mapped, of course Grist doesn't remove the corresponding key from colMappings. No, it just assigns
+    // it a null value, so that we're left guessing whether the col is now unmapped or rather still mapped, just to something that happens to be null. Just awesome.
+    // However, the onRecord/onRecords events seem to transmit partial record objects that contain just the keys that we actually have a mapping for.
+    // So we're using those here to validate colMappings bloody manually.
+    const colMappingsSanitized;
+    if (this.#wasCursorInitialized || this.#wereRecordsInitialized) {
+      colMappingsSanitized = Object.fromEntries(Object.entries(colMappings).filter(([mappedColName, colName] => Object.keys(this.#wasCursorInitialized ? this.cursor.current : this.records.current[0]).includes(colName)));
+    }
+    this.debug("#updateColMappings",colMappings,"sanitized:",colMappingsSanitized);
+    this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappingsSanitized || {};
     const wereColMappingsChanged = !Util.areDictsEqual(this.colMappings.prev, this.colMappings.current);
     if (!disableEventDispatch && wereColMappingsChanged) {
       this.dispatchEvent(new GristWidget.ColMappingsChangedEvent(this.colMappings.prev, this.colMappings.current)); }
@@ -132,18 +141,6 @@ export class GristWidget extends EventTarget {
   #updateOptions (options) { this.options.prev = this.options.current; this.options.current = options; }
   getRecordsDelta (prevRecords, currentRecords) {
     return RecordUtil.compareRecordLists(prevRecords, currentRecords);
-    /*const delta = { get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }, added: {}, changed: {}, removed: {} };
-    for (const currentRecord of currentRecords) {
-      const prevRecord = prevRecords.find((rec) => rec.id === currentRecord.id);
-      if (!prevRecord) { delta.added[currentRecord.id] = { added: {...currentRecord}, changed: {}, removed: {} }; continue; }
-      const fieldsDelta = Util.dictsDelta(prevRecord, currentRecord);
-      if (fieldsDelta.hasAnyChanges) { delta.changed[currentRecord.id] = fieldsDelta; continue; }
-    }
-    for (const prevRecord of prevRecords) {
-      const currentRecord = currentRecords.find((rec) => rec.id === prevRecord.id);
-      if (!currentRecord) { delta.removed[prevRecord.id] = { added: {}, changed: {}, removed: {...prevRecord} }; continue; }
-    }
-    return delta;*/
   }
   /******************* TODO: document all below *************************/
   async moveCursor (newCursor) {
