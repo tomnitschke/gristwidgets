@@ -7,16 +7,16 @@ import { RecordUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist
 
 /********************************************************************************************************************************************/
 export class GristWidget extends EventTarget {
-  static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings){super('ready');Object.assign(this,{records,cursor,colMappings});}}
+  static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings){super('ready');Object.assign(this,{records,cursor,colMappings});}};
   static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings,delta){super('recordsModified');
-    Object.assign(this,{prevRecords,records,colMappings,delta});}}
-  static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}}
-  static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}}
-  static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings,colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}}
-  static OptionsEditorOpenedEvent = class OptionsEditorOpenedEvent extends Event {constructor(prevOptions,options){super('optionsEditorOpened');Object.assign(this,{prevOptions,options});}}
-  static OptionsChangedEvent = class OptionsChangedEvent extends Event {constructor(prevOptions,options){super('optionsChanged');Object.assign(this,{prevOptions,options});}}
-  static WidgetHiddenEvent = class WidgetHiddenEvent extends Event {constructor(){super('widgetHidden');}}
-  static WidgetShownEvent = class WidgetShownEvent extends Event{constructor(){super('widgetShown');}}
+    Object.assign(this,{prevRecords,records,colMappings,delta});}};
+  static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}};
+  static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}};
+  static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings,colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}};
+  static OptionsEditorOpenedEvent = class OptionsEditorOpenedEvent extends Event {constructor(prevOptions,options){super('optionsEditorOpened');Object.assign(this,{prevOptions,options});}};
+  static OptionsChangedEvent = class OptionsChangedEvent extends Event {constructor(prevOptions,options){super('optionsChanged');Object.assign(this,{prevOptions,options});}};
+  static WidgetHiddenEvent = class WidgetHiddenEvent extends Event {constructor(){super('widgetHidden');}};
+  static WidgetShownEvent = class WidgetShownEvent extends Event{constructor(){super('widgetShown');}};
   #wasReadyEventDispatched;
   #wereColMappingsInitialized;
   #wereRecordsInitialized;
