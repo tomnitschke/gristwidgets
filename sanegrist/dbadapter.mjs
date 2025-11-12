@@ -144,16 +144,17 @@ class Column {
     this.refreshInfo();
   }
   refreshInfo () {
-    const [isRef, refType, reffedTableName] = DBUtil.getRefInfo(this.colRec);
+    const [isRef, refType, reffedTableName] = this.colRec ? DBUtil.getRefInfo(this.colRec) : [false, null, null];
     this.isRef = isRef;
     this.refInfo = isRef ? new RefInfo(this, refType, reffedTableName) : undefined;
-    this.widgetOptions = Util.jsonDecode(this.colRec.widgetOptions, {});
-    this.isInternal = DBUtil.isInternalColName(this.colRec.colId);
-    this.colName = this.colRec.colId;
-    this.label = this.colRec.title;
-    this.type = this.colRec.type;
+    this.widgetOptions = this.colRec ? Util.jsonDecode(this.colRec.widgetOptions, {}) : {};
+    this.colName = this.colRec ? this.colRec.colId : 'id';
+    this.isInternal = DBUtil.isInternalColName(this.colName);
+    this.label = this.colRec ? this.colRec.title : 'id';
+    this.type = this.colRec ? this.colRec.type : 'ID';
   }
   async write (fieldsAndValues) {
+    if (this.colName === 'id') { throw new Error(`Cannot write to the special 'id' column.`); }
     this.colRec = {...this.colRec, ...fieldsAndValues};
     this.refreshInfo();
     await grist.docApi.applyUserActions([
@@ -165,7 +166,7 @@ class Column {
 class Table {
   constructor (db, tableName, tableRec) {
     Object.assign(this, { db, tableName, tableRec });
-    this.columns = {id: new Column(this, 'id', 'id', null, tableName, tableRec, 'id', true, false)};
+    this.columns = {id: new Column(this, tableName, null)};
     this.rawRecords = null;
     this.records = {};
   }
