@@ -136,10 +136,11 @@ class GristMonaco {
     for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
       if (elemType == 'input' || elemType == 'textarea') {
         if (elem.classList.contains('configParseAsJSON')) {
+          const emptyJson = ['""', 'undefined', 'null', '{}'];
           elem.placeholder = Util.jsonEncode(configValue);
-          elem.placeholder = elem.placeholder === '""' || elem.placeholder === '{}' ? '' : elem.placeholder;
+          elem.placeholder = emptyJson.includes(elem.placeholder) ? '' : elem.placeholder;
           elem.value = Util.jsonEncode(storedValue);
-          elem.value = elem.value === '""' || elem.value === '{}' ? '' : elem.value;
+          elem.value = emptyJson.includes(elem.value) ? '' : elem.value;
         } else {
           elem.placeholder = configValue;
           elem.value = storedValue || '';
