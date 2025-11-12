@@ -130,7 +130,7 @@ export class GristWidget extends EventTarget {
     // So we're using those here to validate colMappings bloody manually.
     const colMappingsSanitized;
     if (this.#wasCursorInitialized || this.#wereRecordsInitialized) {
-      colMappingsSanitized = Object.fromEntries(Object.entries(colMappings).filter(([mappedColName, colName] => Object.keys(this.#wasCursorInitialized ? this.cursor.current : this.records.current[0]).includes(colName)));
+      colMappingsSanitized = Object.fromEntries(Object.entries(colMappings).filter(([mappedColName, colName]) => Object.keys(this.#wasCursorInitialized ? this.cursor.current : this.records.current[0]).includes(colName)));
     }
     this.debug("#updateColMappings",colMappings,"sanitized:",colMappingsSanitized);
     this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappingsSanitized || {};
