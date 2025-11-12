@@ -19,6 +19,9 @@ const Config = {
   fontSize: 13,
   enableCodeFolding: true,
   enableWordWrap: true,
+  enableMinimap: false,
+  additionalMonacoConfig: {},
+  enableAutoIndent: true,
 }
 
 
@@ -39,7 +42,7 @@ class GristMonaco {
         { name: 'columnRecord', title: 'Column Record', type: 'Any', strictType: true, optional: true, description: `Grist column record (from table '_grist_Tables_column'). If provided, the editor operates on this column's formula rather than the mapped 'Content' column.` },
         { name: 'codeLang', title: 'Language', type: 'Text', optional: true, description: `Used for syntax highlighting and autocompletions on the currently loaded content. Defaults to '${this.config.defaultCodeLang}' if not mapped.` },
         { name: 'isReadonly', title: 'Readonly', type: 'Bool', optional: true, description: `Boolean to indicate whether the editor should act as a readonly viewer for the currently loaded content.` },
-        { name: 'monacoConfig', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
+        { name: 'additionMonacoConfigForRecord', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. Options given here override those given in the widget config, if any. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
@@ -67,7 +70,10 @@ class GristMonaco {
       wordWrap: this.config.enableWordWrap ? 'on' : 'off',
       lineNumbers: 'on',
       folding: this.config.enableCodeFolding,
-      ...(this.widget.cursor.current[this.widget.colMappings.current.monacoConfig] || null),
+      minimap: { enabled: this.config.enableMinimap },
+      autoIndent: this.config.enableAutoIndent ? 'advanced' : 'none',
+      ...this.config.additionalMonacoConfig,
+      ...(this.widget.cursor.current[this.widget.colMappings.current.additionMonacoConfigForRecord] || null),
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
@@ -95,8 +101,14 @@ class GristMonaco {
   async #onConfigItemChanged (eConfigItem) {
     const configKey = eConfigItem.id.slice(7);
     let value = eConfigItem.value;
-    if (eConfigItem.tagName.toLowerCase() === 'sl-checkbox') { value = eConfigItem.checked; }
-    else if (eConfigItem.type === 'number') { value = isNaN(eConfigItem.valueAsNumber) ? 0 : eConfigItem.valueAsNumber; }
+    if (eConfigItem.tagName.toLowerCase() === 'sl-checkbox') {
+      value = eConfigItem.checked;
+    } else if (eConfigItem.type === 'number') {
+      value = isNaN(eConfigItem.valueAsNumber) ? 0 : eConfigItem.valueAsNumber;
+    }
+    if (eConfigItem.classList.contains('configParseAsJSON')) {
+      value = Util.JsonDecode(value, null) || undefined;
+    }
     this.debug("save config item", configKey, eConfigItem, value);
     await grist.setOption(configKey, value);
   }
@@ -106,11 +118,12 @@ class GristMonaco {
       const storedValue = await grist.getOption(configKey);
       const eInput = this.eConfigPanel.querySelector(`sl-input#config_${configKey}`);
       const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config_${configKey}`);
-      if (!eInput && !eCheckbox) { continue; }
+      const eTextarea = this.eConfigPanel.querySelector(`sl-textarea#config_${configKey}`);
+      if (!eInput && !eCheckbox && !eTextarea) { continue; }
       elems.push({
         elem: eInput || eCheckbox,
-        elemType: eInput ? 'input' : eCheckbox ? 'checkbox' : 'unknown',
-        elemValue: (eInput || eCheckbox).value,
+        elemType: eInput ? 'input' : eCheckbox ? 'checkbox' : eTextarea ? 'textarea' : 'unknown',
+        elemValue: (eInput || eCheckbox || eTextarea).value,
         storedValue: storedValue,
         configKey: configKey,
         configValue: configValue,
@@ -121,11 +134,10 @@ class GristMonaco {
   async openConfigPanel () {
     this.eConfigPanel.show();
     for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
-      if (elemType == 'input') {
+      if (elemType == 'input' || elemType == 'textarea') {
         elem.placeholder = configValue;
         elem.value = storedValue || '';
-      }
-      if (elemType == 'checkbox') {
+      } else if (elemType == 'checkbox') {
         elem.value = configValue;
         elem.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
       }
