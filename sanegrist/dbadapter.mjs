@@ -79,7 +79,7 @@ export class GristDBAdapter {
         refInfo.reffedTable = reffedTable;
         if (colRecIdOfVisibleCol) {
           refInfo.reffedColumn = Object.values(reffedTable.columns)
-            .find((otherColumn) => otherColumn.colRec.id === colRecIdOfVisibleCol && otherColumn.colName !== 'id')
+            .find((otherColumn) => otherColumn.colName !== 'id' && otherColumn.colRec.id === colRecIdOfVisibleCol)
             || null;
         } else {
           column.refInfo.reffedColumn = reffedTable.columns['id'];
@@ -97,7 +97,7 @@ export class GristDBAdapter {
   getColumnById (colRecId) {
     this.#assertInited();
     for (const table of Object.values(this.#tables)) {
-      const column = Object.values(table.columns).find((col) => col.colRec.id === colRecId) || null;
+      const column = Object.values(table.columns).find((col) => col.colName !== 'id' && col.colRec.id === colRecId) || null;
       if (column) { return column; }
     }
     throw new Error(`Cannot find column with meta record id '${colRecId}.`);
