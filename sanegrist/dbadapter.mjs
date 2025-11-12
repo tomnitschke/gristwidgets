@@ -108,45 +108,6 @@ export class GristDBAdapter {
     if (!tableName) { throw new Error(`Cannot find table with meta record id '${tableRecId}'.`); }
     return tableName;
   }
-  /*async getData (tableName, forceReload=false, shouldForceReloadAffectPreloadedTables=true, preloadReffedTablesMaxDepth=1, _depth=0) {
-    this.#assertInited();
-    this.debug("getData",tableName,"forceReload:",forceReload);
-    if (forceReload || !(tableName in this.#rawData)) {
-      const rawRecords = await DBUtil.fetchRecords(tableName);
-      const table = this.#tables[tableName];
-      const records = {};
-      for (const rawRecord of rawRecords) {
-        const fields = {};
-        const recordId = rawRecord.id;
-        const record = new Record(table, tableName, recordId, rawRecord);
-        for (const [colName, rawValue] of Object.entries(rawRecord)) {
-          const column = table.columns[colName];
-          let displayValue = rawValue;
-          const isAltText = DBUtil.isAltTextInsteadOfId(rawValue);
-          const isMarkdown = (column.type == 'Text' && column.widgetOptions?.widget === 'Markdown');
-          const field = new Field(this, record, colName, column, rawValue, displayValue, isAltText, isMarkdown, column.refInfo);
-          fields[colName] = field;
-        }
-        record.fields = fields;
-        records[recordId] = record;
-      }
-      for (const record of Object.values(records)) {
-        for (const field of Object.values(record.fields)) {
-          const column = field.column;
-          if (column.isRef && _depth < preloadReffedTablesMaxDepth) {
-            const refInfo = column.refInfo;
-            const reffedDataset = await this.getData(refInfo.reffedTableName, forceReload && shouldForceReloadAffectPreloadedTables, preloadReffedTablesMaxDepth, _depth + 1);
-            refInfo.reffedDataset = reffedDataset;
-            field.reffedRecord = undefined;
-            await field.getReffedRecord();  // This will update field.reffedRecord as well as field.displayValue
-          }
-        }
-      }
-      this.#rawData[tableName] = rawRecords;
-      this.#data[tableName] = records;
-    }
-    return this.#data[tableName];
-  }*/
 }
 
 class Field {
@@ -183,6 +144,11 @@ class RefInfo {
 class Column {
   constructor (table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
     Object.assign(this, { table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo: refInfo || undefined, widgetOptions: widgetOptions || {} });
+  }
+  async write (fieldsAndValues) {
+    grist.docApi.applyUserActions([
+      ['UpdateRecord', '_grist_Tables_column', this.colRec.id, fieldsAndValues],
+    ]);
   }
 }
 
