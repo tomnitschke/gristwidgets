@@ -128,7 +128,7 @@ export class GristWidget extends EventTarget {
     // it a null value, so that we're left guessing whether the col is now unmapped or rather still mapped, just to something that happens to be null. Just awesome.
     // However, the onRecord/onRecords events seem to transmit partial record objects that contain just the keys that we actually have a mapping for.
     // So we're using those here to validate colMappings bloody manually.
-    const colMappingsSanitized;
+    let colMappingsSanitized = colMappings;
     if (this.#wasCursorInitialized || this.#wereRecordsInitialized) {
       colMappingsSanitized = Object.fromEntries(Object.entries(colMappings).filter(([mappedColName, colName]) => Object.keys(this.#wasCursorInitialized ? this.cursor.current : this.records.current[0]).includes(colName)));
     }
