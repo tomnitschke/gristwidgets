@@ -107,7 +107,7 @@ class GristMonaco {
       value = isNaN(eConfigItem.valueAsNumber) ? 0 : eConfigItem.valueAsNumber;
     }
     if (eConfigItem.classList.contains('configParseAsJSON')) {
-      value = Util.JsonDecode(value, null) || undefined;
+      value = Util.jsonDecode(value, null) || undefined;
     }
     this.debug("save config item", configKey, eConfigItem, value);
     await grist.setOption(configKey, value);
@@ -136,7 +136,7 @@ class GristMonaco {
     for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
       if (elemType == 'input' || elemType == 'textarea') {
         elem.placeholder = configValue;
-        elem.value = elem.classList.contains('configParseAsJSON') ? Util.jsonEncode(storedValue || '', '') : storedValue || '';
+        elem.value = elem.classList.contains('configParseAsJSON') ? Util.jsonEncode(storedValue || null, '') : storedValue || '';
       } else if (elemType == 'checkbox') {
         elem.value = configValue;
         elem.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
