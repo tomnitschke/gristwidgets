@@ -39,7 +39,9 @@
         <sl-checkbox class="configItem" id="config_enableMinimap" size="small" help-text="Check to enable a minimap next to the scrollbar.">Enable minimap</sl-checkbox>
         <sl-checkbox class="configItem" id="config_enableAutoIndent" size="small" help-text="Enable automatic indentation of nested code blocks.">Enable auto indent</sl-checkbox>
       </sl-button-group>
-      <sl-textarea class="configItem configParseAsJSON" id="config_additionalMonacoConfig" label="Additional Monaco Config" help-text="You may provide additional config options for the Monaco editor here. See https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html for available options."></sl-textarea>
+      <sl-textarea class="configItem configParseAsJSON" id="config_additionalMonacoConfig" label="Additional Monaco Config">
+        <p slot="help-text">You may provide additional config options for the Monaco editor here. See <a href="https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html">the Monaco API docs</a> for available options.</p>
+      </sl-textarea>
     </div>
     <sl-button-group slot="footer">
       <!--<sl-button id="configSaveBtn" size="small" variant="primary" onclick="document.querySelector('#config').hide();">Save</sl-button>-->
