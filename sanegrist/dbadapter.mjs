@@ -78,8 +78,8 @@ export class GristDBAdapter {
         const reffedTable = this.#tables[refInfo.reffedTableName];
         refInfo.reffedTable = reffedTable;
         if (colRecIdOfVisibleCol) {
-          refInfo.reffedColumn = Object.values(reffedTable)
-            .find((otherColumn) => otherColumn.colRec.id === colRecIdOfVisibleCol && otherColumn.colId !== 'id')
+          refInfo.reffedColumn = Object.values(reffedTable.columns)
+            .find((otherColumn) => otherColumn.colRec.id === colRecIdOfVisibleCol && otherColumn.colName !== 'id')
             || null;
         } else {
           column.refInfo.reffedColumn = reffedTable.columns['id'];
