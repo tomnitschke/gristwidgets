@@ -7,7 +7,7 @@ import { RecordUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist
 
 /********************************************************************************************************************************************/
 export class GristWidget extends EventTarget {
-  static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings){super('ready');Object.assign(this,{records,cursor,colMappings});}};
+  static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings,options){super('ready');Object.assign(this,{records,cursor,colMappings,options});}};
   static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings,delta){super('recordsModified');
     Object.assign(this,{prevRecords,records,colMappings,delta});}};
   static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}};
@@ -21,13 +21,14 @@ export class GristWidget extends EventTarget {
   #wereColMappingsInitialized;
   #wereRecordsInitialized;
   #wasCursorInitialized;
+  #wereOptionsInitialized
   #eventControl;
   #recordOps;
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
     this.name = widgetName;
     this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
     this.#wasReadyEventDispatched = false;
-    this.#wereColMappingsInitialized = false; this.#wereRecordsInitialized = false; this.#wasCursorInitialized = false;
+    this.#wereColMappingsInitialized = false; this.#wereRecordsInitialized = false; this.#wasCursorInitialized = false; this.#wereOptionsInitialized = false;
     this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
     this.#recordOps = {};
     this.tableName = grist.getSelectedTableIdSync();
@@ -71,14 +72,14 @@ export class GristWidget extends EventTarget {
     this.debug('setOptions',options);
     return await grist.setOptions(options);
   }*/
-  get #isReadyEventInformationAssembled () { return (this.#wereColMappingsInitialized && this.#wereRecordsInitialized && this.#wasCursorInitialized); }
+  get #isReadyEventInformationAssembled () { return (this.#wereColMappingsInitialized && this.#wereRecordsInitialized && this.#wasCursorInitialized && this.#wereOptionsInitialized); }
   #onRecords (records, colMappings) {
     this.debug("Grist message onRecords",records,colMappings);
     if (!this.#eventControl.onRecords.wasEverTriggered) {
       this.#eventControl.onRecords.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateRecords(records, true);
       if (!this.#wasReadyEventDispatched && this.#isReadyEventInformationAssembled) { this.debug("dispatching ready-event from onRecords",this.records,this.cursor,this.colMappings); 
-        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current)); }
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current, this.options.current)); }
       return;
     }
     if (this.#eventControl.onRecords.skip) { this.#eventControl.onRecords.skip--; return; }
@@ -90,7 +91,7 @@ export class GristWidget extends EventTarget {
       this.#eventControl.onRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
       if (!this.#wasReadyEventDispatched && this.#isReadyEventInformationAssembled) { this.debug("dispatching ready-event from onRecord",this.records,this.cursor,this.colMappings);
-        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current, this.options.current));
       }
       return;
     }
@@ -103,7 +104,7 @@ export class GristWidget extends EventTarget {
       this.#eventControl.onNewRecord.wasEverTriggered = true;
       this.#updateColMappings(colMappings, true); this.#updateCursor(undefined, true);
       if (!this.#wasReadyEventDispatched && this.#isReadyEventInformationAssembled) { this.debug("dispatching ready-event from onNewRecord",this.records,this.cursor,this.colMappings);
-        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current));
+        this.#wasReadyEventDispatched = true; this.dispatchEvent(new GristWidget.ReadyEvent(this.records.current, this.cursor.current, this.colMappings.current, this.options.current));
       }
       return;
     }
@@ -138,7 +139,11 @@ export class GristWidget extends EventTarget {
     if (!disableEventDispatch && wereColMappingsChanged) {
       this.dispatchEvent(new GristWidget.ColMappingsChangedEvent(this.colMappings.prev, this.colMappings.current)); }
     return wereColMappingsChanged; }
-  #updateOptions (options) { this.options.prev = this.options.current; this.options.current = options; }
+  #updateOptions (options) {
+    this.#wereOptionsInitialized = true;
+    this.options.prev = this.options.current;
+    this.options.current = options;
+  }
   getRecordsDelta (prevRecords, currentRecords) {
     return RecordUtil.compareRecordLists(prevRecords, currentRecords);
   }
