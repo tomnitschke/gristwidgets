@@ -72,7 +72,7 @@ export class GristDBAdapter {
       this.#tables[tableName] = table;
     }
     for (const [tableName, table] of Object.entries(this.#tables)) {
-      for (const [colName, column] of Object.entries(table)) { if (column.isRef) {
+      for (const [colName, column] of Object.entries(table.columns)) { if (column.isRef) {
         const colRecIdOfVisibleCol = column.colRec.visibleCol;
         const refInfo = column.refInfo;
         const reffedTable = this.#tables[refInfo.reffedTableName];
