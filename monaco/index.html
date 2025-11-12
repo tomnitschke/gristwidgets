@@ -19,7 +19,10 @@
   <div id="monaco" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
   <sl-dialog id="config" label="Config">
     <div>
+      <sl-checkbox class="configItem" id="config_enableAutosave" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave</sl-checkbox>
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
+      <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave when working in formula mode</sl-checkbox>
+      <sl-input class="configItem" id="config_autosaveDelayMsForFormulas" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds; for formula mode only."></sl-input>
       <sl-input class="configItem" id="config_defaultCodeLang" label="Default language" placeholder="" clearable size="small" help-text="Which coding language to use by default if no 'Language' column is mapped."></sl-input>
       <sl-input class="configItem" id="config_tabSize" type="number" min="1" label="Tab size" placeholder="" clearable size="small" help-text="How many spaces amount to one tab."></sl-input>
       <sl-input class="configItem" id="config_fontSize" type="number" min="1" label="Font size" placeholder="" clearable size="small" help-text="The size of the font inside the editor."></sl-input>
