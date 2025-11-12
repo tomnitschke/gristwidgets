@@ -12,16 +12,20 @@
     :not(:defined) { visibility: hidden; }
     html, body { var(--grist-theme-medium-font-size); font-family: var(--grist-theme-font-family); }
     sl-dialog::part(close-button) { display: none; }
+    #configContainer { display:flex; flex-direction:column; row-gap:var(--sl-spacing-small); }
   </style>
 </head>
 <body style="height: 100%; display: flex; flex-direction: column; margin: 0px; overflow: hidden;">
   <sl-button id="saveBtn" variant="primary" size="small" style="z-index:9999;position:absolute;top:10px;right:10px;display:none;">Save</sl-button>
   <div id="monaco" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
   <sl-dialog id="config" label="Config">
-    <div>
-      <sl-checkbox class="configItem" id="config_enableAutosave" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave</sl-checkbox>
+    <div id="configContainer">
+      <h1>Autosave</h1>
+      <sl-button-group>
+        <sl-checkbox class="configItem" id="config_enableAutosave" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave</sl-checkbox>
+        <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave when working in formula mode</sl-checkbox>
+      </sl-button-group>
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
-      <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave when working in formula mode</sl-checkbox>
       <sl-input class="configItem" id="config_autosaveDelayMsForFormulas" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds; for formula mode only."></sl-input>
       <sl-input class="configItem" id="config_defaultCodeLang" label="Default language" placeholder="" clearable size="small" help-text="Which coding language to use by default if no 'Language' column is mapped."></sl-input>
       <sl-input class="configItem" id="config_tabSize" type="number" min="1" label="Tab size" placeholder="" clearable size="small" help-text="How many spaces amount to one tab."></sl-input>
@@ -31,6 +35,11 @@
         <sl-checkbox class="configItem" id="config_enableCodeFolding" size="small" help-text="Check to make blocks of code collapsible by a small [-]/[+] symbol in the left margin.">Enable code folding</sl-checkbox>
         <sl-checkbox class="configItem" id="config_enableWordWrap" size="small" help-text="Check to enable wrapping long lines to prevent horizontal scrolling.">Enable word wrap</sl-checkbox>
       </sl-button-group>
+      <sl-button-group>
+        <sl-checkbox class="configItem" id="config_enableMinimap" size="small" help-text="Check to enable a minimap next to the scrollbar.">Enable word wrap</sl-checkbox>
+        <sl-checkbox class="configItem" id="config_enableAutoIndent" size="small" help-text="Enable automatic indentation of nested code blocks.">Enable auto indent</sl-checkbox>
+      </sl-button-group>
+      <sl-textarea class="configItem configParseAsJSON" id="config_additionalMonacoConfig" label="Additional Monaco Config" help-text="You may provide additional config options for the Monaco editor here. See https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html for available options."></sl-textarea>
     </div>
     <sl-button-group slot="footer">
       <!--<sl-button id="configSaveBtn" size="small" variant="primary" onclick="document.querySelector('#config').hide();">Save</sl-button>-->
