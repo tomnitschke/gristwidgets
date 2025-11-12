@@ -135,7 +135,12 @@ class GristMonaco {
   }
   #onDidChangeModelContent (evt) {
     if (this.isColumnMode) {
-      ///TODO
+      const column = this.db.getColumnById(this.widget.cursor.current[this.widget.colMappings.current.columnRecord].rowId);
+      if (column) {
+        this.widget.scheduleRecordOperation(async () => {
+          await column.write({ formula: this.editorModel.getValue() });
+        }, this.config.autosaveDelayMs);
+      }
     } else {
       this.widget.scheduleWriteRecord({
         [this.widget.colMappings.current.content]: this.editorModel.getValue(),
