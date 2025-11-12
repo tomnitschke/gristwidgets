@@ -46,7 +46,7 @@ class GristMonaco {
     this.isColumnMode = false; this.columnToWorkOn = null;
     this.db = new GristDBAdapter();
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn');
-    this.eLoadingOverlay = document.querySelector('#loadingOverlay'); this.eSaveBtbn = document.querySelector('#saveBtn');
+    this.eLoadingOverlay = document.querySelector('#loadingOverlay'); this.eSaveBtn = document.querySelector('#saveBtn');
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
