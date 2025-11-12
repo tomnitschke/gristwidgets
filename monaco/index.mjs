@@ -121,7 +121,7 @@ class GristMonaco {
       const eTextarea = this.eConfigPanel.querySelector(`sl-textarea#config_${configKey}`);
       if (!eInput && !eCheckbox && !eTextarea) { continue; }
       elems.push({
-        elem: eInput || eCheckbox,
+        elem: eInput || eCheckbox || eTextarea,
         elemType: eInput ? 'input' : eCheckbox ? 'checkbox' : eTextarea ? 'textarea' : 'unknown',
         elemValue: (eInput || eCheckbox || eTextarea).value,
         storedValue: storedValue,
