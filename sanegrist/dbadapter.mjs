@@ -64,10 +64,7 @@ export class GristDBAdapter {
       const table = new Table(this, tableName, tableRec);
       for (const colRec of this.#metaRecords.colRecs) { if (colRec.parentId === tableRec.id && colRec.id !== 'id') {
         const colName = colRec.colId;
-        const [isRef, refType, reffedTableName] = DBUtil.getRefInfo(colRec);
-        const refInfo = isRef ? new RefInfo(this, refType, reffedTableName) : undefined;
-        const widgetOptions = Util.jsonDecode(colRec.widgetOptions, {});
-        table.columns[colName] = new Column(table, colName, colRec.label, colRec, tableName, tableRec, colRec.type, DBUtil.isInternalColName(colName), isRef, refInfo, widgetOptions);
+        table.columns[colName] = new Column(table, tableName, colRec);
       }}
       this.#tables[tableName] = table;
     }
@@ -142,11 +139,26 @@ class RefInfo {
 }
 
 class Column {
-  constructor (table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
-    Object.assign(this, { table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo: refInfo || undefined, widgetOptions: widgetOptions || {} });
+  new Column(table, tableName, colRec, DBUtil.isInternalColName(colName), isRef, refInfo, widgetOptions);
+  //constructor (table, colName, label, colRec, tableName, tableRec, type, isInternal, isRef, refInfo=undefined, widgetOptions=undefined) {
+  constructor (table, tableName, colRec) {
+    Object.assign(this, { table, tableName, colRec });
+    this.refreshInfo();
+  }
+  refreshInfo () {
+    const [isRef, refType, reffedTableName] = DBUtil.getRefInfo(this.colRec);
+    this.isRef = isRef;
+    this.refInfo = isRef ? new RefInfo(this, refType, reffedTableName) : undefined;
+    this.widgetOptions = Util.jsonDecode(this.colRec.widgetOptions, {});
+    this.isInternal = DBUtil.isInternalColName(this.colRec.colId);
+    this.colName = this.colRec.colId;
+    this.label = this.colRec.title;
+    this.type = this.colRec.type;
   }
   async write (fieldsAndValues) {
-    grist.docApi.applyUserActions([
+    this.colRec = {...this.colRec, ...fieldsAndValues};
+    this.refreshInfo();
+    await grist.docApi.applyUserActions([
       ['UpdateRecord', '_grist_Tables_column', this.colRec.id, fieldsAndValues],
     ]);
   }
