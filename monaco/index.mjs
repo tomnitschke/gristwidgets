@@ -42,7 +42,7 @@ class GristMonaco {
         { name: 'monacoConfig', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
       ],
     }, true);
-    this.debug = this.widget.logger.debug.bind(this.widget.logger);
+    this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.isColumnMode = false; this.columnToWorkOn = null;
     this.db = new GristDBAdapter();
     this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn');
@@ -79,11 +79,13 @@ class GristMonaco {
       if (this.isColumnMode) {
         this.#setEditorContent(undefined, undefined, null, {readOnly: true});
         const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
-        if (content.rowId && content.tableId) {
+        this.columnToWorkOn = this.db.getColumnById(content.rowId || content);
+        if (this.columnToWorkOn) {
           await this.db.init();
-          this.columnToWorkOn = this.db.getColumnById(content.rowId);
           this.debug("load: formula from column",this.columnToWorkOn,":",this.columnToWorkOn.colRec.formula);
           this.#setEditorContent(this.columnToWorkOn.colRec.formula, 'python');
+        } else {
+          this.err(`Couldn't find column with record id '${content.rowId || content}'. Editor is now in readonly mode.`);
         }
       } else {
         const content = this.widget.cursor.current[this.widget.colMappings.current.content];
