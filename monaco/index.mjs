@@ -138,9 +138,9 @@ class GristMonaco {
         if (elem.classList.contains('configParseAsJSON')) {
           const emptyJson = ['""', 'undefined', 'null', '{}'];
           elem.placeholder = Util.jsonEncode(configValue);
-          elem.placeholder = emptyJson.includes(elem.placeholder) ? '' : elem.placeholder;
+          elem.placeholder = !elem.placeholder || emptyJson.includes(elem.placeholder) ? '' : elem.placeholder;
           elem.value = Util.jsonEncode(storedValue);
-          elem.value = emptyJson.includes(elem.value) ? '' : elem.value;
+          elem.value = !elem.value || emptyJson.includes(elem.value) ? '' : elem.value;
         } else {
           elem.placeholder = configValue;
           elem.value = storedValue || '';
