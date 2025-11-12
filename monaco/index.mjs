@@ -135,8 +135,14 @@ class GristMonaco {
     this.eConfigPanel.show();
     for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
       if (elemType == 'input' || elemType == 'textarea') {
+        if (elem.classList.contains('configParseAsJSON')) {
+          configValue = Util.jsonEncode(configValue);
+          configValue = configValue === '""' || configValue === '{}' ? '' : configValue;
+          storedValue = Util.jsonEncode(storedValue);
+          storedValue = storedValue === '""' || storedValue === '{}' ? '' : storedValue;
+        }
         elem.placeholder = configValue;
-        elem.value = elem.classList.contains('configParseAsJSON') ? Util.jsonEncode(storedValue || null, '') : storedValue || '';
+        elem.value = storedValue || '';
       } else if (elemType == 'checkbox') {
         elem.value = configValue;
         elem.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
