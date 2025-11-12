@@ -9,7 +9,10 @@ import MonacoLoader from 'https://esm.sh/@monaco-editor/loader@1.6.1';
 
 /*****************************************************************************************************/
 const Config = {
+  enableAutosave: true,
+  enableAutosaveForFormulas: false,
   autosaveDelayMs: 500,
+  autosaveDelayMsForFormulas: 500,
   defaultCodeLang: 'javascript',
   tabSize: 3,
   enableCodeFolding: true,
@@ -40,16 +43,17 @@ class GristMonaco {
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger);
-    this.isColumnMode = false;
+    this.isColumnMode = false; this.columnToWorkOn = null;
     this.db = new GristDBAdapter();
-    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn'); this.eLoadingOverlay = document.querySelector('#loadingOverlay');
+    this.eContainer = document.querySelector('#monaco'); this.eConfigPanel = document.querySelector('#config'); this.eConfigResetBtn = document.querySelector('#configResetBtn');
+    this.eLoadingOverlay = document.querySelector('#loadingOverlay'); this.eSaveBtbn = document.querySelector('#saveBtn');
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
     this.eConfigResetBtn.addEventListener('click', async () => { await grist.setOptions({}); this.openConfigPanel() });
     this.eLoadingOverlay.addEventListener('sl-initial-focus', (evt) => evt.preventDefault());
-    this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.loadContent(); });
-    this.widget.addEventListener('cursorMoved', async (evt) => await this.loadContent());
+    this.widget.addEventListener('ready', async (evt) => { await this.init(); await this.load(); });
+    this.widget.addEventListener('cursorMoved', async (evt) => await this.load());
     this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
     this.widget.addEventListener('optionsChanged', (evt) => this.applyConfig(evt.options));
   }
@@ -67,7 +71,7 @@ class GristMonaco {
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
-  async loadContent () {
+  async load () {
     this.eLoadingOverlay.show();
     try {
       this.isColumnMode = this.widget.isColMapped('columnRecord');
@@ -76,13 +80,13 @@ class GristMonaco {
         const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
         if (content.rowId && content.tableId) {
           await this.db.init();
-          const column = this.db.getColumnById(content.rowId);
-          this.debug("loadContent: formula from column",column,":",column.colRec.formula);
-          this.#setEditorContent(column.colRec.formula, 'python');
+          this.columnToWorkOn = this.db.getColumnById(content.rowId);
+          this.debug("load: formula from column",this.columnToWorkOn,":",this.columnToWorkOn.colRec.formula);
+          this.#setEditorContent(this.columnToWorkOn.colRec.formula, 'python');
         }
       } else {
         const content = this.widget.cursor.current[this.widget.colMappings.current.content];
-        this.debug("loadContent",content);
+        this.debug("load",content);
         this.#setEditorContent(content);
       }
     } finally { this.eLoadingOverlay.hide(); }
@@ -135,17 +139,27 @@ class GristMonaco {
   }
   #onDidChangeModelContent (evt) {
     if (this.isColumnMode) {
-      const column = this.db.getColumnById(this.widget.cursor.current[this.widget.colMappings.current.columnRecord].rowId);
-      if (column) {
-        this.widget.scheduleRecordOperation(async () => {
-          await column.write({ formula: this.editorModel.getValue() });
-        }, this.config.autosaveDelayMs);
-      }
+      if (!this.config.enableAutosaveForFormulas) { this.#toggleSaveBtn(true); }
+      else { this.save(); }
+    } else {
+      if (!this.config.enableAutosave) { this.#toggleSaveBtn(true); }
+      else { this.save(); }
+    }
+  }
+  save () {
+    if (this.isColumnMode) {
+      this.widget.scheduleRecordOperation(async () => {
+        await this.columnToWorkOn.write({ formula: this.editorModel.getValue() });
+      }, this.config.autosaveDelayMsForFormulas);
     } else {
       this.widget.scheduleWriteRecord({
         [this.widget.colMappings.current.content]: this.editorModel.getValue(),
       }, this.config.autosaveDelayMs);
     }
+    this.#toggleSaveBtn(false);
+  }
+  #toggleSaveBtn (shouldShow) {
+    this.eSaveBtn.style.display = shouldShow ? 'block' : 'none';
   }
   #setEditorContent (content=undefined, codeLang=undefined, modelOptions=null, editorOptions=null) {
     codeLang = codeLang || this.widget.cursor.current?.[this.widget.colMappings.current.codeLang] || this.config.defaultCodeLang;
