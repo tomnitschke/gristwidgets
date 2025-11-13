@@ -22,7 +22,7 @@ export class GristWidget extends EventTarget {
   #wereRecordsInitialized;
   #wasCursorInitialized;
   #wereOptionsInitialized;
-  #pendingRecordsModifiedEvent;
+  //#pendingRecordsModifiedEvent;
   #eventControl;
   #recordOps;
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
@@ -30,7 +30,7 @@ export class GristWidget extends EventTarget {
     this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
     this.#wasReadyEventDispatched = false;
     this.#wereColMappingsInitialized = false; this.#wereRecordsInitialized = false; this.#wasCursorInitialized = false; this.#wereOptionsInitialized = false;
-    this.#pendingRecordsModifiedEvent = null;
+    //this.#pendingRecordsModifiedEvent = null;
     this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
     this.#recordOps = {};
     this.tableName = grist.getSelectedTableIdSync();
@@ -97,13 +97,13 @@ export class GristWidget extends EventTarget {
       }
       return;
     }
-    if (this.#pendingRecordsModifiedEvent) {
+    /*if (this.#pendingRecordsModifiedEvent) {
       this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
       this.#pendingRecordsModifiedEvent.cursor = this.cursor.current;
       this.dispatchEvent(this.#pendingRecordsModifiedEvent);
       this.#pendingRecordsModifiedEvent = null;
       return;
-    }
+    }*/
     if (this.#eventControl.onRecord.skip) { this.#eventControl.onRecord.skip--; return; }
     this.#updateColMappings(colMappings); this.#updateCursor(record);
   }
@@ -124,9 +124,22 @@ export class GristWidget extends EventTarget {
     this.#wereRecordsInitialized = true;
     this.records.prev = this.records.current; this.records.current = records || [];
     const delta = this.getRecordsDelta(this.records.prev, this.records.current);
-    if (!disableEventDispatch && delta.hasAnyChanges) {
-      this.#pendingRecordsModifiedEvent = new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta);
+    if (delta.hasAnyChanges) {
+      if (this.cursor.current?.id in delta.changed) {
+        this.cursor.current = {...this.cursor.current, ...delta.changed[this.cursor.current.id];
+      }
+      if (!disableEventDispatch) {
+        this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta));
+      }
     }
+    /*if (!disableEventDispatch && delta.hasAnyChanges) {
+      this.#pendingRecordsModifiedEvent = new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta);
+      setTimeout(() => {
+        if (this.#pendingRecordsModifiedEvent) {
+          this.dispatchEvent(this.#pendingRecordsModifiedEvent.cursor = this.cursor.current);
+        }
+      }, 500);
+    }*/
   }
   #updateCursor (record, disableEventDispatch=false) {
     this.#wasCursorInitialized = true;
