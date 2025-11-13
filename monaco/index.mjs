@@ -63,6 +63,18 @@ class GristMonaco {
   }
   async init () {
     this.api = await MonacoLoader.init();
+    this.api.languages.typescript.javascriptDefaults.addExtraLib(window.definition, 'plugin.d.ts');
+    this.api.languages.typescript.javascriptDefaults.addExtraLib(
+      `
+      import * as Grist from "grist"
+      declare global {
+        interface Window {
+          var grist: typeof Grist;
+        }
+      }
+      export {}
+      `,
+      'main.d.ts');
     this.editor = this.api.editor.create(this.eContainer, {
       model: this.editorModel,
       automaticLayout: true,
