@@ -6,8 +6,8 @@ class RecordsDelta {
   get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }
 }
 class FieldsDelta {
-  constructor (added=undefined, changed=undefined, removed=undefined) { Object.assign(this, { added: added || [], changed: changed || [], removed: removed || [] }); }
-  get hasAnyChanges () { return Boolean(this.added.length || this.changed.length || this.removed.length); }
+  constructor (added=undefined, changed=undefined, removed=undefined) { Object.assign(this, { added: added || {}, changed: changed || {}, removed: removed || {} }); }
+  get hasAnyChanges () { return Boolean(Object.keys(this.added).length || Object.keys(this.changed).length || Object.keys(this.removed).length); }
 }
 
 
@@ -16,16 +16,16 @@ export const RecordUtil = {
     recordA = recordA || {}; recordB = recordB || {};
     const delta = new FieldsDelta();
     for (const [key, value] of Object.entries(recordA)) {
-      if (!(key in recordB)) { delta.removed.push({[key]: value}); continue; }
+      if (!(key in recordB)) { delta.removed[key] = value; continue; }
       if (Array.isArray(value)) {
-        if (!Array.isArray(recordB[key])) { delta.changed.push({[key]: value}); continue; }
-        if (value.length !== recordB[key].length) { delta.changed.push({[key]: value}); continue; }
-        if (value.some((val, idx) => val !== recordB[key][idx])) { delta.changed.push({[key]: value}); continue; }
+        if (!Array.isArray(recordB[key])) { delta.changed[key] = value; continue; }
+        if (value.length !== recordB[key].length) { delta.changed[key] = value; continue; }
+        if (value.some((val, idx) => val !== recordB[key][idx])) { delta.changed[key] = value; continue; }
       }
-      if (recordB[key] !== value) { delta.changed.push({[key]: value}); continue; }
+      if (recordB[key] !== value) { delta.changed[key] = value; continue; }
     }
     for (const [key, value] of Object.entries(recordB)) {
-      if (!(key in recordA)) { delta.added.push({[key]: value}); continue; }
+      if (!(key in recordA)) { delta.added[key] = value; continue; }
     }
     return delta;
   },
