@@ -8,8 +8,8 @@ import { RecordUtil } from 'https://tomnitschke.github.io/gristwidgets/sanegrist
 /********************************************************************************************************************************************/
 export class GristWidget extends EventTarget {
   static ReadyEvent = class ReadyEvent extends Event {constructor(records,cursor,colMappings,options){super('ready');Object.assign(this,{records,cursor,colMappings,options});}};
-  static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings,delta){super('recordsModified');
-    Object.assign(this,{prevRecords,records,colMappings,delta});}};
+  static RecordsModifiedEvent = class RecordsModifiedEvent extends Event {constructor(prevRecords,records,colMappings,delta,cursor=null){super('recordsModified');
+    Object.assign(this,{prevRecords,records,colMappings,delta,cursor});}};
   static CursorMovedEvent = class CursorMovedEvent extends Event {constructor (prevCursor,cursor,colMappings){super('cursorMoved');Object.assign(this,{prevCursor,cursor,colMappings});}};
   static CursorMovedToNewEvent = class CursorMovedToNewEvent extends Event {constructor (prevCursor,colMappings){super('cursorMovedToNew');Object.assign(this,{prevCursor,colMappings});}};
   static ColMappingsChangedEvent = class ColMappingsChangedEvent extends Event {constructor (prevColMappings,colMappings){super('colMappingChanged');Object.assign(this,{prevColMappings,colMappings});}};
@@ -21,7 +21,8 @@ export class GristWidget extends EventTarget {
   #wereColMappingsInitialized;
   #wereRecordsInitialized;
   #wasCursorInitialized;
-  #wereOptionsInitialized
+  #wereOptionsInitialized;
+  #pendingRecordsModifiedEvent;
   #eventControl;
   #recordOps;
   constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
@@ -29,6 +30,7 @@ export class GristWidget extends EventTarget {
     this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
     this.#wasReadyEventDispatched = false;
     this.#wereColMappingsInitialized = false; this.#wereRecordsInitialized = false; this.#wasCursorInitialized = false; this.#wereOptionsInitialized = false;
+    this.#pendingRecordsModifiedEvent = null;
     this.#eventControl = { onRecords: { wasEverTriggered: false, skip: 0, args: {} }, onRecord: { wasEverTriggered: false, skip: 0, args: {} }, onNewRecord: { wasEverTriggered: false, skip: 0, args: {} } };
     this.#recordOps = {};
     this.tableName = grist.getSelectedTableIdSync();
@@ -95,6 +97,13 @@ export class GristWidget extends EventTarget {
       }
       return;
     }
+    if (this.#pendingRecordsModifiedEvent) {
+      this.#updateColMappings(colMappings, true); this.#updateCursor(record, true);
+      this.#pendingRecordsModifiedEvent.cursor = this.cursor.current;
+      this.dispatchEvent(this.#pendingRecordsModifiedEvent);
+      this.#pendingRecordsModifiedEvent = null;
+      return;
+    }
     if (this.#eventControl.onRecord.skip) { this.#eventControl.onRecord.skip--; return; }
     this.#updateColMappings(colMappings); this.#updateCursor(record);
   }
@@ -115,7 +124,9 @@ export class GristWidget extends EventTarget {
     this.#wereRecordsInitialized = true;
     this.records.prev = this.records.current; this.records.current = records || [];
     const delta = this.getRecordsDelta(this.records.prev, this.records.current);
-    if (!disableEventDispatch && delta.hasAnyChanges) { this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta)); }
+    if (!disableEventDispatch && delta.hasAnyChanges) {
+      this.#pendingRecordsModifiedEvent = new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta);
+    }
   }
   #updateCursor (record, disableEventDispatch=false) {
     this.#wasCursorInitialized = true;
