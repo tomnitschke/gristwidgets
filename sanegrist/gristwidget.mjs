@@ -126,7 +126,7 @@ export class GristWidget extends EventTarget {
     const delta = this.getRecordsDelta(this.records.prev, this.records.current);
     if (delta.hasAnyChanges) {
       if (this.cursor.current?.id in delta.changed) {
-        this.cursor.current = {...this.cursor.current, ...delta.changed[this.cursor.current.id];
+        this.cursor.current = {...this.cursor.current, ...delta.changed[this.cursor.current.id]};
       }
       if (!disableEventDispatch) {
         this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta));
