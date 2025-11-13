@@ -141,10 +141,9 @@ export class GristWidget extends EventTarget {
     // However, the onRecord/onRecords events seem to transmit partial record objects that contain just the keys that we actually have a mapping for.
     // So we're using those here to validate colMappings bloody manually.
     let colMappingsSanitized = colMappings;
-    if (this.#wasCursorInitialized || this.#wereRecordsInitialized) {
+    if ((this.#wasCursorInitialized || this.#wereRecordsInitialized) && (this.cursor.current || this.records.current?.[0])) {
       colMappingsSanitized = Object.fromEntries(Object.entries(colMappings).filter(([mappedColName, colName]) => Object.keys(this.#wasCursorInitialized ? this.cursor.current : this.records.current[0]).includes(colName)));
     }
-    this.debug("#updateColMappings",colMappings,"sanitized:",colMappingsSanitized);
     this.colMappings.prev = this.colMappings.current; this.colMappings.current = colMappingsSanitized || {};
     const wereColMappingsChanged = !Util.areDictsEqual(this.colMappings.prev, this.colMappings.current);
     if (!disableEventDispatch && wereColMappingsChanged) {
