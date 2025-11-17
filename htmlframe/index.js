@@ -3,29 +3,46 @@ import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegris
 
 
 class GristHTMLFrame {
+  #readyMessageTimeoutHandler;
   constructor () {
-    /*this.widget = new GristWidget('GristHTMLFrame', {
+    this.widget = new GristWidget('GristHTMLFrame', {
       requiredAccess: 'read table',
       columns: [
         { name: 'html', title: 'HTML', type: 'Text', optional: true },
         { name: 'js', title: 'JS', type: 'Text', optional: true },
       ],
-    }, true);
+    }, true, false);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    */
     //window.onerror = (event, source, lineno, colno, error) => {
       //error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
       //this.err("Error in js fetched from Grist record:", error);
       //return true;
     //}
-                                                  this.debug = (...args) => { console.info(...args); };
+                                                  /*this.debug = (...args) => { console.info(...args); };*/
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
-    //this.eContentFrame.contentWindow.grist = grist;
+    this.#readyMessageTimeoutHandler = undefined;
+    ////////////////////////////////////////////////////////////////////////////
     grist.rpc.sendReadyMessage();
+    grist.rpc.registerFunc('editOptions', () => {});
+    window.addEventListener('message', (msg) => {
+      if (msg.source === this.eContentFrame.contentWindow) {
+        if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
+          this.debug("MSG:",msg);
+          msg.data.args ??= [{}];
+          msg.data.args[0].columns = [...this.widget.gristOptions.columns, ...(msg.data.args[0].columns || [])];
+          clearTimeout(this.#readyMessageTimeoutHandler);
+        }
+        window.parent.postMessage(msg.data, '*');
+      } else if (msg.source === window.parent) {
+        this.eContentFrame.contentWindow.postMessage(msg.data, '*');
+      }
+    });
+    //this.eContentFrame.contentWindow.grist = grist;
+    /*grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
       if (msg.source === this.eContentFrame.contentWindow) {
@@ -100,23 +117,27 @@ class GristHTMLFrame {
         `;
       this.eContentDocument.body.appendChild(eScript2);
     });
-    this.eContentDocument.body.appendChild(eScript);
+    this.eContentDocument.body.appendChild(eScript);*/
   }
   load (record) {
     if (this.widget.isColMapped('html')) {
       this.eContentDocument.body.innerHTML = record[this.widget.colMappings.current.html];
     }
     if (this.widget.isColMapped('js')) {
-      this.eContentFrame.contentWindow.grist = grist;
-      /*const eScript = this.eContentDocument.createElement('script');
-      eScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-      eScript.defer = false;
-      eScript.async = false;
-      this.eContentDocument.body.appendChild(eScript);*/
-      const eScript2 = this.eContentDocument.createElement('script');
-      eScript2.type = 'module';
-      eScript2.innerHTML = record[this.widget.colMappings.current.js];
-      this.eContentDocument.body.appendChild(eScript2);
+      const eGristPluginApiScript = this.eContentDocument.createElement('script');
+      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+      eGristPluginApiScript.defer = false;
+      eGristPluginApiScript.async = false;
+      eGristPluginApiScript.addEventListener('load', () => {
+        const eCustomScript = this.eContentDocument.createElement('script');
+        eCustomScript.type = 'module';
+        eCustomScript.innerHTML = record[this.widget.colMappings.current.js];
+        this.eContentDocument.body.appendChild(eCustomScript);
+      });
+      this.eContentDocument.body.appendChild(eGristPluginApiScript)
+    }
+    if (typeof this.#readyMessageTimeoutHandler === 'undefined') {
+      this.#readyMessageTimeoutHandler = setTimeout(() => { grist.sectionApi.configure(this.widget.gristOptions); }, 500);
     }
   }
 }
