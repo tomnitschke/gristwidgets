@@ -4,7 +4,7 @@ import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegris
 
 class GristHTMLFrame {
   constructor () {
-    this.widget = new GristWidget('GristHTMLFrame', {
+    /*this.widget = new GristWidget('GristHTMLFrame', {
       requiredAccess: 'read table',
       columns: [
         { name: 'html', title: 'HTML', type: 'Text', optional: true },
@@ -15,11 +15,13 @@ class GristHTMLFrame {
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    window.onerror = (event, source, lineno, colno, error) => {
-      error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
-      this.err("Error in js fetched from Grist record:", error);
-      return true;
-    }
+    */
+    //window.onerror = (event, source, lineno, colno, error) => {
+      //error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
+      //this.err("Error in js fetched from Grist record:", error);
+      //return true;
+    //}
+                                                  this.debug = (...args) => { console.info(...args); };
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     grist.rpc.sendReadyMessage();
@@ -51,6 +53,7 @@ class GristHTMLFrame {
     }
   }
 }
+
 Util.onDOMReady(() => {
   const gristHtmlFrame = new GristHTMLFrame();
 });
