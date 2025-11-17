@@ -25,10 +25,10 @@
       <h1>Autosave</h1>
       <sl-button-group>
         <sl-checkbox class="configItem" id="config_enableAutosave" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave</sl-checkbox>
-        <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave when working in formula mode</sl-checkbox>
+        <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave in formula mode. Note that turning this on may lead Grist to re-evaluate dependent cells very frequently, causing high traffic.</sl-checkbox>
       </sl-button-group>
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
-      <sl-input class="configItem" id="config_autosaveDelayMsForFormulas" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds; for formula mode only."></sl-input>
+      <sl-input class="configItem" id="config_autosaveDelayMsForFormulas" type="number" min="0" label="Autosave delay in formula mode (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds; for formula mode only."></sl-input>
       <sl-input class="configItem" id="config_defaultCodeLang" label="Default language" placeholder="" clearable size="small" help-text="Which coding language to use by default if no 'Language' column is mapped."></sl-input>
       <sl-input class="configItem" id="config_tabSize" type="number" min="1" label="Tab size" placeholder="" clearable size="small" help-text="How many spaces amount to one tab."></sl-input>
       <sl-input class="configItem" id="config_fontSize" type="number" min="1" label="Font size" placeholder="" clearable size="small" help-text="The size of the font inside the editor."></sl-input>
