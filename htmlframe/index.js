@@ -2,38 +2,30 @@ import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 
 
-const Config = {
-  colNameForHtml: 'html',
-  colNameForJs: 'js',
-}
-
-
-class GristHTMLFrame {
+class GristSandbox {
   #readyMessageTimeoutHandler;
   #contentGristReadyDeclaration;
-  constructor (config) {
-    this.config = {...Config, config};
-    this.widget = new GristWidget('GristHTMLFrame', {
+  constructor () {
+    this.widget = new GristWidget('GristSandbox', {
       requiredAccess: 'read table',
       columns: [
-        { name: 'html', title: 'HTML', type: 'Text', optional: true },
-        { name: 'js', title: 'JS', type: 'Text', optional: true },
+        { name: 'sandbox_html', title: 'HTML', type: 'Text', optional: true },
+        { name: 'sandbox_js', title: 'JS', type: 'Text', optional: true },
       ],
     }, true, false);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    //window.onerror = (event, source, lineno, colno, error) => {
-      //error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
-      //this.err("Error in js fetched from Grist record:", error);
-      //return true;
-    //}
+    window.onerror = (event, source, lineno, colno, error) => {
+      error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
+      this.err("Error in js fetched from Grist record:", error);
+      return true;
+    }
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
-    ////////////////////////////////////////////////////////////////////////////
     grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
@@ -41,15 +33,14 @@ class GristHTMLFrame {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
-          this.debug("MSG:",msg,"contentGristReadyDeclaration:",this.#contentGristReadyDeclaration);
+          //this.debug("MSG:",msg,"contentGristReadyDeclaration:",this.#contentGristReadyDeclaration);
           msg.data.args[0].requiredAccess ??= 'read table';
           msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.widget.gristOptions.columns ];
-          //msg.data.args[0].columns = [...this.widget.gristOptions.columns, ...(msg.data.args[0].columns || [])];
           clearTimeout(this.#readyMessageTimeoutHandler);
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
-        this.debug("forwarding msg to iframe:",msg);
+        //this.debug("forwarding msg to iframe:",msg);
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
@@ -58,9 +49,8 @@ class GristHTMLFrame {
   load (record) {
     this.eContentDocument.body.innerHTML = '';
     if (this.widget.isColMapped('html')) {
-      this.eContentDocument.body.innerHTML = record[this.widget.colMappings.current.html];
+      this.eContentDocument.body.innerHTML = record[this.widget.colMappings.current.sandbox_html];
     }
-    //this.eContentDocument.body.innerHTML = record[this.config.colNameForHtml];
     if (this.widget.isColMapped('js')) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
@@ -69,8 +59,7 @@ class GristHTMLFrame {
       eGristPluginApiScript.addEventListener('load', () => {
         const eCustomScript = this.eContentDocument.createElement('script');
         eCustomScript.type = 'module';
-        eCustomScript.innerHTML = record[this.widget.colMappings.current.js];
-        //eCustomScript.innerHTML = record[this.config.colNameForJs];
+        eCustomScript.innerHTML = record[this.widget.colMappings.current.sandbox_js];
         this.eContentDocument.body.appendChild(eCustomScript);
       });
       this.eContentDocument.body.appendChild(eGristPluginApiScript)
@@ -79,5 +68,5 @@ class GristHTMLFrame {
 }
 
 Util.onDOMReady(() => {
-  const gristHtmlFrame = new GristHTMLFrame();
+  const gristSandbox = new GristSandbox();
 });
