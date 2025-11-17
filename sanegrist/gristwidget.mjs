@@ -148,6 +148,7 @@ export class GristWidget extends EventTarget {
       new GristWidget.CursorMovedToNewEvent(this.cursor.prev, this.colMappings.current) : new GristWidget.CursorMovedEvent(this.cursor.prev, this.cursor.current, this.colMappings.current)); }
     return wasCursorChanged; }
   #updateColMappings (colMappings, disableEventDispatch=false) {
+    colMappings = colMappings || {};
     this.#wereColMappingsInitialized = true;
     // When a column gets unmapped that was previously mapped, of course Grist doesn't remove the corresponding key from colMappings. No, it just assigns
     // it a null value, so that we're left guessing whether the col is now unmapped or rather still mapped, just to something that happens to be null. Just awesome.
