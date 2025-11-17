@@ -54,7 +54,8 @@ class GristHTMLFrame {
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
-                                        grist.sectionApi.configure(this.widget.gristOptions);
+                                        //grist.sectionApi.configure(this.widget.gristOptions);
+                                        this.#readyMessageTimeoutHandler = setTimeout(() => { grist.sectionApi.configure(this.widget.gristOptions); }, 1000);
     //this.eContentFrame.contentWindow.grist = grist;
     /*grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
