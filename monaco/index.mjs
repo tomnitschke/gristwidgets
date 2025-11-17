@@ -58,6 +58,7 @@ class GristMonaco {
     this.eSaveBtn.addEventListener('click', () => this.save());
     this.widget.addEventListener('ready', async (evt) => { this.applyConfig(evt.options); await this.init(); await this.load(); });
     this.widget.addEventListener('cursorMoved', async (evt) => await this.load());
+    this.widget.addEventListener('cursorMovedToNew', async (evt) => await this.load());
     this.widget.addEventListener('optionsEditorOpened', async () => await this.openConfigPanel());
     this.widget.addEventListener('optionsChanged', (evt) => this.applyConfig(evt.options));
   }
@@ -93,20 +94,24 @@ class GristMonaco {
   async load () {
     this.eLoadingOverlay.show();
     try {
-      this.isColumnMode = this.widget.isColMapped('columnRecord');
-      if (this.isColumnMode) {
+      if (!this.widget.cursor.current) {
         this.#setEditorContent(undefined, undefined, null, {readOnly: true});
-        const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
-        await this.db.init();
-        try {
-          this.columnToWorkOn = this.db.getColumnById(content.rowId || content);
-        } catch (error) { this.err(`Cannot find column with meta record id '${content.rowId || content}'. Editor is now in readonly mode.`); }
-        //this.debug("load: formula from column",this.columnToWorkOn,":",this.columnToWorkOn.colRec.formula);
-        this.#setEditorContent(this.columnToWorkOn.colRec.formula, 'python');
       } else {
-        const content = this.widget.cursor.current[this.widget.colMappings.current.content];
-        //this.debug("load",content);
-        this.#setEditorContent(content);
+        this.isColumnMode = this.widget.isColMapped('columnRecord');
+        if (this.isColumnMode) {
+          this.#setEditorContent(undefined, undefined, null, {readOnly: true});
+          const content = this.widget.cursor.current[this.widget.colMappings.current.columnRecord];
+          await this.db.init();
+          try {
+            this.columnToWorkOn = this.db.getColumnById(content.rowId || content);
+          } catch (error) { this.err(`Cannot find column with meta record id '${content.rowId || content}'. Editor is now in readonly mode.`); }
+          //this.debug("load: formula from column",this.columnToWorkOn,":",this.columnToWorkOn.colRec.formula);
+          this.#setEditorContent(this.columnToWorkOn.colRec.formula, 'python');
+        } else {
+          const content = this.widget.cursor.current[this.widget.colMappings.current.content];
+          //this.debug("load",content);
+          this.#setEditorContent(content);
+        }
       }
     } finally { this.eLoadingOverlay.hide(); }
   }
