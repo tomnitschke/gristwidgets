@@ -72,6 +72,7 @@ class GristHTMLFrame {
               requiredAccess: 'full',
               allowSelectBy: true,
               columns: [
+                  { name: 'test', type: 'Any' },
               ],
           }, true);
           this.debug = this.widget.logger.debug.bind(this.widget.logger);
