@@ -24,7 +24,7 @@ class GristHTMLFrame {
                                                   this.debug = (...args) => { console.info(...args); };
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
-    this.eContentFrame.contentWindow.grist = grist;
+    //this.eContentFrame.contentWindow.grist = grist;
     grist.rpc.sendReadyMessage();
     try {
       grist.rpc.registerFunc('editOptions', () => {});
@@ -55,6 +55,11 @@ class GristHTMLFrame {
   </body>
   </html>
         `;
+      const eScript = this.eContentDocument.createElement('script');
+      eScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+      eScript.defer = false;
+      eScript.async = false;
+      this.eContentDocument.body.appendChild(eScript);
       const eScript2 = this.eContentDocument.createElement('script');
       eScript2.type = 'module';
       eScript2.innerHTML = `
