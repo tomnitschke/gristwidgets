@@ -14,11 +14,11 @@ class GristHTMLFrame {
   constructor (config) {
     this.config = {...Config, config};
     this.widget = new GristWidget('GristHTMLFrame', {
-      /*requiredAccess: 'read table',
+      requiredAccess: 'read table',
       columns: [
         { name: 'html', title: 'HTML', type: 'Text', optional: true },
         { name: 'js', title: 'JS', type: 'Text', optional: true },
-      ],*/
+      ],
     }, true, false);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
@@ -44,6 +44,7 @@ class GristHTMLFrame {
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
           this.debug("MSG:",msg,"contentGristReadyDeclaration:",this.#contentGristReadyDeclaration);
           msg.data.args[0].requiredAccess ??= 'read table';
+          msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.widget.gristOptions.columns ];
           //msg.data.args[0].columns = [...this.widget.gristOptions.columns, ...(msg.data.args[0].columns || [])];
           clearTimeout(this.#readyMessageTimeoutHandler);
         }
@@ -53,6 +54,7 @@ class GristHTMLFrame {
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
+                                        grist.sectionApi.configure(this.widget.gristOptions);
     //this.eContentFrame.contentWindow.grist = grist;
     /*grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
