@@ -24,6 +24,7 @@ class GristHTMLFrame {
                                                   this.debug = (...args) => { console.info(...args); };
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
+    this.eContentFrame.contentWindow.grist = grist;
     grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
