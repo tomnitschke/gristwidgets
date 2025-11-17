@@ -15,6 +15,7 @@ class GristSandbox {
     }, true, false);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
+                                grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
     window.onerror = (event, source, lineno, colno, error) => {
