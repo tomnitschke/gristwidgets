@@ -32,7 +32,7 @@ class GristHTMLFrame {
         msg.data.args ??= [{}];
         msg.data.args[0].hasCustomOptions = true;
       }
-      window.parent.postMessage(e.data, '*');
+      window.parent.postMessage(msg.data, '*');
     });
   }
   load (record) {
