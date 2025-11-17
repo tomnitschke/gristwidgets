@@ -30,12 +30,16 @@ class GristHTMLFrame {
       grist.rpc.registerFunc('editOptions', () => {});
     } catch {}
     window.addEventListener('message', (msg) => {
-      if (msg.source === this.eContentFrame.contentWindow && msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
-        this.debug("MSG:",msg);
-        msg.data.args ??= [{}];
-        msg.data.args[0].hasCustomOptions = true;
+      if (msg.source === this.eContentFrame.contentWindow) {
+        if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
+          this.debug("MSG:",msg);
+          msg.data.args ??= [{}];
+          msg.data.args[0].hasCustomOptions = true;
+        }
+        window.parent.postMessage(msg.data, '*');
+      } else if (msg.source === window.parent) {
+        this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
-      window.parent.postMessage(msg.data, '*');
     });
     setTimeout(() => {
       this.eContentDocument.body.innerHTML = `
