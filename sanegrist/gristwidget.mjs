@@ -25,8 +25,9 @@ export class GristWidget extends EventTarget {
   //#pendingRecordsModifiedEvent;
   #eventControl;
   #recordOps;
-  constructor (widgetName, gristOptions=undefined, isDebugMode=false) { super();
+  constructor (widgetName, gristOptions=undefined, isDebugMode=false, sendReadyMessage=true) { super();
     this.name = widgetName;
+    this.gristOptions = gristOptions;
     this.logger = new Logger(widgetName, isDebugMode); this.debug = this.logger.debug.bind(this.logger);
     this.#wasReadyEventDispatched = false;
     this.#wereColMappingsInitialized = false; this.#wereRecordsInitialized = false; this.#wasCursorInitialized = false; this.#wereOptionsInitialized = false;
@@ -36,8 +37,10 @@ export class GristWidget extends EventTarget {
     this.tableName = grist.getSelectedTableIdSync();
     this.tableOps = grist.getTable();
     this.cursor = { prev: null, current: null }; this.colMappings = { prev: {}, current: {} }; this.records = { prev: [], current: [] }; this.options = { prev: {}, current: {} };
-    grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...gristOptions });
-      grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
+    if (sendReadyMessage) {
+      this.#sendReadyMessage();
+    }
+    grist.onRecords(this.#onRecords.bind(this)); grist.onRecord(this.#onRecord.bind(this)); grist.onNewRecord(this.#onNewRecord.bind(this)); grist.onOptions(this.#onOptions.bind(this));
     window.addEventListener('visibilitychange', this.#onPageVisibilityChanged.bind(this));
     if (isDebugMode) {
       this.addEventListener('ready',(evt) => this.debug("event", evt.type, evt));
@@ -47,6 +50,9 @@ export class GristWidget extends EventTarget {
       this.addEventListener('optionsEditorOpened',(evt) => this.debug("event", evt.type, evt));
       this.addEventListener('optionsChanged',(evt) => this.debug("event", evt.type, evt));
     }
+  }
+  #sendReadyMessage () {
+    grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...this.gristOptions });
   }
   async #onPageVisibilityChanged () {
     if (document.visibilityState === 'hidden') {
