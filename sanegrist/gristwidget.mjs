@@ -129,7 +129,7 @@ export class GristWidget extends EventTarget {
         this.cursor.current = this.records.current.find((rec) => rec.id === this.cursor.current.id);
       }
       if (!disableEventDispatch) {
-        this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.current, this.records.prev, this.colMappings.current, delta));
+        this.dispatchEvent(new GristWidget.RecordsModifiedEvent(this.records.prev, this.records.current, this.colMappings.current, delta, this.cursor.current));
       }
     }
     /*if (!disableEventDispatch && delta.hasAnyChanges) {
