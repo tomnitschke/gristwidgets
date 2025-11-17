@@ -2,15 +2,22 @@ import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 
 
+const Config = {
+  colNameForHtml: 'html',
+  colNameForJs: 'js',
+}
+
+
 class GristHTMLFrame {
   #readyMessageTimeoutHandler;
-  constructor () {
+  constructor (config) {
+    this.config = {...Config, config};
     this.widget = new GristWidget('GristHTMLFrame', {
-      requiredAccess: 'read table',
+      /*requiredAccess: 'read table',
       columns: [
         { name: 'html', title: 'HTML', type: 'Text', optional: true },
         { name: 'js', title: 'JS', type: 'Text', optional: true },
-      ],
+      ],*/
     }, true, false);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
@@ -33,7 +40,8 @@ class GristHTMLFrame {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           this.debug("MSG:",msg);
           msg.data.args ??= [{}];
-          msg.data.args[0].columns = [...this.widget.gristOptions.columns, ...(msg.data.args[0].columns || [])];
+          msg.data.args[0].requiredAccess ??= 'read table';
+          //msg.data.args[0].columns = [...this.widget.gristOptions.columns, ...(msg.data.args[0].columns || [])];
           clearTimeout(this.#readyMessageTimeoutHandler);
         }
         window.parent.postMessage(msg.data, '*');
@@ -120,10 +128,11 @@ class GristHTMLFrame {
     this.eContentDocument.body.appendChild(eScript);*/
   }
   load (record) {
-    if (this.widget.isColMapped('html')) {
+    /*if (this.widget.isColMapped('html')) {
       this.eContentDocument.body.innerHTML = record[this.widget.colMappings.current.html];
-    }
-    if (this.widget.isColMapped('js')) {
+    }*/
+    this.eContentDocument.body.innerHTML = record[this.config.colNameForHtml];
+    //if (this.widget.isColMapped('js')) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       eGristPluginApiScript.defer = false;
@@ -131,11 +140,12 @@ class GristHTMLFrame {
       eGristPluginApiScript.addEventListener('load', () => {
         const eCustomScript = this.eContentDocument.createElement('script');
         eCustomScript.type = 'module';
-        eCustomScript.innerHTML = record[this.widget.colMappings.current.js];
+        //eCustomScript.innerHTML = record[this.widget.colMappings.current.js];
+        eCustomScript.innerHTML = record[this.config.colNameForJs];
         this.eContentDocument.body.appendChild(eCustomScript);
       });
       this.eContentDocument.body.appendChild(eGristPluginApiScript)
-    }
+    //}
     if (typeof this.#readyMessageTimeoutHandler === 'undefined') {
       this.#readyMessageTimeoutHandler = setTimeout(() => { grist.sectionApi.configure(this.widget.gristOptions); }, 500);
     }
