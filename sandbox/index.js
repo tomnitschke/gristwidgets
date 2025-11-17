@@ -17,11 +17,11 @@ class GristSandbox {
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    window.onerror = (event, source, lineno, colno, error) => {
-      error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
-      this.err("Error in js fetched from Grist record:", error);
-      return true;
-    }
+    //window.onerror = (event, source, lineno, colno, error) => {
+      //error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
+      //this.err("Error in js fetched from Grist record:", error);
+      //return true;
+    //}
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
