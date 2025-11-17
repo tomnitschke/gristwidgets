@@ -59,6 +59,7 @@ class GristHTMLFrame {
       eScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       eScript.defer = false;
       eScript.async = false;
+      eScript.addEventListener('load', () => { this.debug("SCHKRIPT LOHTET",this.eContentDocument.contentWindow); }
       this.eContentDocument.body.appendChild(eScript);
       const eScript2 = this.eContentDocument.createElement('script');
       eScript2.type = 'module';
