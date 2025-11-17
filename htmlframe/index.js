@@ -99,7 +99,7 @@ class GristHTMLFrame {
   });
         `;
       this.eContentDocument.body.appendChild(eScript2);
-    }
+    });
     this.eContentDocument.body.appendChild(eScript);
   }
   load (record) {
