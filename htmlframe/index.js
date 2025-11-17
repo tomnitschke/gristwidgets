@@ -26,13 +26,11 @@ class GristHTMLFrame {
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     //this.eContentFrame.contentWindow.grist = grist;
     grist.rpc.sendReadyMessage();
-    try {
-      grist.rpc.registerFunc('editOptions', () => {});
-    } catch {}
+    grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
       if (msg.source === this.eContentFrame.contentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
-          this.debug("MSG:",msg);
+          this.debug("MSG:",msg,"data:",structuredClone(msg.data));
           msg.data.args ??= [{}];
           msg.data.args[0].hasCustomOptions = true;
           msg.data.args[0].columns = [...(msg.data.args[0].columns || []), { name: 'added', type: 'Bool' }];
