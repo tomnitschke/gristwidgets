@@ -34,7 +34,7 @@ class GristHTMLFrame {
       }
       window.parent.postMessage(msg.data, '*');
     });
-    this.eContentDocument.body.innerHTML = ```
+    this.eContentDocument.body.innerHTML = `
 <html>
 <head>
   <style>
@@ -46,10 +46,10 @@ class GristHTMLFrame {
   <div id="datagrid"></div>
 </body>
 </html>
-      ```;
+      `;
     const eScript2 = this.eContentDocument.createElement('script');
     eScript2.type = 'module';
-    eScript2.innerHTML = ```
+    eScript2.innerHTML = `
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs'
 import canvasDatagrid from 'https://esm.sh/canvas-datagrid@0.4.7/?dev';
@@ -85,7 +85,7 @@ class GristCanvasGrid {
 Util.onDOMReady(() => {
     const gristCanvasGrid = new GristCanvasGrid(document.querySelector('#datagrid'));
 });
-      ```;
+      `;
     this.eContentDocument.body.appendChild(eScript2);
   }
   load (record) {
