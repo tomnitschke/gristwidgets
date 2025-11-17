@@ -41,26 +41,24 @@ class GristHTMLFrame {
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
-    setTimeout(() => {
-      this.eContentDocument.body.innerHTML = `
-  <html>
-  <head>
-    <style>
-      html, body { margin:0; padding:0; }
-      #datagrid { border:solid 10px red; box-sizing:border-box; }
-    </style>
-  </head>
-  <body>
-    <div id="datagrid"></div>
-  </body>
-  </html>
-        `;
-      const eScript = this.eContentDocument.createElement('script');
-      eScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-      eScript.defer = false;
-      eScript.async = false;
-      eScript.addEventListener('load', () => { this.debug("SCHKRIPT LOHTET",this.eContentFrame.contentWindow); });
-      this.eContentDocument.body.appendChild(eScript);
+    this.eContentDocument.body.innerHTML = `
+<html>
+<head>
+  <style>
+    html, body { margin:0; padding:0; }
+    #datagrid { border:solid 10px red; box-sizing:border-box; }
+  </style>
+</head>
+<body>
+  <div id="datagrid"></div>
+</body>
+</html>
+      `;
+    const eScript = this.eContentDocument.createElement('script');
+    eScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+    eScript.defer = false;
+    eScript.async = false;
+    eScript.addEventListener('load', () => {
       const eScript2 = this.eContentDocument.createElement('script');
       eScript2.type = 'module';
       eScript2.innerHTML = `
@@ -101,7 +99,8 @@ class GristHTMLFrame {
   });
         `;
       this.eContentDocument.body.appendChild(eScript2);
-    }, 2000);
+    }
+    this.eContentDocument.body.appendChild(eScript);
   }
   load (record) {
     if (this.widget.isColMapped('html')) {
