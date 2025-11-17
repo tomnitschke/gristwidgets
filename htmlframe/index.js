@@ -26,7 +26,9 @@ class GristHTMLFrame {
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.eContentFrame.contentWindow.grist = grist;
     grist.rpc.sendReadyMessage();
-    grist.rpc.registerFunc('editOptions', () => {});
+    try {
+      grist.rpc.registerFunc('editOptions', () => {});
+    } catch {}
     window.addEventListener('message', (msg) => {
       if (msg.source === this.eContentFrame.contentWindow && msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
         this.debug("MSG:",msg);
