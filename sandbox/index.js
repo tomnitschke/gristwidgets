@@ -17,11 +17,11 @@ class GristSandbox {
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    //window.onerror = (event, source, lineno, colno, error) => {
-      //error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
-      //this.err("Error in js fetched from Grist record:", error);
-      //return true;
-    //}
+    window.onerror = (event, source, lineno, colno, error) => {
+      error.message = error.message.replace(/Failed to execute 'appendChild'.+?:\s*/, '');
+      this.err("Error in js fetched from Grist record:", error);
+      return true;
+    }
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
@@ -48,10 +48,10 @@ class GristSandbox {
   }
   load (record) {
     this.eContentDocument.body.innerHTML = '';
-    if (this.widget.isColMapped('html')) {
+    if (this.widget.isColMapped('sandbox_html')) {
       this.eContentDocument.body.innerHTML = record[this.widget.colMappings.current.sandbox_html];
     }
-    if (this.widget.isColMapped('js')) {
+    if (this.widget.isColMapped('sandbox_js')) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       eGristPluginApiScript.defer = false;
