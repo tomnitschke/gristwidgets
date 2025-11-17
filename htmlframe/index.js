@@ -10,6 +10,7 @@ const Config = {
 
 class GristHTMLFrame {
   #readyMessageTimeoutHandler;
+  #contentGristReadyDeclaration;
   constructor (config) {
     this.config = {...Config, config};
     this.widget = new GristWidget('GristHTMLFrame', {
@@ -32,14 +33,16 @@ class GristHTMLFrame {
     this.eContentFrame = document.querySelector('#content');
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
+    this.#contentGristReadyDeclaration = {};
     ////////////////////////////////////////////////////////////////////////////
     grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
       if (msg.source === this.eContentFrame.contentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
-          this.debug("MSG:",msg);
           msg.data.args ??= [{}];
+          this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
+          this.debug("MSG:",msg,"contentGristReadyDeclaration:",this.#contentGristReadyDeclaration);
           msg.data.args[0].requiredAccess ??= 'read table';
           //msg.data.args[0].columns = [...this.widget.gristOptions.columns, ...(msg.data.args[0].columns || [])];
           clearTimeout(this.#readyMessageTimeoutHandler);
@@ -147,7 +150,7 @@ class GristHTMLFrame {
       this.eContentDocument.body.appendChild(eGristPluginApiScript)
     //}
     if (typeof this.#readyMessageTimeoutHandler === 'undefined') {
-      this.#readyMessageTimeoutHandler = setTimeout(() => { grist.sectionApi.configure(this.widget.gristOptions); }, 500);
+      //this.#readyMessageTimeoutHandler = setTimeout(() => { grist.sectionApi.configure(this.widget.gristOptions); }, 500);
     }
   }
 }
