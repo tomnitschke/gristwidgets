@@ -35,6 +35,7 @@ class GristHTMLFrame {
           this.debug("MSG:",msg);
           msg.data.args ??= [{}];
           msg.data.args[0].hasCustomOptions = true;
+          msg.data.args[0].columns = [...(msg.data.args[0].columns || []), { name: 'added', type: 'Bool' }];
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
