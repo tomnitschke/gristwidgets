@@ -49,6 +49,7 @@ class GristHTMLFrame {
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
+        this.debug("forwarding msg to iframe:",msg);
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
