@@ -207,8 +207,8 @@ class GristMonaco {
     const isReadonly = Boolean(this.widget.cursor.current?.[this.widget.colMappings.current.isReadonly]);
     this.editorModel = this.api.editor.createModel(content || '', codeLang);
     this.editor.setModel(this.editorModel);
-    this.editorModel.updateOptions({ tabSize: this.config.tabSize, readOnly: isReadonly, ...modelOptions });
     this.editor.updateOptions({ readOnly: isReadonly, ...editorOptions });
+    this.editorModel.updateOptions({ tabSize: this.config.tabSize, ...modelOptions });
   }
 }
 
