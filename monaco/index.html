@@ -24,8 +24,8 @@
     <div id="configContainer">
       <h1>Autosave</h1>
       <sl-button-group>
-        <sl-checkbox class="configItem" id="config_enableAutosave" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave</sl-checkbox>
-        <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Check to enable autosaving when changes are made.">Enable autosave in formula mode. Note that turning this on may lead Grist to re-evaluate dependent cells very frequently, causing high traffic.</sl-checkbox>
+        <sl-checkbox class="configItem" id="config_enableAutosave" size="small">Enable autosave</sl-checkbox>
+        <sl-checkbox class="configItem" id="config_enableAutosaveForFormulas" size="small" help-text="Note that turning this on may lead Grist to re-evaluate dependent cells very frequently, causing high traffic.">Enable autosave in formula mode</sl-checkbox>
       </sl-button-group>
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
       <sl-input class="configItem" id="config_autosaveDelayMsForFormulas" type="number" min="0" label="Autosave delay in formula mode (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds; for formula mode only."></sl-input>
