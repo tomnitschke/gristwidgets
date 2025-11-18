@@ -19,7 +19,7 @@ const Config = {
   enableCodeFolding: true,
   fontSize: 13,
   enableCodeFolding: true,
-  enableWordWrap: true,
+  enableWordWrap: false,
   enableMinimap: false,
   additionalMonacoConfig: {},
   enableAutoIndent: true,
