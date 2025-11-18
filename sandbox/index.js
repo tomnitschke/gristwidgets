@@ -30,6 +30,7 @@ class GristSandbox {
     grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
+      this.debug("MSG",msg);
       if (msg.source === this.eContentFrame.contentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
@@ -45,8 +46,8 @@ class GristSandbox {
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
-    this.#readyMessageTimeoutHandler = setTimeout(() => {
-      grist.sectionApi.configure(this.widget.gristOptions);
+    this.#readyMessageTimeoutHandler = setTimeout(async () => {
+      await grist.sectionApi.configure(this.widget.gristOptions);
       this.debug("CONFIGURE DONE",this);
     }, 1000);
   }
