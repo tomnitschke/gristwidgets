@@ -65,8 +65,8 @@ class GristSandbox {
         eCustomScript.innerHTML = jsContent;
         this.eContentDocument.body.appendChild(eCustomScript);
       });
+      this.eContentDocument.body.appendChild(eGristPluginApiScript);
     }
-    this.eContentDocument.body.appendChild(eGristPluginApiScript)
   }
 }
 
