@@ -30,8 +30,14 @@
       <sl-input class="configItem" id="config_autosaveDelayMs" type="number" min="0" label="Autosave delay (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds."></sl-input>
       <sl-input class="configItem" id="config_autosaveDelayMsForFormulas" type="number" min="0" label="Autosave delay in formula mode (ms)" placeholder="" clearable size="small" help-text="How long to wait after a change to editor contents before saving to Grist, in milliseconds; for formula mode only."></sl-input>
       <sl-input class="configItem" id="config_defaultCodeLang" label="Default language" placeholder="" clearable size="small" help-text="Which coding language to use by default if no 'Language' column is mapped."></sl-input>
-      <sl-input class="configItem" id="config_tabSize" type="number" min="1" label="Tab size" placeholder="" clearable size="small" help-text="How many spaces amount to one tab."></sl-input>
-      <sl-input class="configItem" id="config_fontSize" type="number" min="1" label="Font size" placeholder="" clearable size="small" help-text="The size of the font inside the editor."></sl-input>
+      <sl-button-group>
+        <sl-input class="configItem" id="config_tabSize" type="number" min="1" label="Tab size" placeholder="" clearable size="small" help-text="How many spaces amount to one tab."></sl-input>
+        <sl-checkbox class="configItem" id="config_adjustTabSizeByContent" size="small" help-text="Check to auto-adjust tab size according to current editor content, overriding the default tab size if applicable.">Adjust tab size by content</sl-checkbox>
+      </sl-button-group>
+      <sl-button-group>
+        <sl-input class="configItem" id="config_fontSize" type="number" min="1" label="Font size" placeholder="" clearable size="small" help-text="The size of the font inside the editor."></sl-input>
+        <sl-input class="configItem" id="config_fontFamily" label="Font family" placeholder="" clearable size="small" help-text="The font family to use inside the editor."></sl-input>
+      </sl-button-group>
       <div class="--sl-spacing-x-small"></div>
       <sl-button-group>
         <sl-checkbox class="configItem" id="config_enableCodeFolding" size="small" help-text="Check to make blocks of code collapsible by a small [-]/[+] symbol in the left margin.">Enable code folding</sl-checkbox>
