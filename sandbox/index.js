@@ -27,12 +27,10 @@ class GristSandbox {
     this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
-    grist.rpc.sendReadyMessage().then(() => {
-      this.#readyMessageTimeoutHandler = setTimeout(async () => {
-        await grist.sectionApi.configure(this.widget.gristOptions);
-        this.debug("CONFIGURE DONE",this);
-      }, 1000);
-    });
+    this.init();
+  }
+  async init () {
+    await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
       this.debug("MSG",msg);
@@ -51,6 +49,10 @@ class GristSandbox {
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
+    this.#readyMessageTimeoutHandler = setTimeout(async () => {
+      await grist.sectionApi.configure(this.widget.gristOptions);
+      this.debug("CONFIGURE DONE",this);
+    }, 1000);
   }
   load (record) {
     this.eContentDocument.body.innerHTML = '';
