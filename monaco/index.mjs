@@ -193,7 +193,7 @@ class GristMonaco {
     }
   }
   save () {
-    const editorState = Util.jsonEncode(this.editor.saveViewState || '', null);
+    const editorState = Util.jsonEncode(this.editor.saveViewState() || '', null);
     const fieldsAndValues = {};
     if (this.widget.isColMapped('state') && editorState) {
       fieldsAndValues[this.widget.colMappings.current.state] = editorState;
