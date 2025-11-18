@@ -44,6 +44,7 @@ class GristMonaco {
         { name: 'codeLang', title: 'Language', type: 'Text', optional: true, description: `Used for syntax highlighting and autocompletions on the currently loaded content. Defaults to '${this.config.defaultCodeLang}' if not mapped.` },
         { name: 'isReadonly', title: 'Readonly', type: 'Bool', optional: true, description: `Boolean to indicate whether the editor should act as a readonly viewer for the currently loaded content.` },
         { name: 'additionMonacoConfigForRecord', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. Options given here override those given in the widget config, if any. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
+        { name: 'state', title: 'Editor State', type: 'Text', optional: true, description: `Text column to optionally store the current editor state (scroll position etc.) in upon saving.` },
       ],
     }, true);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
@@ -115,6 +116,10 @@ class GristMonaco {
           //this.debug("load",content);
           this.#setEditorContent(content);
         }
+      }
+      const editorState = Util.jsonDecode(this.widget.cursor.current[this.widget.colMappings.current.state] || '', null);
+      if (editorState) {
+        this.editor.restoreViewState(editorState);
       }
     } finally { this.eLoadingOverlay.hide(); }
   }
@@ -188,14 +193,21 @@ class GristMonaco {
     }
   }
   save () {
+    const editorState = Util.jsonEncode(this.editor.saveViewState || '', null);
+    const fieldsAndValues = {};
+    if (this.widget.isColMapped('state') && editorState) {
+      fieldsAndValues[this.widget.colMappings.current.state] = editorState;
+    }
     if (this.isColumnMode) {
       this.widget.scheduleRecordOperation(async () => {
         await this.columnToWorkOn.write({ formula: this.editorModel.getValue() });
+        if (Object.keys(fieldsAndValues).length) {
+          await this.widget.writeRecord(fieldsAndValues);
+        }
       }, this.config.autosaveDelayMsForFormulas);
     } else {
-      this.widget.scheduleWriteRecord({
-        [this.widget.colMappings.current.content]: this.editorModel.getValue(),
-      }, this.config.autosaveDelayMs);
+      fieldsAndValues[this.widget.colMappings.current.content] = this.editorModel.getValue();
+      this.widget.scheduleWriteRecord(fieldsAndValues, this.config.autosaveDelayMs);
     }
     this.#toggleSaveBtn(false);
   }
