@@ -28,19 +28,16 @@ class GristSandbox {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
-      //this.debug("MSG",msg);
       if (msg.source === this.eContentFrame.contentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
-          //this.debug("MSG:",msg,"contentGristReadyDeclaration:",this.#contentGristReadyDeclaration);
           msg.data.args[0].requiredAccess ??= 'read table';
           msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.widget.gristOptions.columns ];
           clearTimeout(this.#readyMessageTimeoutHandler);
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
-        //this.debug("forwarding msg to iframe:",msg);
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
