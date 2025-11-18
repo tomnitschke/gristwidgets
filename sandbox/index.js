@@ -47,6 +47,7 @@ class GristSandbox {
     });
     this.#readyMessageTimeoutHandler = setTimeout(() => {
       grist.sectionApi.configure(this.widget.gristOptions);
+      this.debug("CONFIGURE DONE",this);
     }, 1000);
   }
   load (record) {
