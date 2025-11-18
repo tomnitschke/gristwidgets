@@ -59,16 +59,16 @@ class GristSandbox {
     const jsContent = record[this.widget.colMappings.current.sandbox_js];
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
-      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-      eGristPluginApiScript.defer = false;
-      eGristPluginApiScript.async = false;
       eGristPluginApiScript.addEventListener('load', () => {
         const eCustomScript = this.eContentDocument.createElement('script');
         eCustomScript.type = 'module';
         eCustomScript.innerHTML = jsContent;
         this.eContentDocument.body.appendChild(eCustomScript);
       });
+      eGristPluginApiScript.defer = false;
+      eGristPluginApiScript.async = false;
       this.eContentDocument.body.appendChild(eGristPluginApiScript);
+      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
     }
   }
 }
