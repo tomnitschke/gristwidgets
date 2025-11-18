@@ -28,7 +28,7 @@ class GristSandbox {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
-      this.debug("MSG",msg);
+      //this.debug("MSG",msg);
       if (msg.source === this.eContentFrame.contentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
