@@ -45,7 +45,9 @@ class GristSandbox {
         this.eContentFrame.contentWindow.postMessage(msg.data, '*');
       }
     });
-    this.#readyMessageTimeoutHandler = setTimeout(() => { grist.sectionApi.configure(this.widget.gristOptions); }, 1000);
+    this.#readyMessageTimeoutHandler = setTimeout(() => {
+      grist.sectionApi.configure(this.widget.gristOptions);
+    }, 1000);
   }
   load (record) {
     this.eContentDocument.body.innerHTML = '';
