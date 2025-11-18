@@ -56,6 +56,10 @@ class GristSandbox {
     const jsContent = record[this.widget.colMappings.current.sandbox_js];
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
+      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+      eGristPluginApiScript.onerror = (error) => {
+        this.err("Error loading Grist plugin API:", error);
+      };
       eGristPluginApiScript.onload = () => {
         const eCustomScript = this.eContentDocument.createElement('script');
         eCustomScript.type = 'module';
@@ -64,7 +68,6 @@ class GristSandbox {
       };
       //eGristPluginApiScript.defer = false;
       //eGristPluginApiScript.async = false;
-      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       this.eContentDocument.body.appendChild(eGristPluginApiScript);
     }
   }
