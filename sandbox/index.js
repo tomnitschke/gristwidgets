@@ -56,7 +56,7 @@ class GristSandbox {
     const jsContent = record[this.widget.colMappings.current.sandbox_js];
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
-      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+      eGristPluginApiScript.async = true;
       eGristPluginApiScript.onerror = (error) => {
         this.err("Error loading Grist plugin API:", error);
       };
@@ -66,6 +66,7 @@ class GristSandbox {
         eCustomScript.innerHTML = jsContent;
         this.eContentDocument.body.appendChild(eCustomScript);
       };
+      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       //eGristPluginApiScript.defer = false;
       //eGristPluginApiScript.async = false;
       this.eContentDocument.body.appendChild(eGristPluginApiScript);
