@@ -48,6 +48,8 @@ class GristSandbox {
     }, 1000);
   }
   load (record) {
+    this.eContentDocument.open();
+    this.eContentDocument.close();
     this.eContentDocument.body.innerHTML = '';
     const htmlContent = record[this.widget.colMappings.current.sandbox_html];
     if (htmlContent) {
