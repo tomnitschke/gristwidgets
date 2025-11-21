@@ -94,7 +94,7 @@ class GristMonaco {
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     this.editor.onKeyDown((evt) => {
-      if (evt.keyCode === KeyCode.KeyS && evt.ctrlKey) {
+      if (evt.key === 's' && evt.ctrlKey) {
         evt.preventDefault();
         this.save();
       } 
