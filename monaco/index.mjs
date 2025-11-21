@@ -93,6 +93,12 @@ class GristMonaco {
       ...(this.widget.cursor.current[this.widget.colMappings.current.additionMonacoConfigForRecord] || null),
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
+    this.editor.onKeyDown((evt) => {
+      if (evt.keyCode === KeyCode.KeyS && evt.ctrlKey) {
+        evt.preventDefault();
+        this.save();
+      } 
+    });
     //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
   }
   async load () {
