@@ -50,11 +50,11 @@ class GristSandbox {
   load (record) {
     this.eContentFrame.src = 'javascript:void(0);';
     this.eContentDocument.body.innerHTML = '';
-    const htmlContent = record[this.widget.colMappings.current.sandbox_html];
+    const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
     if (htmlContent) {
       this.eContentDocument.body.innerHTML = htmlContent;
     }
-    const jsContent = record[this.widget.colMappings.current.sandbox_js];
+    const jsContent = record[this.widget.colMappings.current?.sandbox_js];
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
                         eGristPluginApiScript.async = false;
