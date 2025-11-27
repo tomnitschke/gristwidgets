@@ -68,7 +68,8 @@ class GristSandbox {
       eGristPluginApiScript.onload = () => {*/
         const eCustomScript = this.eContentDocument.createElement('script');
         eCustomScript.type = 'module';
-        eCustomScript.innerHTML = jsContent;
+        /*eCustomScript.innerHTML = jsContent;*/
+                        eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
         /*this.eContentDocument.body.appendChild(eCustomScript);
       };
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';*/
