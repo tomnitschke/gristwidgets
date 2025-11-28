@@ -74,6 +74,7 @@ class GristMonaco {
       });
       eGristDefinitions.src = 'https://gristlabs.github.io/grist-widget/custom-widget-builder/api_deps.js';
       eGristDefinitions.async = true;
+      document.head.appendChild(eGristDefinitions);
     });
     this.api = await MonacoLoader.init();
     this.api.languages.typescript.javascriptDefaults.addExtraLib(window.definition, 'plugin.d.ts');
