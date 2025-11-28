@@ -75,7 +75,7 @@ class GristSandbox {
     if (htmlContent) {
       this.eContentDocument.body.innerHTML = htmlContent;
     }
-    const jsContent = record[this.widget.colMappings.current?.sandbox_js];
+    /*const jsContent = record[this.widget.colMappings.current?.sandbox_js];*/
     if (jsContent) {
       /*const eGristPluginApiScript = this.eContentDocument.createElement('script');
                         eGristPluginApiScript.async = false;
