@@ -18,17 +18,19 @@ class GristSandbox {
                                 grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    this.eContentFrame = document.querySelector('#content');
-    this.eContentDocument = this.eContentFrame.contentWindow.document;
+    //this.eContentFrame = document.querySelector('#content');
+    //this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
     this.init();
   }
+  get eContentWindow() { return this.eContentFrame?.contentWindow ?? null; }
+  get eContentDocument() { return this.eContentFrame?.contentWindow?.document ?? null; }
   async init () {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
     window.addEventListener('message', (msg) => {
-      if (msg.source === this.eContentFrame.contentWindow) {
+      if (!this.eContentFrame || msg.source === this.eContentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
@@ -38,7 +40,7 @@ class GristSandbox {
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
-        this.eContentFrame.contentWindow.postMessage(msg.data, '*');
+        this.eContentWindow.postMessage(msg.data, '*');
       }
     });
     this.#readyMessageTimeoutHandler = setTimeout(async () => {
@@ -48,37 +50,56 @@ class GristSandbox {
     }, 1000);
   }
   load (record) {
-    this.eContentFrame.src = 'javascript:void(0);';
-    this.eContentDocument.body.innerHTML = '';
+    if (this.eContentFrame) {
+      this.eContentFrame.remove();
+    }
+    this.eContentFrame = document.createElement('iframe');
+    this.eContentFrame.id = 'content';
+    //this.eContentFrame.src = 'javascript:void(0);';
+    //this.eContentDocument.body.innerHTML = '';
     const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
+    const jsContent = record[this.widget.colMappings.current?.sandbox_js];
+    if (jsContent) {
+      const eGristPluginApiScript = this.eContentDocument.createElement('script');
+      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+      eGristPluginApiScript.async = false;
+      eGristPluginApiScript.defer = false;
+      this.eContentDocument.head.appendChild(eGristPluginApiScript);
+      const eCustomScript = this.eContentDocument.createElement('script');
+      eCustomScript.type = 'module';
+      eCustomScript.async = false;
+      eCustomScript.defer = false;
+      eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
+      this.eContentDocument.head.appendChild(eCustomScript);
+    }
     if (htmlContent) {
       this.eContentDocument.body.innerHTML = htmlContent;
     }
     const jsContent = record[this.widget.colMappings.current?.sandbox_js];
     if (jsContent) {
-      const eGristPluginApiScript = this.eContentDocument.createElement('script');
+      /*const eGristPluginApiScript = this.eContentDocument.createElement('script');
                         eGristPluginApiScript.async = false;
                         eGristPluginApiScript.defer = false;
                         eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-                        this.eContentDocument.body.appendChild(eGristPluginApiScript);
+                        this.eContentDocument.body.appendChild(eGristPluginApiScript);*/
       /*eGristPluginApiScript.async = true;
       eGristPluginApiScript.onerror = (error) => {
         this.err("Error loading Grist plugin API:", error);
       };
       eGristPluginApiScript.onload = () => {*/
-        const eCustomScript = this.eContentDocument.createElement('script');
-        eCustomScript.type = 'module';
-        eCustomScript.async = false;
-        eCustomScript.defer = false;
+                        /*const eCustomScript = this.eContentDocument.createElement('script');
+                        eCustomScript.type = 'module';
+                        eCustomScript.async = false;
+                        eCustomScript.defer = false;*/
         /*eCustomScript.innerHTML = jsContent;*/
-                        eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
+                        /*eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));*/
         /*this.eContentDocument.body.appendChild(eCustomScript);
       };
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';*/
       //eGristPluginApiScript.defer = false;
       //eGristPluginApiScript.async = false;
       /*this.eContentDocument.body.appendChild(eGristPluginApiScript);*/
-                      this.eContentDocument.body.appendChild(eCustomScript);
+                      /*this.eContentDocument.body.appendChild(eCustomScript);*/
     }
   }
 }
