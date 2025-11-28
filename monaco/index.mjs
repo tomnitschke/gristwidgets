@@ -77,7 +77,7 @@ class GristMonaco {
       document.head.appendChild(eGristDefinitions);
     });
     this.api = await MonacoLoader.init();
-    this.api.languages.typescript.javascriptDefaults.addExtraLib(window.definition, 'plugin.d.ts');
+    this.api.languages.typescript.javascriptDefaults.addExtraLib(definition, 'plugin.d.ts');  // 'definition' is a global const from the api_deps.js that was just loaded.
     this.api.languages.typescript.javascriptDefaults.addExtraLib(
       `
       import * as Grist from "grist"
