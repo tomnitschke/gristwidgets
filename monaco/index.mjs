@@ -67,6 +67,14 @@ class GristMonaco {
     this.widget.addEventListener('optionsChanged', (evt) => this.applyConfig(evt.options));
   }
   async init () {
+    await new Promise((resolve, reject) => {
+      const eGristDefinitions = document.createElement('script');
+      eGristDefinitions.addEventListener('load', () => {
+        resolve();
+      });
+      eGristDefinitions.src = 'https://gristlabs.github.io/grist-widget/custom-widget-builder/api_deps.js';
+      eGristdefinitions.async = true;
+    });
     this.api = await MonacoLoader.init();
     this.api.languages.typescript.javascriptDefaults.addExtraLib(window.definition, 'plugin.d.ts');
     this.api.languages.typescript.javascriptDefaults.addExtraLib(
