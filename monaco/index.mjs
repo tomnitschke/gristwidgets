@@ -1,5 +1,7 @@
 'use strict';
 
+///TODO: Add an outline view. See https://github.com/microsoft/monaco-editor/issues/2959#issuecomment-1095212411 for the fucking undocumented API to get at the symbols.
+
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
 import { GristDBAdapter } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/dbadapter.mjs';
