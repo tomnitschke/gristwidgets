@@ -128,7 +128,7 @@ class GristMonaco {
           this.#setEditorContent(content);
         }
       }
-      const editorState = Util.jsonDecode(this.widget.cursor.current[this.widget.colMappings.current.state] || '', null);
+      const editorState = Util.jsonDecode(this.widget.cursor.current?.[this.widget.colMappings.current.state] || '', null);
       if (editorState) {
         this.editor.restoreViewState(editorState);
       }
