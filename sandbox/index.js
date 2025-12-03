@@ -54,29 +54,31 @@ class GristSandbox {
     if (this.eContentFrame) {
       this.eContentFrame.remove();
     }
-    this.eContentFrame = document.createElement('iframe');
-    this.eContentFrame.id = 'content';
-    this.eContentFrame.addEventListener('load', () => {
-      const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
-      const jsContent = record[this.widget.colMappings.current?.sandbox_js];
-      if (jsContent) {
-        const eGristPluginApiScript = this.eContentDocument.createElement('script');
-        eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-        eGristPluginApiScript.async = false;
-        eGristPluginApiScript.defer = false;
-        this.eContentDocument.head.appendChild(eGristPluginApiScript);
-        const eCustomScript = this.eContentDocument.createElement('script');
-        eCustomScript.type = 'module';
-        eCustomScript.async = false;
-        eCustomScript.defer = false;
-        eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
-        this.eContentDocument.head.appendChild(eCustomScript);
-      }
-      if (htmlContent) {
-        this.eContentDocument.body.innerHTML = htmlContent;
-      }
-    });
-    document.body.appendChild(this.eContentFrame);
+    if (record) {
+      this.eContentFrame = document.createElement('iframe');
+      this.eContentFrame.id = 'content';
+      this.eContentFrame.addEventListener('load', () => {
+        const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
+        const jsContent = record[this.widget.colMappings.current?.sandbox_js];
+        if (jsContent) {
+          const eGristPluginApiScript = this.eContentDocument.createElement('script');
+          eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+          eGristPluginApiScript.async = false;
+          eGristPluginApiScript.defer = false;
+          this.eContentDocument.head.appendChild(eGristPluginApiScript);
+          const eCustomScript = this.eContentDocument.createElement('script');
+          eCustomScript.type = 'module';
+          eCustomScript.async = false;
+          eCustomScript.defer = false;
+          eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
+          this.eContentDocument.head.appendChild(eCustomScript);
+        }
+        if (htmlContent) {
+          this.eContentDocument.body.innerHTML = htmlContent;
+        }
+      });
+      document.body.appendChild(this.eContentFrame);
+    }
     //this.eContentFrame.src = 'javascript:void(0);';
     //this.eContentDocument.body.innerHTML = '';
     /*const jsContent = record[this.widget.colMappings.current?.sandbox_js];*/
