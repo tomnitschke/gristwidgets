@@ -101,7 +101,7 @@ class GristMonaco {
       autoIndent: this.config.enableAutoIndent ? 'advanced' : 'none',
       detectIndentation: this.config.adjustTabSizeByContent,
       ...this.config.additionalMonacoConfig,
-      ...(this.widget.cursor.current[this.widget.colMappings.current.additionMonacoConfigForRecord] || {}),
+      ...(this.widget.cursor.current?.[this.widget.colMappings.current.additionMonacoConfigForRecord] || null),
     });
     this.editor.onDidChangeModelContent(this.#onDidChangeModelContent.bind(this));
     //this.debug("monaco loaded:",this.editor,this.api.languages.getLanguages());
