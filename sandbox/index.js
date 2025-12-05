@@ -145,7 +145,7 @@ class GristSandbox {
       this.userConfig[configKey] = value;
       this.#config = null;
                                                                                     this.widget.scheduleSkipGristMessage('onRecord');
-                                                                                    await this.widget.writeRecord({ [this.widget.colMappings.current.sandbox_config]: Util.jsonEncode(userConfig, '{}') });
+                                                                                    await this.widget.writeRecord({ [this.widget.colMappings.current.sandbox_config]: Util.jsonEncode(this.userConfig, '{}') });
     }
     ///await grist.setOption(configKey, value);
   }
