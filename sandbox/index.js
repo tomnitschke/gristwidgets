@@ -18,6 +18,10 @@ class GristSandbox {
       ...Config,
       ...config,
     };
+    this.eContentFrame = null;
+    this.eConfigPanel = document.querySelector('#config');
+    this.eConfigResetBtn = document.querySelector('#configResetBtn');
+    this.eLoadingOverlay = document.querySelector('#loadingOverlay');
     this.widget = new GristWidget('GristSandbox', {
       requiredAccess: 'read table',
       columns: [
@@ -34,10 +38,6 @@ class GristSandbox {
     this.widget.addEventListener('optionsChanged', (evt) => this.applyConfig(evt.options));
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
-    this.eContentFrame = null;
-    this.eConfigPanel = document.querySelector('#config');
-    this.eConfigResetBtn = document.querySelector('#configResetBtn');
-    this.eLoadingOverlay = document.querySelector('#loadingOverlay');
     this.init();
   }
   get eContentWindow() { return this.eContentFrame?.contentWindow ?? null; }
