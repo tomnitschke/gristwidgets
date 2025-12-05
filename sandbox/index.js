@@ -2,8 +2,10 @@ import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 
 
-const Config = {
+const Config = {    ///TODO create a config ui
   importGristThemeCSSVars: true,
+  jsPrelude: '',    ///TODO
+  htmlPrelude: '',  ///TODO
 }
 
 
