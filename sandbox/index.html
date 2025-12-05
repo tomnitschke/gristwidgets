@@ -5,12 +5,17 @@
   <script type="module" src="./index.js"></script>
 
   <style>
-    html, body { margin:0; padding:0; }
+    :not(:defined) { visibility: hidden; }
+    html, body { margin:0; padding:0; var(--grist-theme-medium-font-size); font-family: var(--grist-theme-font-family); }
+    sl-dialog::part(close-button) { display: none; }
+    #configContainer { display:flex; flex-direction:column; row-gap:var(--sl-spacing-small); }
     #content { height:100%;width:100%;border:solid 1px var(--grist-theme-widget-border);box-sizing:border-box; }
+    #configOpenBtn { position:absolute; z-index:9999; top:20px; right:20px; }
   </style>
 </head>
 <body>
   <sl-dialog id="config" label="Config">
+    <sl-button id="configOpenBtn">Sandbox Config</sl-button>
     <div id="configContainer">
       <sl-checkbox class="configItem" id="config_enableAutoreload" size="small">Enable auto-reload</sl-checkbox>
       <sl-checkbox class="configItem" id="config_importGristThemeCSSVars" size="small">Import Grist theme CSS vars into loaded content</sl-checkbox>
