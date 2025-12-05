@@ -86,7 +86,7 @@ class GristSandbox {
           this.eContentDocument.documentElement.innerHTML = htmlContent;
         }
         if (this.config.importGristThemeCSSVars && (jsContent || htmlContent)) {
-          this.eContentDocument.document.body.appendChild(
+          this.eContentDocument.body.appendChild(
             document.importNode(parent.document.querySelector('style#grist-theme'), true)
           );
         }
