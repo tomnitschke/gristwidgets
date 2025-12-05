@@ -15,12 +15,6 @@ class GristSandbox {
   #readyMessageTimeoutHandler;
   #contentGristReadyDeclaration;
   #config;
-  get config() {
-    if (!this.#config) {
-      this.#config = { ...this.defaultConfig, ...this.userConfig };
-    }
-    return this.#config;
-  };
   constructor (config=null) {
     this.defaultConfig = {
       ...Config,
@@ -48,14 +42,21 @@ class GristSandbox {
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => async () { await this.init(); this.load(this.widget.cursor.current) });
                                 //grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
-    this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
+    this.widget.addEventListener('cursorMoved', () => { this.load(this.widget.cursor.current) });
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
+    this.#config = null;
     this.initRPCMiddleware();
   }
   get eContentWindow() { return this.eContentFrame?.contentWindow ?? null; }
   get eContentDocument() { return this.eContentFrame?.contentWindow?.document ?? null; }
+  get config() {
+    if (!this.#config) {
+      this.#config = { ...this.defaultConfig, ...this.userConfig };
+    }
+    return this.#config;
+  };
   async initRPCMiddleware () {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
