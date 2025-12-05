@@ -37,6 +37,7 @@ class GristSandbox {
     this.eContentFrame = null;
     this.eConfigPanel = document.querySelector('#config');
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
+    this.eLoadingOverlay = document.querySelector('#loadingOverlay');
     this.init();
   }
   get eContentWindow() { return this.eContentFrame?.contentWindow ?? null; }
