@@ -41,7 +41,7 @@ class GristSandbox {
     this.widget.addEventListener('ready', () => { this.load(this.widget.cursor.current) });
                                 //grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
     this.widget.addEventListener('cursorMoved', () => { this.load(this.widget.cursor.current) });
-    this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
+    this.widget.addEventListener('recordsModified', () => { if (this.config.enableAutoreload) { this.load(this.widget.cursor.current) } });
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
