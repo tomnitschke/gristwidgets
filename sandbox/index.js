@@ -1,6 +1,5 @@
 import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
-import * as Shoelace from 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js';
 
 
 const Config = {
