@@ -32,7 +32,7 @@ class GristSandbox {
     this.eConfigOpenBtn = document.querySelector('#configOpenBtn');
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
     this.eLoadingOverlay = document.querySelector('#loadingOverlay');
-    this.eConfigResetBtn.addEventListener('click', async () => { await this.#clearConfig(); this.openConfigPanel() });
+    this.eConfigResetBtn.addEventListener('click', async () => { await this.clearConfig(); this.openConfigPanel() });
     this.eLoadingOverlay.addEventListener('sl-initial-focus', (evt) => evt.preventDefault());
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
@@ -122,7 +122,7 @@ class GristSandbox {
       }
     } finally { this.eLoadingOverlay.hide(); }
   }
-  async #clearConfig() {
+  async clearConfig() {
     if(this.widget.colMappings.current?.sandbox_config && this.widget.cursor.current) {
                                                                                     this.widget.scheduleSkipGristMessage('onRecord');
                                                                                     await this.widget.writeRecord({ [this.widget.colMappings.current.sandbox_config]: '{}' });
