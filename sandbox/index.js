@@ -24,10 +24,8 @@ class GristSandbox {
     this.eConfigPanel = document.querySelector('#config');
     this.eConfigOpenBtn = document.querySelector('#configOpenBtn');
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
-    this.eLoadingOverlay = document.querySelector('#loadingOverlay');
     this.eConfigOpenBtn.addEventListener('click', async () => { this.openConfigPanel() });
     this.eConfigResetBtn.addEventListener('click', async () => { await this.clearConfig(); this.openConfigPanel() });
-    this.eLoadingOverlay.addEventListener('sl-initial-focus', (evt) => evt.preventDefault());
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
@@ -86,49 +84,44 @@ class GristSandbox {
     await this.applyConfig();
     if (this.widget.colMappings.current?.sandbox_config) {
       this.eConfigOpenBtn.style.display =  'initial';
-      this.eConfigOpenBtn.disabled = false;
     } else {
       this.eConfigOpenBtn.style.display =  'none';
-      this.eConfigOpenBtn.disabled = true;
     }
   }
   load (record) {
-    this.eLoadingOverlay.show();
-    try {
-      if (this.eContentFrame) {
-        this.eContentFrame.remove();
-      }
-      if (record) {
-        this.eContentFrame = document.createElement('iframe');
-        this.eContentFrame.id = 'content';
-        this.eContentFrame.addEventListener('load', () => {
-          const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
-          const jsContent = record[this.widget.colMappings.current?.sandbox_js];
-          if (jsContent) {
-            const eGristPluginApiScript = this.eContentDocument.createElement('script');
-            eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-            eGristPluginApiScript.async = false;
-            eGristPluginApiScript.defer = false;
-            this.eContentDocument.head.appendChild(eGristPluginApiScript);
-            const eCustomScript = this.eContentDocument.createElement('script');
-            eCustomScript.type = 'module';
-            eCustomScript.async = false;
-            eCustomScript.defer = false;
-            eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
-            this.eContentDocument.head.appendChild(eCustomScript);
-          }
-          if (htmlContent) {
-            this.eContentDocument.documentElement.innerHTML = htmlContent;
-          }
-          if (this.config.importGristThemeCSSVars && (jsContent || htmlContent)) {
-            this.eContentDocument.body.appendChild(
-              this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
-            );
-          }
-        });
-        document.body.appendChild(this.eContentFrame);
-      }
-    } finally { this.eLoadingOverlay.hide(); }
+    if (this.eContentFrame) {
+      this.eContentFrame.remove();
+    }
+    if (record) {
+      this.eContentFrame = document.createElement('iframe');
+      this.eContentFrame.id = 'content';
+      this.eContentFrame.addEventListener('load', () => {
+        const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
+        const jsContent = record[this.widget.colMappings.current?.sandbox_js];
+        if (jsContent) {
+          const eGristPluginApiScript = this.eContentDocument.createElement('script');
+          eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
+          eGristPluginApiScript.async = false;
+          eGristPluginApiScript.defer = false;
+          this.eContentDocument.head.appendChild(eGristPluginApiScript);
+          const eCustomScript = this.eContentDocument.createElement('script');
+          eCustomScript.type = 'module';
+          eCustomScript.async = false;
+          eCustomScript.defer = false;
+          eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
+          this.eContentDocument.head.appendChild(eCustomScript);
+        }
+        if (htmlContent) {
+          this.eContentDocument.documentElement.innerHTML = htmlContent;
+        }
+        if (this.config.importGristThemeCSSVars && (jsContent || htmlContent)) {
+          this.eContentDocument.body.appendChild(
+            this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
+          );
+        }
+      });
+      document.body.appendChild(this.eContentFrame);
+    }
   }
   async clearConfig() {
     if(this.widget.colMappings.current?.sandbox_config && this.widget.cursor.current) {
