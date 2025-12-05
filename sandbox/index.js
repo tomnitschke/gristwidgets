@@ -2,7 +2,8 @@ import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 
 
-const Config = {    ///TODO create a config ui
+const Config = {
+  enableAutoreload: true,
   importGristThemeCSSVars: true,
   jsPrelude: '',    ///TODO
   htmlPrelude: '',  ///TODO
@@ -26,13 +27,14 @@ class GristSandbox {
     }, true, false);
     this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
     this.widget.addEventListener('ready', () => this.load(this.widget.cursor.current));
-                                grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
+                                //grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
     this.widget.addEventListener('cursorMoved', () => this.load(this.widget.cursor.current));
     this.widget.addEventListener('recordsModified', () => { this.load(this.widget.cursor.current) });
-    //this.eContentFrame = document.querySelector('#content');
-    //this.eContentDocument = this.eContentFrame.contentWindow.document;
     this.#readyMessageTimeoutHandler = undefined;
     this.#contentGristReadyDeclaration = {};
+    this.eContentFrame = null;
+    this.eConfigPanel = document.querySelector('#config');
+    this.eConfigResetBtn = document.querySelector('#configResetBtn');
     this.init();
   }
   get eContentWindow() { return this.eContentFrame?.contentWindow ?? null; }
@@ -95,34 +97,52 @@ class GristSandbox {
       });
       document.body.appendChild(this.eContentFrame);
     }
-    //this.eContentFrame.src = 'javascript:void(0);';
-    //this.eContentDocument.body.innerHTML = '';
-    /*const jsContent = record[this.widget.colMappings.current?.sandbox_js];*/
-    /*if (jsContent) {*/
-      /*const eGristPluginApiScript = this.eContentDocument.createElement('script');
-                        eGristPluginApiScript.async = false;
-                        eGristPluginApiScript.defer = false;
-                        eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-                        this.eContentDocument.body.appendChild(eGristPluginApiScript);*/
-      /*eGristPluginApiScript.async = true;
-      eGristPluginApiScript.onerror = (error) => {
-        this.err("Error loading Grist plugin API:", error);
-      };
-      eGristPluginApiScript.onload = () => {*/
-                        /*const eCustomScript = this.eContentDocument.createElement('script');
-                        eCustomScript.type = 'module';
-                        eCustomScript.async = false;
-                        eCustomScript.defer = false;*/
-        /*eCustomScript.innerHTML = jsContent;*/
-                        /*eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));*/
-        /*this.eContentDocument.body.appendChild(eCustomScript);
-      };
-      eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';*/
-      //eGristPluginApiScript.defer = false;
-      //eGristPluginApiScript.async = false;
-      /*this.eContentDocument.body.appendChild(eGristPluginApiScript);*/
-                      /*this.eContentDocument.body.appendChild(eCustomScript);*/
-    /*}*/
+  }
+  async #getConfigElements () {
+    const elems = [];
+    for (const [configKey, configValue] of Object.entries(this.config)) {
+      const storedValue = await grist.getOption(configKey);
+      const eInput = this.eConfigPanel.querySelector(`sl-input#config_${configKey}`);
+      const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config_${configKey}`);
+      const eTextarea = this.eConfigPanel.querySelector(`sl-textarea#config_${configKey}`);
+      if (!eInput && !eCheckbox && !eTextarea) { continue; }
+      elems.push({
+        elem: eInput || eCheckbox || eTextarea,
+        elemType: eInput ? 'input' : eCheckbox ? 'checkbox' : eTextarea ? 'textarea' : 'unknown',
+        elemValue: (eInput || eCheckbox || eTextarea).value,
+        storedValue: storedValue,
+        configKey: configKey,
+        configValue: configValue,
+      });
+    }
+    return elems;
+  }
+  async openConfigPanel () {
+    this.eConfigPanel.show();
+    for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
+      if (elemType == 'input' || elemType == 'textarea') {
+        if (elem.classList.contains('configParseAsJSON')) {
+          const emptyJson = ['""', 'undefined', 'null', '{}'];
+          elem.placeholder = Util.jsonEncode(configValue);
+          elem.placeholder = !elem.placeholder || emptyJson.includes(elem.placeholder) ? '' : elem.placeholder;
+          elem.value = Util.jsonEncode(storedValue);
+          elem.value = !elem.value || emptyJson.includes(elem.value) ? '' : elem.value;
+        } else {
+          elem.placeholder = configValue;
+          elem.value = storedValue || '';
+        }
+      } else if (elemType == 'checkbox') {
+        elem.value = configValue;
+        elem.checked = typeof storedValue === 'undefined' ? configValue : storedValue;
+      }
+    }
+  }
+  applyConfig (configToApply) {
+    this.config = {
+      ...this.config,
+      ...configToApply,
+    };
+    this.debug("applied config",this.config);      
   }
 }
 
