@@ -25,6 +25,7 @@ class GristSandbox {
     this.eConfigOpenBtn = document.querySelector('#configOpenBtn');
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
     this.eLoadingOverlay = document.querySelector('#loadingOverlay');
+    this.eConfigOpenBtn.addEventListener('click', async () => { this.openConfigPanel() });
     this.eConfigResetBtn.addEventListener('click', async () => { await this.clearConfig(); this.openConfigPanel() });
     this.eLoadingOverlay.addEventListener('sl-initial-focus', (evt) => evt.preventDefault());
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
@@ -82,8 +83,14 @@ class GristSandbox {
     }, 1000);
   }
   async init () {
-    this.eConfigOpenBtn.style.display = this.widget.colMappings.current?.sandbox_config ? 'initial' : 'none';
     await this.applyConfig();
+    if (this.widget.colMappings.current?.sandbox_config) {
+      this.eConfigOpenBtn.style.display =  'initial';
+      this.eConfigOpenBtn.disabled = false;
+    } else {
+      this.eConfigOpenBtn.style.display =  'none';
+      this.eConfigOpenBtn.disabled = true;
+    }
   }
   load (record) {
     this.eLoadingOverlay.show();
