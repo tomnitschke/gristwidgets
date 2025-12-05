@@ -87,7 +87,7 @@ class GristSandbox {
         }
         if (this.config.importGristThemeCSSVars && (jsContent || htmlContent)) {
           this.eContentDocument.body.appendChild(
-            document.importNode(parent.document.querySelector('style#grist-theme'), true)
+            this.eContentDocument.importNode(parent.document.querySelector('style#grist-theme'), true)
           );
         }
       });
