@@ -74,7 +74,7 @@ class GristSandbox {
           this.eContentDocument.head.appendChild(eCustomScript);
         }
         if (htmlContent) {
-          this.eContentDocument.innerHTML = htmlContent;
+          this.eContentDocument.documentElement.innerHTML = htmlContent;
         }
       });
       document.body.appendChild(this.eContentFrame);
