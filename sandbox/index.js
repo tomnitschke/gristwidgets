@@ -2,10 +2,19 @@ import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.
 import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 
 
+const Config = {
+  importGristThemeCSSVars: true,
+}
+
+
 class GristSandbox {
   #readyMessageTimeoutHandler;
   #contentGristReadyDeclaration;
-  constructor () {
+  constructor (config=null) {
+    this.config = {
+      ...Config,
+      ...config,
+    };
     this.widget = new GristWidget('GristSandbox', {
       requiredAccess: 'read table',
       columns: [
@@ -75,6 +84,11 @@ class GristSandbox {
         }
         if (htmlContent) {
           this.eContentDocument.documentElement.innerHTML = htmlContent;
+        }
+        if (this.config.importGristThemeCSSVars && (jsContent || htmlContent) {
+          this.eContentDocument.document.body.appendChild(
+            document.importNode(parent.document.querySelector('style#grist-theme'), true));
+          );
         }
       });
       document.body.appendChild(this.eContentFrame);
