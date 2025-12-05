@@ -1,12 +1,33 @@
 <html>
 <head>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+
   <script type="module" src="./index.js"></script>
+
   <style>
     html, body { margin:0; padding:0; }
     #content { height:100%;width:100%;border:solid 1px var(--grist-theme-widget-border);box-sizing:border-box; }
   </style>
 </head>
 <body>
+  <sl-dialog id="config" label="Config">
+    <div id="configContainer">
+      <sl-checkbox class="configItem" id="config_enableAutoreload" size="small">Enable auto-reload</sl-checkbox>
+      <sl-checkbox class="configItem" id="config_importGristThemeCSSVars" size="small">Import Grist theme CSS vars into loaded content</sl-checkbox>
+      <sl-textarea class="configItem" id="config_jsPrelude" label="Default JS content">
+        <p slot="help-text">Any JS code defined here will always be inserted into the sandbox, regardless of what user content gets loaded. This code will get loaded before any user code.</p>
+      </sl-textarea>
+      <sl-textarea class="configItem" id="config_htmlPrelude" label="Default HTML content">
+        <p slot="help-text">Any HTML markup defined here will always be inserted into the sandbox, regardless of what user content gets loaded. This markup will be inserted after any user markup.</p>
+      </sl-textarea>
+    </div>
+    <sl-button-group slot="footer">
+      <sl-button id="configResetBtn" size="small">Reset</sl-button>
+      <sl-button size="small" variant="primary" onclick="document.querySelector('#config').hide();">Close</sl-button>
+    </sl-button-group>
+  </sl-dialog>
 </body>
 </html>
