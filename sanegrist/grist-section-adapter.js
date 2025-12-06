@@ -48,6 +48,7 @@ export class GristSectionAdapter extends EventTarget {
   #wasInitEventDispatched;
   #initEventTimeoutHandle;
   #isFetchingTableName;
+  #skipMessages;
   constructor(readyPayload=undefined, doSendReadyMessage=true) {
     super();
     this.readyPayload = readyPayload;
@@ -66,6 +67,12 @@ export class GristSectionAdapter extends EventTarget {
     this.#wasInitEventDispatched = false;
     this.#initEventTimeoutHandle = null;
     this.#isFetchingTableName = false;
+    this.#skipMessages = {
+      onRecord: 0,
+      onRecords: 0,
+      onNewRecord: 0,
+      onOptions: 0,
+    };
     grist.onRecord((record, mappings) => {
       this.#onUpdateCursor(record);
       this.#onUpdateMappings(mappings);
@@ -172,6 +179,16 @@ export class GristSectionAdapter extends EventTarget {
       this.#initEventTimeoutHandle = setTimeout(() => { this.#tryDispatchInitEvent(); }, 500);
     }
   }
+  #assertInitEventDispatched() {
+    if (!this.#wasInitEventDispatched) {
+      throw new Error(`Not yet inited. Wait for 'init' event do be dispatched first!`);
+    }
+  }
+  #assertMappingExists(mappedColName) {
+    if (!(mappedColName in this.mappings)) {
+      throw new Error(`There is no mapped column called '${mappedColName}'. The current mappings are: ${Util.jsonEncode(this.mappings)}`);
+    }
+  }
   /****************************************************************************************************/
   on(eventName, callbackFn) { this.addEventListener(eventName, callbackFn); }
   onInit(callbackFn) { this.addEventListener('init', callbackFn); }
@@ -183,4 +200,32 @@ export class GristSectionAdapter extends EventTarget {
   onOptionsUpdated(callbackFn) { this.addEventListener('optionsUpdated', callbackFn); }
   onInteractionOptionsUpdated(callbackFn) { this.addEventListener('interactionOptionsUpdated', callbackFn); }
   onOptionsEditorRequested(callbackFn) { this.addEventListener('optionsEditorRequested', callbackFn); }
+  skipMessage(messageName, amountToSkip) {
+    if (!(messageName in this.#skipMessages)) {
+      throw new Error(`Unknown message '${messageName}'.`);
+    }
+    this.#skipMessages[messageName] += amountToSkip;
+  }
+  getCursorField(mappedColName) {
+    this.#assertInitEventDispatched();
+    this.#assertMappingExists(mappedColName);
+    return this.cursor[this.mappings[mappedColName]];
+  }
+  async writeRecord(recId, fieldsAndValues, opOptions=undefined) {
+    this.#assertInitEventDispatched();
+    if (recId === 'new') {
+      return await this.tableOps.create({ fields: fieldsAndValues }, opOptions);
+    } else {
+      return await this.tableOps.update({ id: recId, fields: fieldsAndValues }, opOptions);
+    }
+  }
+  async writeCursor(fieldsAndValues, opOptions=undefined) {
+    this.#assertInitEventDispatched();
+    return await this.writeRecord(this.cursor.id, fieldsAndValues, opOptions);
+  }
+  async writeCursorField(mappedColName, value, opOptions=undefined) {
+    this.#assertInitEventDispatched();
+    this.#assertMappingExists(mappedColName);
+    return await this.writeCursor({ [this.mappings[mappedColName]: value }, opOptions);
+  }
 }
