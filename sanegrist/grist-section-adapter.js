@@ -129,7 +129,7 @@ export class GristSectionAdapter extends EventTarget {
     }
   }
   #onUpdateInteractionOptions(interactionOptions) {
-    if (options) {
+    if (interactionOptions) {
       this.interactionOptionsPrev = this.interactionOptions ?? interactionOptions;
       this.interactionOptions = interactionOptions;
       if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.interactionOptionsPrev, this.interactionOptions)) {
