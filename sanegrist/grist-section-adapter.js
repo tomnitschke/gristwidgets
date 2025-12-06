@@ -33,6 +33,11 @@ export class InteractionOptionsChangedEvent extends Event {
     super('interactionOptionsChanged');
   }
 }
+export class OptionsEditorRequestedEvent extends Event {
+  constructor() {
+    super('optionsEditorRequested');
+  }
+}
 
 export class GristSectionAdapter extends EventTarget {
   #wasInitEventDispatched;
@@ -70,7 +75,13 @@ export class GristSectionAdapter extends EventTarget {
       this.#tryDispatchInitEvent();
     });
     if (doSendReadyMessage) {
-      grist.ready({ onEditOptions: this.#onEditOptions.bind(this), ...this.readyPayload });
+      grist.ready({
+        onEditOptions: () => {
+          this.#tryDispatchInitEvent();
+          this.dispatchEvent(new OptionsEditorRequestedEvent());
+        },
+        ...this.readyPayload
+      });
     }
     this.#tryDispatchInitEvent();
   }
@@ -131,11 +142,11 @@ export class GristSectionAdapter extends EventTarget {
       return;
     }
     clearTimeout(this.#initEventTimeoutHandle);
-    if (!this.#mayDispatchInitEvent) {
-      this.#initEventTimeoutHandle = setTimeout(() => { this.#dispatchInitEvent(); }, 500);
-    } else {
+    if (this.#mayDispatchInitEvent) {
       this.#wasInitEventDispatched = true;
       this.dispatchEvent(new InitEvent());
+    } else {
+      this.#initEventTimeoutHandle = setTimeout(() => { this.#dispatchInitEvent(); }, 500);
     }
   }
 }
