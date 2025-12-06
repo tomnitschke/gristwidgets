@@ -1,5 +1,6 @@
 import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
-import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+//import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
+import { GristSectionAdapter } from './grist-section-adapter.js';
 
 
 const Config = {
@@ -11,7 +12,7 @@ const Config = {
 
 
 class GristSandbox {
-  #readyMessageTimeoutHandler;
+  #readyMessageTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
   constructor (config=null) {
@@ -29,20 +30,21 @@ class GristSandbox {
     for (const eConfigItem of document.querySelectorAll('.configItem')) {
       eConfigItem.addEventListener('sl-input', async (evt) => await this.#onConfigItemChanged(evt.target));
     }
-    this.widget = new GristWidget('GristSandbox', {
+    this.adapter = new GristSectionAdapter({
       requiredAccess: 'full',
       columns: [
         { name: 'sandbox_html', title: 'HTML', type: 'Text', optional: true },
         { name: 'sandbox_js', title: 'JS', type: 'Text', optional: true },
         { name: 'sandbox_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
       ],
-    }, true, false);
-    this.debug = this.widget.logger.debug.bind(this.widget.logger); this.err = this.widget.logger.err.bind(this.widget.logger);
-    this.widget.addEventListener('ready', () => { this.load(this.widget.cursor.current) });
-                                //grist.on('message',(msg) => { console.info("GRIST MSG",msg); });
-    this.widget.addEventListener('cursorMoved', () => { this.load(this.widget.cursor.current) });
-    this.widget.addEventListener('recordsModified', () => { if (this.config.enableAutoreload) { this.load(this.widget.cursor.current) } });
-    this.#readyMessageTimeoutHandler = undefined;
+    }, false);
+    this.adapter.onInitOrCursorMoved(() => { this.load(this.adapter.cursor); });
+    this.adapter.onRecordsModified(() => {
+      if (this.config.enableAutoreload) {
+        this.load(this.adapter.cursor);
+      }
+    });
+    this.#readyMessageTimeoutHandle = undefined;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
     this.initRPCMiddleware();
@@ -65,24 +67,24 @@ class GristSandbox {
           msg.data.args ??= [{}];
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
           msg.data.args[0].requiredAccess ??= 'read table';
-          msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.widget.gristOptions.columns ];
-          clearTimeout(this.#readyMessageTimeoutHandler);
+          msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.adapter.readyPayload.columns ];
+          clearTimeout(this.#readyMessageTimeoutHandle);
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
         this.eContentWindow.postMessage(msg.data, '*');
       }
     });
-    this.#readyMessageTimeoutHandler = setTimeout(async () => {
-      await grist.sectionApi.configure(this.widget.gristOptions);
-      this.widget.colMappings.current = await grist.sectionApi.mappings();
+    this.#readyMessageTimeoutHandle = setTimeout(async () => {
+      await grist.sectionApi.configure(this.adapter.readyPayload);
+      this.adapter.mappings = await grist.sectionApi.mappings();
       await this.init();
-      this.load(this.widget.cursor.current);
+      this.load(this.adapter.cursor);
     }, 1000);
   }
   async init () {
     await this.applyConfig();
-    if (this.widget.colMappings.current?.sandbox_config) {
+    if (this.adapter.hasMapping('sandbox_config')) {
       this.eConfigOpenBtn.style.display =  'initial';
     } else {
       this.eConfigOpenBtn.style.display =  'none';
@@ -96,8 +98,8 @@ class GristSandbox {
       this.eContentFrame = document.createElement('iframe');
       this.eContentFrame.id = 'content';
       this.eContentFrame.addEventListener('load', () => {
-        const htmlContent = record[this.widget.colMappings.current?.sandbox_html];
-        const jsContent = record[this.widget.colMappings.current?.sandbox_js];
+        const htmlContent = this.adapter.getRecordField(record, 'sandbox_html');
+        const jsContent = this.adapter.getRecordField(record, 'sandbox_js');
         if (jsContent) {
           const eGristPluginApiScript = this.eContentDocument.createElement('script');
           eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
@@ -124,9 +126,10 @@ class GristSandbox {
     }
   }
   async clearConfig() {
-    if(this.widget.colMappings.current?.sandbox_config && this.widget.cursor.current) {
-                                                                                    this.widget.scheduleSkipGristMessage('onRecord');
-                                                                                    await this.widget.writeRecord({ [this.widget.colMappings.current.sandbox_config]: '{}' });
+    if(this.adapter.hasMapping('sandbox_config')) {
+                                                                                    this.adapter.skipMessage('onRecord');
+                                                                                    this.adapter.skipMessage('onRecords');
+                                                                                    await this.adapter.writeCursorField('sandbox_config', '{}');
     }
   }
   async #onConfigItemChanged (eConfigItem) {
@@ -140,12 +143,13 @@ class GristSandbox {
     if (eConfigItem.classList.contains('configParseAsJSON')) {
       value = Util.jsonDecode(value, null) || undefined;
     }
-    if (this.widget.colMappings.current?.sandbox_config && this.widget.cursor.current) {
+    if (this.adapter.hasMapping('sandbox_config')) {
       this.debug("save config item", configKey, eConfigItem, value);
       this.userConfig[configKey] = value;
       this.#config = null;
-                                                                                    this.widget.scheduleSkipGristMessage('onRecord');
-                                                                                    await this.widget.writeRecord({ [this.widget.colMappings.current.sandbox_config]: Util.jsonEncode(this.userConfig, '{}') });
+                                                                                    this.adapter.skipMessage('onRecord');
+                                                                                    this.adapter.skipMessage('onRecords');
+                                                                                    await this.adapter.writeCursorField('sandbox_config', Util.jsonEncode(this.userConfig, '{}'));
     }
     ///await grist.setOption(configKey, value);
   }
@@ -190,8 +194,8 @@ class GristSandbox {
     }
   }
   async applyConfig () {
-    if (this.widget.colMappings.current?.sandbox_config && this.widget.cursor.current) {
-      this.userConfig = Util.jsonDecode(this.widget.cursor.current[this.widget.colMappings.current.sandbox_config], {});
+    if (this.adapter.hasMappings('sandbox_config')) {
+      this.userConfig = Util.jsonDecode(this.adapter.getCursorField('sandbox_config'), {});
       this.#config = null;
     }
     this.debug("applied config",this.userConfig);      
