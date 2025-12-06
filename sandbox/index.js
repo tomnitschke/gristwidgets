@@ -82,7 +82,7 @@ class GristSandbox {
     });
     this.#readyMessageTimeoutHandle = setTimeout(async () => {
       await grist.sectionApi.configure(this.adapter.readyPayload);
-      this.load();
+      await this.load();
     }, 30000);
     this.#isInited = true;
   }
@@ -116,7 +116,7 @@ class GristSandbox {
       this.eContentDocument.head.appendChild(eCustomScript);
     }
   }
-  load () {
+  async load () {
     await this.applyConfig();
     if (this.adapter.hasMapping('sandbox_config')) {
       this.eConfigOpenBtn.style.display =  'initial';
