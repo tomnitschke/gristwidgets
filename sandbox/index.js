@@ -145,7 +145,6 @@ class GristSandbox {
       value = Util.jsonDecode(value, null) || undefined;
     }
     if (this.adapter.hasMapping('sandbox_config')) {
-      this.debug("save config item", configKey, eConfigItem, value);
       this.userConfig[configKey] = value;
       this.#config = null;
                                                                                     this.adapter.skipMessage('onRecord');
@@ -199,7 +198,6 @@ class GristSandbox {
       this.userConfig = Util.jsonDecode(this.adapter.getCursorField('sandbox_config'), {});
       this.#config = null;
     }
-    this.debug("applied config",this.userConfig);      
   }
 }
 
