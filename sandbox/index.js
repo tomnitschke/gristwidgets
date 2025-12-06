@@ -63,7 +63,6 @@ class GristSandbox {
   async initRPCMiddleware () {
     await this.init();
     console.error("INITED");
-    this.adapter.mappings = await grist.sectionApi.mappings();
     window.addEventListener('message', (msg) => {
       //if (!this.eContentFrame) { return; }
       if (msg.source === this.eContentWindow) {
@@ -89,6 +88,7 @@ class GristSandbox {
     this.load();
   }
   async init () {
+    this.adapter.mappings = await grist.sectionApi.mappings();
     this.adapter._forceDispatchInitEvent();
     await this.applyConfig();
     if (this.adapter.hasMapping('sandbox_config')) {
