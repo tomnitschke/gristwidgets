@@ -90,7 +90,7 @@ export class GristSectionAdapter extends EventTarget {
       if (mappings) {
         this.mappingsPrev = this.mappings ?? mappings;
         this.mappings = mappings;
-        if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.mappingsPrev, this.mappings) {
+        if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.mappingsPrev, this.mappings)) {
           this.dispatchEvent(new MappingsChangedEvent());
         }
       }
