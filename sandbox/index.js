@@ -83,6 +83,7 @@ class GristSandbox {
     }, 1000);
   }
   async init () {
+    this.adapter._forceDispatchInitEvent();
     await this.applyConfig();
     if (this.adapter.hasMapping('sandbox_config')) {
       this.eConfigOpenBtn.style.display =  'initial';
