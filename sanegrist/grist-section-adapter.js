@@ -200,11 +200,20 @@ export class GristSectionAdapter extends EventTarget {
   onOptionsUpdated(callbackFn) { this.addEventListener('optionsUpdated', callbackFn); }
   onInteractionOptionsUpdated(callbackFn) { this.addEventListener('interactionOptionsUpdated', callbackFn); }
   onOptionsEditorRequested(callbackFn) { this.addEventListener('optionsEditorRequested', callbackFn); }
-  skipMessage(messageName, amountToSkip) {
+  hasMapping(mappedColName) {
+    this.#assertInitEventDispatched();
+    return mappedColName in this.mappings;
+  }
+  skipMessage(messageName, amountToSkip=1) {
     if (!(messageName in this.#skipMessages)) {
       throw new Error(`Unknown message '${messageName}'.`);
     }
     this.#skipMessages[messageName] += amountToSkip;
+  }
+  getRecordField(record, mappedColName) {
+    this.#assertInitEventDispatched();
+    this.#assertMappingExists(mappedColName);
+    return record[this.mappings[mappedColName]];
   }
   getCursorField(mappedColName) {
     this.#assertInitEventDispatched();
