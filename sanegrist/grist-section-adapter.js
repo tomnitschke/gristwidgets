@@ -12,9 +12,14 @@ export class CursorMovedEvent extends Event {
     super('cursorMoved');
   }
 }
-export class MappingsChangedEvent extends Event {
+export class CursorMovedToNewEvent extends Event {
   constructor() {
-    super('mappingsChanged');
+    super('cursorMovedToNew');
+  }
+}
+export class MappingsUpdatedEvent extends Event {
+  constructor() {
+    super('mappingsUpdated');
   }
 }
 export class RecordsModifiedEvent extends Event {
@@ -23,14 +28,14 @@ export class RecordsModifiedEvent extends Event {
     this.delta = delta;
   }
 }
-export class OptionsChangedEvent extends Event {
+export class OptionsUpdatedEvent extends Event {
   constructor() {
-    super('optionsChanged');
+    super('optionsUpdated');
   }
 }
-export class InteractionOptionsChangedEvent extends Event {
+export class InteractionOptionsUpdatedEvent extends Event {
   constructor() {
-    super('interactionOptionsChanged');
+    super('interactionOptionsUpdated');
   }
 }
 export class OptionsEditorRequestedEvent extends Event {
@@ -42,9 +47,12 @@ export class OptionsEditorRequestedEvent extends Event {
 export class GristSectionAdapter extends EventTarget {
   #wasInitEventDispatched;
   #initEventTimeoutHandle;
+  #isFetchingTableName;
   constructor(readyPayload=undefined, doSendReadyMessage=true) {
     super();
     this.readyPayload = readyPayload;
+    this.tableName = null;
+    this.tableOps = null;
     this.mappings = null;
     this.mappingsPrev = null;
     this.cursor = null;
@@ -67,7 +75,11 @@ export class GristSectionAdapter extends EventTarget {
     });
     grist.onNewRecord((mappings) => {
       this.#onUpdateMappings();
+      this.cursor = { id: -1 };
       this.#tryDispatchInitEvent();
+      if (this.#wasInitEventDispatched) {
+        this.dispatchEvent(new CursorMovedToNewEvent());
+      }
     });
     grist.onOptions((options, interactionOptions) => {
       this.#onUpdateOptions(options);
@@ -86,7 +98,7 @@ export class GristSectionAdapter extends EventTarget {
     this.#tryDispatchInitEvent();
   }
   get #mayDispatchInitEvent() {
-    return Boolean(this.mappings && this.cursor && this.records && this.options);
+    return Boolean(this.tableName && this.tableOps && this.mappings && this.cursor && this.records && this.options);
   }
   #onUpdateCursor(record) {
       if (record) {
@@ -102,7 +114,7 @@ export class GristSectionAdapter extends EventTarget {
         this.mappingsPrev = this.mappings ?? mappings;
         this.mappings = mappings;
         if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.mappingsPrev, this.mappings)) {
-          this.dispatchEvent(new MappingsChangedEvent());
+          this.dispatchEvent(new MappingsUpdatedEvent());
         }
       }
   }
@@ -124,7 +136,7 @@ export class GristSectionAdapter extends EventTarget {
       this.optionsPrev = this.options ?? options;
       this.options = options;
       if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.optionsPrev, this.options)) {
-        this.dispatchEvent(new OptionsChangedEvent());
+        this.dispatchEvent(new OptionsUpdatedEvent());
       }
     }
   }
@@ -133,7 +145,7 @@ export class GristSectionAdapter extends EventTarget {
       this.interactionOptionsPrev = this.interactionOptions ?? interactionOptions;
       this.interactionOptions = interactionOptions;
       if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.interactionOptionsPrev, this.interactionOptions)) {
-        this.dispatchEvent(new InteractionOptionsChangedEvent());
+        this.dispatchEvent(new InteractionOptionsUpdatedEvent());
       }
     }
   }
@@ -142,6 +154,14 @@ export class GristSectionAdapter extends EventTarget {
       return;
     }
     clearTimeout(this.#initEventTimeoutHandle);
+    if (!this.tableName && !this.#isFetchingTableName) {
+      this.#isFetchingTableName = true;
+      grist.getSelectedTableId().then((tableName) => {
+        this.#isFetchingTableName = false;
+        this.tableName = tableName;
+        this.tableOps = grist.getTable();
+      });
+    }
     if (this.#mayDispatchInitEvent) {
       this.#wasInitEventDispatched = true;
       this.dispatchEvent(new InitEvent());
@@ -149,4 +169,15 @@ export class GristSectionAdapter extends EventTarget {
       this.#initEventTimeoutHandle = setTimeout(() => { this.#tryDispatchInitEvent(); }, 500);
     }
   }
+  /****************************************************************************************************/
+  on(eventName, callbackFn) { this.addEventListener(eventName, callbackFn); }
+  onInit(callbackFn) { this.addEventListener('init', callbackFn); }
+  onInitOrCursorMoved(callbackFn) { this.addEventListener('init', callbackFn); this.addEventListener('cursorMoved', callbackFn); }
+  onMappingsUpdated(callbackFn) { this.addEventListener('mappingsUpdated', callbackFn); }
+  onCursorMoved(callbackFn) { this.addEventListener('cursorMoved', callbackFn); }
+  onCursorMovedToNew(callbackFn) { this.addEventListener('cursorMovedToNew', callbackFn); }
+  onRecordsModified(callbackFn) { this.addEventListener('recordsModified', callbackFn); }
+  onOptionsUpdated(callbackFn) { this.addEventListener('optionsUpdated', callbackFn); }
+  onInteractionOptionsUpdated(callbackFn) { this.addEventListener('interactionOptionsUpdated', callbackFn); }
+  onOptionsEditorRequested(callbackFn) { this.addEventListener('optionsEditorRequested', callbackFn); }
 }
