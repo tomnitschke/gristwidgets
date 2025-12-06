@@ -61,6 +61,12 @@ class GristSandbox {
   async initRPCMiddleware () {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
+    this.#readyMessageTimeoutHandle = setTimeout(async () => {
+      await grist.sectionApi.configure(this.adapter.readyPayload);
+      this.adapter.mappings = await grist.sectionApi.mappings();
+      await this.init();
+      this.load();
+    }, 5000);
     window.addEventListener('message', (msg) => {
       //if (!this.eContentFrame) { return; }
       if (msg.source === this.eContentWindow) {
@@ -76,12 +82,6 @@ class GristSandbox {
         this.eContentWindow.postMessage(msg.data, '*');
       }
     });
-    this.#readyMessageTimeoutHandle = setTimeout(async () => {
-      await grist.sectionApi.configure(this.adapter.readyPayload);
-      this.adapter.mappings = await grist.sectionApi.mappings();
-      await this.init();
-      this.load();
-    }, 5000);
   }
   async init () {
     this.adapter._forceDispatchInitEvent();
