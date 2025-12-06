@@ -61,6 +61,8 @@ class GristSandbox {
     return this.#config;
   };
   async initRPCMiddleware () {
+    await grist.rpc.sendReadyMessage();
+    grist.rpc.registerFunc('editOptions', () => {});
     await this.init();
     console.error("INITED");
     window.addEventListener('message', (msg) => {
@@ -78,8 +80,6 @@ class GristSandbox {
         this.eContentWindow.postMessage(msg.data, '*');
       }
     });
-    await grist.rpc.sendReadyMessage();
-    grist.rpc.registerFunc('editOptions', () => {});
     this.#readyMessageTimeoutHandle = setTimeout(async () => {
       await grist.sectionApi.configure(this.adapter.readyPayload);
       this.load();
