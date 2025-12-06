@@ -39,10 +39,10 @@ class GristSandbox {
         { name: 'sandbox_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
       ],
     }, false);
-    this.adapter.onInitOrCursorMoved(() => { this.load(this.adapter.cursor); });
+    this.adapter.onInitOrCursorMoved(() => { this.load(); });
     this.adapter.onRecordsModified(() => {
       if (this.config.enableAutoreload) {
-        this.load(this.adapter.cursor);
+        this.load();
       }
     });
     this.#readyMessageTimeoutHandle = undefined;
@@ -80,7 +80,7 @@ class GristSandbox {
       await grist.sectionApi.configure(this.adapter.readyPayload);
       this.adapter.mappings = await grist.sectionApi.mappings();
       await this.init();
-      this.load(this.adapter.cursor);
+      this.load();
     }, 1000);
   }
   async init () {
@@ -93,10 +93,15 @@ class GristSandbox {
     }
   }
   #onContentFrameLoaded() {
-    const htmlContent = this.adapter.getRecordField(record, 'sandbox_html');
-    const jsContent = this.adapter.getRecordField(record, 'sandbox_js');
+    /*const htmlContent = this.adapter.getRecordField(record, 'sandbox_html');
     if (htmlContent) {
       this.eContentDocument.documentElement.innerHTML = htmlContent;
+    }*/
+    const jsContent = this.adapter.getCursorField('sandbox_js');
+    if (this.config.importGristThemeCSSVars && jsContent) {
+      this.eContentDocument.body.appendChild(
+        this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
+      );
     }
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
@@ -111,16 +116,16 @@ class GristSandbox {
       eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
       this.eContentDocument.head.appendChild(eCustomScript);
     }
-    if (this.config.importGristThemeCSSVars && (jsContent || htmlContent)) {
-      this.eContentDocument.body.appendChild(
-        this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
-      );
-    }
   }
-  load (record) {
+  load () {
+    const htmlContent = this.adapter.getCursorField('sandbox_html');
+    if (htmlContent) {
+      this.eContentFrame.srcdoc = htmlContent;
+    } else {
+      this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
+    }
     //this.eContentFrame.remove();
-    if (record) {
-                                                                        this.eContentDocument.documentElement.innerHTML = '';
+    //if (record) {
       //this.eContentFrame = document.createElement('iframe');
       //this.eContentFrame.id = 'content';
       /*this.eContentFrame.addEventListener('load', () => {
@@ -149,7 +154,7 @@ class GristSandbox {
         }
       });*/
       //document.body.appendChild(this.eContentFrame);
-    }
+    //}
   }
   async clearConfig() {
     if(this.adapter.hasMapping('sandbox_config')) {
