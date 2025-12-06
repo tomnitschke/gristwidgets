@@ -40,7 +40,7 @@ class GristSandbox {
         { name: 'sandbox_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
       ],
     }, false);
-    this.adapter.onCursorMoved(() => { this.load(); });
+    this.adapter.onInitOrCursorMoved(() => { this.load(); });
     this.adapter.onRecordsModified(() => {
       if (this.config.enableAutoreload) {
         this.load();
@@ -85,7 +85,6 @@ class GristSandbox {
       this.load();
     }, 30000);
     this.#isInited = true;
-    this.load();
   }
   async init () {
     this.adapter.mappings = await grist.sectionApi.mappings();
