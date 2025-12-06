@@ -88,7 +88,7 @@ class GristSandbox {
   }
   async init () {
     this.adapter.mappings = await grist.sectionApi.mappings();
-    this.adapter._forceDispatchInitEvent();
+    //this.adapter._forceDispatchInitEvent();
     await this.applyConfig();
     if (this.adapter.hasMapping('sandbox_config')) {
       this.eConfigOpenBtn.style.display =  'initial';
