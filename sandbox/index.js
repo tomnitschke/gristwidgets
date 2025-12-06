@@ -89,12 +89,6 @@ class GristSandbox {
   async init () {
     this.adapter.mappings = await grist.sectionApi.mappings();
     //this.adapter._forceDispatchInitEvent();
-    await this.applyConfig();
-    if (this.adapter.hasMapping('sandbox_config')) {
-      this.eConfigOpenBtn.style.display =  'initial';
-    } else {
-      this.eConfigOpenBtn.style.display =  'none';
-    }
   }
   #onContentFrameLoaded() {
     /*const htmlContent = this.adapter.getRecordField(record, 'sandbox_html');
@@ -123,6 +117,12 @@ class GristSandbox {
     }
   }
   load () {
+    await this.applyConfig();
+    if (this.adapter.hasMapping('sandbox_config')) {
+      this.eConfigOpenBtn.style.display =  'initial';
+    } else {
+      this.eConfigOpenBtn.style.display =  'none';
+    }
     const htmlContent = this.adapter.getCursorField('sandbox_html');
     if (htmlContent) {
       this.eContentFrame.srcdoc = htmlContent;
