@@ -59,6 +59,9 @@ class GristSandbox {
     return this.#config;
   };
   async initRPCMiddleware () {
+    await this.init();
+    console.error("INITED");
+    this.adapter.mappings = await grist.sectionApi.mappings();
     window.addEventListener('message', (msg) => {
       //if (!this.eContentFrame) { return; }
       if (msg.source === this.eContentWindow) {
@@ -78,8 +81,6 @@ class GristSandbox {
     grist.rpc.registerFunc('editOptions', () => {});
     this.#readyMessageTimeoutHandle = setTimeout(async () => {
       await grist.sectionApi.configure(this.adapter.readyPayload);
-      this.adapter.mappings = await grist.sectionApi.mappings();
-      await this.init();
       this.load();
     }, 30000);
   }
