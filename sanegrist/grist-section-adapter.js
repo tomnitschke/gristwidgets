@@ -235,6 +235,6 @@ export class GristSectionAdapter extends EventTarget {
   async writeCursorField(mappedColName, value, opOptions=undefined) {
     this.#assertInitEventDispatched();
     this.#assertMappingExists(mappedColName);
-    return await this.writeCursor({ [this.mappings[mappedColName]: value }, opOptions);
+    return await this.writeCursor({ [this.mappings[mappedColName]]: value }, opOptions);
   }
 }
