@@ -203,6 +203,7 @@ export class GristSectionAdapter extends EventTarget {
   onOptionsUpdated(callbackFn) { this.addEventListener('optionsUpdated', callbackFn); }
   onInteractionOptionsUpdated(callbackFn) { this.addEventListener('interactionOptionsUpdated', callbackFn); }
   onOptionsEditorRequested(callbackFn) { this.addEventListener('optionsEditorRequested', callbackFn); }
+  isInited() { return this.#wasInitEventDispatched; }
   hasMapping(mappedColName) {
     this.#assertInitEventDispatched();
     return mappedColName in this.mappings;
