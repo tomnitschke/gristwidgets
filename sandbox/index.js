@@ -97,6 +97,7 @@ class GristSandbox {
     if (htmlContent) {
       this.eContentDocument.documentElement.innerHTML = htmlContent;
     }*/
+    if (!this.adapter.isInited) { return; }
     const jsContent = this.adapter.getCursorField('sandbox_js');
     if (this.config.importGristThemeCSSVars && jsContent) {
       this.eContentDocument.body.appendChild(
