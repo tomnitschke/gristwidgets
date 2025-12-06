@@ -1,6 +1,6 @@
-import { Util } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/util.mjs';
+import { Util } from '../sanegrist/util.mjs';
 //import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
-import { GristSectionAdapter } from './grist-section-adapter.js';
+import { GristSectionAdapter } from '../sanegrist/grist-section-adapter.js';
 
 
 const Config = {
