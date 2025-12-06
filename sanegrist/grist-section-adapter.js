@@ -98,7 +98,7 @@ export class GristSectionAdapter extends EventTarget {
     this.#tryDispatchInitEvent();
   }
   get #mayDispatchInitEvent() {
-    return Boolean(this.tableName && this.tableOps && this.mappings && this.cursor && this.records && this.options);
+    return Boolean(this.tableName && this.tableOps && this.mappings && this.cursor && this.records);
   }
   #onUpdateCursor(record) {
       if (record) {
