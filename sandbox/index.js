@@ -194,7 +194,7 @@ class GristSandbox {
     }
   }
   async applyConfig () {
-    if (this.adapter.hasMappings('sandbox_config')) {
+    if (this.adapter.hasMapping('sandbox_config')) {
       this.userConfig = Util.jsonDecode(this.adapter.getCursorField('sandbox_config'), {});
       this.#config = null;
     }
