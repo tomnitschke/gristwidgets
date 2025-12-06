@@ -146,7 +146,7 @@ export class GristSectionAdapter extends EventTarget {
       this.#wasInitEventDispatched = true;
       this.dispatchEvent(new InitEvent());
     } else {
-      this.#initEventTimeoutHandle = setTimeout(() => { this.#dispatchInitEvent(); }, 500);
+      this.#initEventTimeoutHandle = setTimeout(() => { this.#tryDispatchInitEvent(); }, 500);
     }
   }
 }
