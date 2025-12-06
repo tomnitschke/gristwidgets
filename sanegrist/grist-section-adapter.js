@@ -193,6 +193,7 @@ export class GristSectionAdapter extends EventTarget {
     }
   }
   /****************************************************************************************************/
+  get isInited() { return this.#wasInitEventDispatched; }
   on(eventName, callbackFn) { this.addEventListener(eventName, callbackFn); }
   onInit(callbackFn) { this.addEventListener('init', callbackFn); }
   onInitOrCursorMoved(callbackFn) { this.addEventListener('init', callbackFn); this.addEventListener('cursorMoved', callbackFn); }
@@ -203,7 +204,6 @@ export class GristSectionAdapter extends EventTarget {
   onOptionsUpdated(callbackFn) { this.addEventListener('optionsUpdated', callbackFn); }
   onInteractionOptionsUpdated(callbackFn) { this.addEventListener('interactionOptionsUpdated', callbackFn); }
   onOptionsEditorRequested(callbackFn) { this.addEventListener('optionsEditorRequested', callbackFn); }
-  isInited() { return this.#wasInitEventDispatched; }
   hasMapping(mappedColName) {
     this.#assertInitEventDispatched();
     return mappedColName in this.mappings;
