@@ -81,7 +81,7 @@ class GristSandbox {
       this.adapter.mappings = await grist.sectionApi.mappings();
       await this.init();
       this.load();
-    }, 1000);
+    }, 5000);
   }
   async init () {
     this.adapter._forceDispatchInitEvent();
