@@ -15,6 +15,7 @@ class GristSandbox {
   #readyMessageTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
+  #isInited;
   constructor (config=null) {
     this.defaultConfig = {
       ...Config,
@@ -39,7 +40,7 @@ class GristSandbox {
         { name: 'sandbox_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
       ],
     }, false);
-    this.adapter.onInitOrCursorMoved(() => { this.load(); });
+    this.adapter.onCursorMoved(() => { this.load(); });
     this.adapter.onRecordsModified(() => {
       if (this.config.enableAutoreload) {
         this.load();
@@ -48,6 +49,7 @@ class GristSandbox {
     this.#readyMessageTimeoutHandle = undefined;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
+    this.#isInited = false;
     this.initRPCMiddleware();
   }
   get eContentWindow() { return this.eContentFrame.contentWindow; }
@@ -83,6 +85,8 @@ class GristSandbox {
       await grist.sectionApi.configure(this.adapter.readyPayload);
       this.load();
     }, 30000);
+    this.#isInited = true;
+    this.load();
   }
   async init () {
     this.adapter._forceDispatchInitEvent();
@@ -98,7 +102,7 @@ class GristSandbox {
     if (htmlContent) {
       this.eContentDocument.documentElement.innerHTML = htmlContent;
     }*/
-    if (!this.adapter.isInited) { return; }
+    if (!this.#isInited) { return; }
     const jsContent = this.adapter.getCursorField('sandbox_js');
     if (this.config.importGristThemeCSSVars && jsContent) {
       this.eContentDocument.body.appendChild(
