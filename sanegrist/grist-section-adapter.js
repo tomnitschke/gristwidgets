@@ -110,6 +110,29 @@ export class GristSectionAdapter extends EventTarget {
   get #mayDispatchInitEvent() {
     return Boolean(this.tableName && this.tableOps && this.mappings && this.cursor && this.records);
   }
+  #tryDispatchInitEvent(doForce=false) {
+    if (this.#wasInitEventDispatched) {
+      return;
+    }
+    clearTimeout(this.#initEventTimeoutHandle);
+    if (!this.tableName && !this.#isFetchingTableName) {
+      this.#isFetchingTableName = true;
+      grist.getSelectedTableId().then((tableName) => {
+        this.#isFetchingTableName = false;
+        this.tableName = tableName;
+        this.tableOps = grist.getTable();
+      });
+    }
+    if (doForce || this.#mayDispatchInitEvent) {
+      this.#wasInitEventDispatched = true;
+      this.dispatchEvent(new InitEvent());
+    } else {
+      this.#initEventTimeoutHandle = setTimeout(() => { this.#tryDispatchInitEvent(); }, 500);
+    }
+  }
+  _forceDispatchInitEvent() {
+    this.#tryDispatchInitEvent(true);
+  }
   #onUpdateCursor(record) {
       if (record) {
         this.cursorPrev = this.cursor ?? record;
@@ -157,26 +180,6 @@ export class GristSectionAdapter extends EventTarget {
       if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.interactionOptionsPrev, this.interactionOptions)) {
         this.dispatchEvent(new InteractionOptionsUpdatedEvent());
       }
-    }
-  }
-  #tryDispatchInitEvent() {
-    if (this.#wasInitEventDispatched) {
-      return;
-    }
-    clearTimeout(this.#initEventTimeoutHandle);
-    if (!this.tableName && !this.#isFetchingTableName) {
-      this.#isFetchingTableName = true;
-      grist.getSelectedTableId().then((tableName) => {
-        this.#isFetchingTableName = false;
-        this.tableName = tableName;
-        this.tableOps = grist.getTable();
-      });
-    }
-    if (this.#mayDispatchInitEvent) {
-      this.#wasInitEventDispatched = true;
-      this.dispatchEvent(new InitEvent());
-    } else {
-      this.#initEventTimeoutHandle = setTimeout(() => { this.#tryDispatchInitEvent(); }, 500);
     }
   }
   #assertInitEventDispatched() {
