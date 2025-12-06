@@ -63,6 +63,9 @@ export class GristSectionAdapter extends EventTarget {
     this.optionsPrev = null;
     this.interactionOptions = null;
     this.interactionOptionsPrev = null;
+    this.#wasInitEventDispatched = false;
+    this.#initEventTimeoutHandle = null;
+    this.#isFetchingTableName = false;
     grist.onRecord((record, mappings) => {
       this.#onUpdateCursor(record);
       this.#onUpdateMappings(mappings);
