@@ -101,9 +101,20 @@ class GristPlayground {
     if (!this.#isInited) { return; }
     const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars && jsContent) {
-      this.eContentDocument.body.appendChild(
+      this.eContentDocument.head.appendChild(
         this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
       );
+    }
+    if (this.config.jsPrelude) {
+      const eJsPrelude = this.eContentDocument.createElement('script');
+      eJsPrelude.type = 'module';
+      eJsPrelude.async = false;
+      eJsPrelude.defer = false;
+      eJsPrelude.appendChild(this.eContentDocument.createTextNode(this.config.jsPrelude));
+      this.eContentDocument.head.appendChild(eJsPrelude);
+    }
+    if (this.config.htmlPrelude) {
+      this.eContentDocument.body.insertAdjacentHTML('afterbegin', this.config.htmlPrelude);
     }
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
