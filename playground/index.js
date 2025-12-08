@@ -11,6 +11,18 @@ const Config = {
 }
 
 
+/*
+  First-load process:
+  1. Call grist.rpcs.sendReadyMessage(), indicating 'ready to receive messages' to Grist *without* also calling grist.sectionApi.configure(), which is what the normal grist.ready() call would do.
+  2. We start receiving 'onRecord'/'onRecords' messages from Grist *but without any valid column mapping*, because grist.sectionApi.configure() hasn't been called yet.
+  3. load() checks whether we've got valid mappings or not, then:
+    a) If we don't, it calls grist.sectionApi.configure() manually. This causes Grist to reload the entire widget, so we're starting out at 1. again but once we get to 3., we'll branch off to b), below.
+    b) If we do, it proceeds to load user code. This may or may not include a grist.ready() call that will invoke grist.sectionApi.configure(). Since we don't know whether it does, we'll set a timeout
+       to call grist.sectionApi.configure() manually if any loaded user code hasn't done so by itself inside of 3 seconds.
+  4. For user code that does include a grist.ready() call, we've already set up a message middleware in our constructor. This will pick up the 'configure' message coming from the iframe holding the user code,
+     add this widget's own column mappings to it and then forward it to Grist.
+*/
+
 class GristPlayground {
   #readyMessageTimeoutHandle;
   #contentGristReadyDeclaration;
@@ -57,9 +69,9 @@ class GristPlayground {
       if (!this.#isFirstLoadDone) {
         this.#isFirstLoadDone = true;
         this.adapter.mappings = await grist.sectionApi.mappings();
-        [this.adapter.tableName, this.adapter.tableOps] = await Promise.all([
+        [this.adapter.tableName = await Promise.all([
           await grist.getSelectedTableId(),
-          this.adapter.tableOps = await grist.getTable()
+          await grist.getTable()
         ]);
         await this.load();
       }
