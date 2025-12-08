@@ -11,7 +11,7 @@ const Config = {
 }
 
 
-class GristSandbox {
+class GristPlayground {
   #readyMessageTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
@@ -35,13 +35,20 @@ class GristSandbox {
     this.adapter = new GristSectionAdapter({
       requiredAccess: 'full',
       columns: [
-        { name: 'sandbox_html', title: 'HTML', type: 'Text', optional: true },
-        { name: 'sandbox_js', title: 'JS', type: 'Text', optional: true },
-        { name: 'sandbox_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
+        { name: 'playground_html', title: 'HTML', type: 'Text', optional: true },
+        { name: 'playground_js', title: 'JS', type: 'Text', optional: true },
+        { name: 'playground_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
       ],
-    }, false);
-    this.adapter.onInitOrCursorMoved(() => { this.load(); });
+    }, {
+      doSendReadyMessage: false,
+      disableInitEvent: true
+    });
+    this.adapter.onInitOrCursorMoved(() => {
+      console.error("onInitOrCursorMoved",this);
+      this.load();
+    });
     this.adapter.onRecordsModified(() => {
+      console.error("onRecordsModified",this);
       if (this.config.enableAutoreload) {
         this.load();
       }
@@ -63,8 +70,7 @@ class GristSandbox {
   async initRPCMiddleware () {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
-    await this.init();
-    console.error("INITED");
+    /*await this.init();*/
     window.addEventListener('message', (msg) => {
       //if (!this.eContentFrame) { return; }
       if (msg.source === this.eContentWindow) {
@@ -82,21 +88,18 @@ class GristSandbox {
     });
     this.#readyMessageTimeoutHandle = setTimeout(async () => {
       await grist.sectionApi.configure(this.adapter.readyPayload);
+      console.error("forced sectionApi.configure() invocation because user code didn't do it. Current state:",this,"Current mappings:",this.adapter.mappings,"fetching mappings:",await grist.sectionApi.mappings());
       await this.load();
-    }, 30000);
+    }, 10000);
     this.#isInited = true;
   }
-  async init () {
+  /*async init () {
     this.adapter.mappings = await grist.sectionApi.mappings();
     //this.adapter._forceDispatchInitEvent();
-  }
+  }*/
   #onContentFrameLoaded() {
-    /*const htmlContent = this.adapter.getRecordField(record, 'sandbox_html');
-    if (htmlContent) {
-      this.eContentDocument.documentElement.innerHTML = htmlContent;
-    }*/
     if (!this.#isInited) { return; }
-    const jsContent = this.adapter.getCursorField('sandbox_js');
+    const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars && jsContent) {
       this.eContentDocument.body.appendChild(
         this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
@@ -117,55 +120,25 @@ class GristSandbox {
     }
   }
   async load () {
+    console.error("load!",this);
     await this.applyConfig();
-    if (this.adapter.hasMapping('sandbox_config')) {
+    if (this.adapter.hasMapping('playground_config')) {
       this.eConfigOpenBtn.style.display =  'initial';
     } else {
       this.eConfigOpenBtn.style.display =  'none';
     }
-    const htmlContent = this.adapter.getCursorField('sandbox_html');
+    const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
       this.eContentFrame.srcdoc = htmlContent;
     } else {
       this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
     }
-    //this.eContentFrame.remove();
-    //if (record) {
-      //this.eContentFrame = document.createElement('iframe');
-      //this.eContentFrame.id = 'content';
-      /*this.eContentFrame.addEventListener('load', () => {
-        const htmlContent = this.adapter.getRecordField(record, 'sandbox_html');
-        const jsContent = this.adapter.getRecordField(record, 'sandbox_js');
-        if (jsContent) {
-          const eGristPluginApiScript = this.eContentDocument.createElement('script');
-          eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
-          eGristPluginApiScript.async = false;
-          eGristPluginApiScript.defer = false;
-          this.eContentDocument.head.appendChild(eGristPluginApiScript);
-          const eCustomScript = this.eContentDocument.createElement('script');
-          eCustomScript.type = 'module';
-          eCustomScript.async = false;
-          eCustomScript.defer = false;
-          eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
-          this.eContentDocument.head.appendChild(eCustomScript);
-        }
-        if (htmlContent) {
-          this.eContentDocument.documentElement.innerHTML = htmlContent;
-        }
-        if (this.config.importGristThemeCSSVars && (jsContent || htmlContent)) {
-          this.eContentDocument.body.appendChild(
-            this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
-          );
-        }
-      });*/
-      //document.body.appendChild(this.eContentFrame);
-    //}
   }
   async clearConfig() {
-    if(this.adapter.hasMapping('sandbox_config')) {
+    if(this.adapter.hasMapping('playground_config')) {
                                                                                     this.adapter.skipMessage('onRecord');
                                                                                     this.adapter.skipMessage('onRecords');
-                                                                                    await this.adapter.writeCursorField('sandbox_config', '{}');
+                                                                                    await this.adapter.writeCursorField('playground_config', '{}');
     }
   }
   async #onConfigItemChanged (eConfigItem) {
@@ -184,7 +157,7 @@ class GristSandbox {
       this.#config = null;
                                                                                     this.adapter.skipMessage('onRecord');
                                                                                     this.adapter.skipMessage('onRecords');
-                                                                                    await this.adapter.writeCursorField('sandbox_config', Util.jsonEncode(this.userConfig, '{}'));
+                                                                                    await this.adapter.writeCursorField('playground_config', Util.jsonEncode(this.userConfig, '{}'));
     }
     ///await grist.setOption(configKey, value);
   }
@@ -229,13 +202,13 @@ class GristSandbox {
     }
   }
   async applyConfig () {
-    if (this.adapter.hasMapping('sandbox_config')) {
-      this.userConfig = Util.jsonDecode(this.adapter.getCursorField('sandbox_config'), {});
+    if (this.adapter.hasMapping('playground_config')) {
+      this.userConfig = Util.jsonDecode(this.adapter.getCursorField('playground_config'), {});
       this.#config = null;
     }
   }
 }
 
 Util.onDOMReady(() => {
-  const gristSandbox = new GristSandbox();
+  const gristPlayground = new GristPlayground();
 });
