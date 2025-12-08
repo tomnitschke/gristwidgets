@@ -44,13 +44,19 @@ export class OptionsEditorRequestedEvent extends Event {
   }
 }
 
+const Config = {
+  doSendReadyMessage: true,
+  disableInitEvent: false,
+};
+
 export class GristSectionAdapter extends EventTarget {
-  #wasInitEventDispatched;
+  #_wasInitEventDispatched;
   #initEventTimeoutHandle;
   #isFetchingTableName;
   #skipMessages;
-  constructor(readyPayload=undefined, doSendReadyMessage=true) {
+  constructor(readyPayload=undefined, config=undefined) {
     super();
+    this.config = {...Config, ...config};
     this.readyPayload = readyPayload;
     this.tableName = null;
     this.tableOps = null;
@@ -64,7 +70,7 @@ export class GristSectionAdapter extends EventTarget {
     this.optionsPrev = null;
     this.interactionOptions = null;
     this.interactionOptionsPrev = null;
-    this.#wasInitEventDispatched = false;
+    this.#_wasInitEventDispatched = false;
     this.#initEventTimeoutHandle = null;
     this.#isFetchingTableName = false;
     this.#skipMessages = {
@@ -96,7 +102,7 @@ export class GristSectionAdapter extends EventTarget {
       this.#onUpdateInteractionOptions(interactionOptions);
       this.#tryDispatchInitEvent();
     });
-    if (doSendReadyMessage) {
+    if (this.config.doSendReadyMessage) {
       grist.ready({
         onEditOptions: () => {
           this.#tryDispatchInitEvent();
@@ -109,6 +115,12 @@ export class GristSectionAdapter extends EventTarget {
   }
   get #mayDispatchInitEvent() {
     return Boolean(this.tableName && this.tableOps && this.mappings && this.cursor && this.records);
+  }
+  get #wasInitEventDispatched() {
+    return this.#_wasInitEventDispatched || this.config.disableInitEvent;
+  }
+  set #wasInitEventDispatched(value) {
+    this.#_wasInitEventDispatched = value;
   }
   #tryDispatchInitEvent(doForce=false) {
     if (this.#wasInitEventDispatched) {
