@@ -49,9 +49,11 @@ class GristPlayground {
       this.load();
     });
     this.adapter.onRecordsModified(() => {
-      console.error("onRecordsModified",this);
-      if (this.config.enableAutoreload) {
-        this.load();
+      if (this.#isFirstLoadDone) {
+        console.error("onRecordsModified",this);
+        if (this.config.enableAutoreload) {
+          this.load();
+        }
       }
     });
     grist.onRecord(async (record) => {
@@ -104,7 +106,7 @@ class GristPlayground {
     this.#readyMessageTimeoutHandle = setTimeout(async () => {
       await grist.sectionApi.configure(this.adapter.readyPayload);  // This will make Grist reload the widget.
       console.error("forced sectionApi.configure() invocation because user code didn't do it. Current state:",this,"Current mappings:",this.adapter.mappings,"fetching mappings:",await grist.sectionApi.mappings());
-    }, 3000);
+    }, 10000);
     this.#isInited = true;
   }
   #onContentFrameLoaded() {
