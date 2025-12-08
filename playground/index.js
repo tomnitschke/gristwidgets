@@ -16,6 +16,7 @@ class GristPlayground {
   #contentGristReadyDeclaration;
   #config;
   #isInited;
+  #isFirstLoadDone;
   constructor (config=null) {
     this.defaultConfig = {
       ...Config,
@@ -43,10 +44,10 @@ class GristPlayground {
       doSendReadyMessage: false,
       disableInitEvent: true
     });
-    /*this.adapter.onInitOrCursorMoved(() => {
+    this.adapter.onInitOrCursorMoved(() => {
       console.error("onInitOrCursorMoved",this);
       this.load();
-    });*/
+    });
     this.adapter.onRecordsModified(() => {
       console.error("onRecordsModified",this);
       if (this.config.enableAutoreload) {
@@ -54,12 +55,16 @@ class GristPlayground {
       }
     });
     grist.onRecord(async (record) => {
-      console.error("grist.onRecord",record,"adapter state:",this.adapter);
+      if (!this.#isFirstLoadDone) {
+        console.error("grist.onRecord",record,"adapter state:",this.adapter);
+        await this.load();
+      }
     });
     this.#readyMessageTimeoutHandle = undefined;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
     this.#isInited = false;
+    this.#isFirstLoadDone = false;
     this.initRPCMiddleware();
   }
   get eContentWindow() { return this.eContentFrame.contentWindow; }
