@@ -58,6 +58,10 @@ class GristPlayground {
       if (!this.#isFirstLoadDone) {
         this.#isFirstLoadDone = true;
         this.adapter.mappings = await grist.sectionApi.mappings();
+        [this.adapter.tableName, this.adapter.tableOps] = await Promise.all([
+          await grist.getSelectedTableId(),
+          this.adapter.tableOps = await grist.getTable()
+        ]);
         if (this.adapter.mappings) {
           await this.load();
         }
