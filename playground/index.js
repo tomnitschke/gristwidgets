@@ -49,9 +49,9 @@ class GristPlayground {
     this.adapter = new GristSectionAdapter({
       requiredAccess: 'full',
       columns: [
-        { name: 'playground_html', title: 'HTML', type: 'Text', optional: true },
-        { name: 'playground_js', title: 'JS', type: 'Text', optional: true },
-        { name: 'playground_config', title: 'Config JSON', type: 'Text', strictType: true, optional: true },
+        { name: 'playground_html', title: '+++ Playground: HTML +++', type: 'Text', optional: true },
+        { name: 'playground_js', title: '+++ Playground: JS +++', type: 'Text', optional: true },
+        { name: 'playground_config', title: '+++ Playground: Config JSON +++', type: 'Text', strictType: true, optional: true },
       ],
     }, {
       doSendReadyMessage: false,
@@ -78,14 +78,15 @@ class GristPlayground {
       if (!this.#wasLoadStarted) {
         this.#wasLoadStarted = true;
         await this.load();
-        /*this.adapter.mappings = await grist.sectionApi.mappings();
-        [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
-          await grist.getSelectedTableId(),
-          await grist.getTable()
-        ]);
-        await this.load();*/
       }
     });
+    grist.on('message', (msg) => {
+      // GristSectionAdapter won't know its tableName and tableOps because we're not sending grist.ready(). So we have to gather these manually.
+      if (!this.adapter.tableName && msg.tableId) {
+        this.adapter.tableName = msg.tableId;
+        this.adapter.tableOps = grist.getTable(msg.tableId);
+      }
+    }
   }
   get #areMappingsReady() {
     return Boolean(this.adapter.mappings);
@@ -149,13 +150,6 @@ class GristPlayground {
       eCustomScript.defer = false;
       eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
       this.eContentDocument.head.appendChild(eCustomScript);
-    }
-    // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
-    if (!this.adapter.tableName) {
-      grist.getSelectedTableId().then((tableName) => {
-        this.adapter.tableName = tableName;
-        this.adapter.tableOps = grist.getTable();
-      });
     }
   }
   async load () {
