@@ -17,17 +17,18 @@ const Config = {
   2. We start receiving 'onRecord'/'onRecords' messages from Grist *but without any valid column mapping*, because grist.sectionApi.configure() hasn't been called yet.
   3. load() checks whether we've got valid mappings or not, then:
     a) If we don't, it calls grist.sectionApi.configure() manually. This causes Grist to reload the entire widget, so we're starting out at 1. again but once we get to 3., we'll branch off to b), below.
-    b) If we do, it proceeds to load user code. This may or may not include a grist.ready() call that will invoke grist.sectionApi.configure(). Since we don't know whether it does, we'll set a timeout
-       to call grist.sectionApi.configure() manually if any loaded user code hasn't done so by itself inside of 3 seconds.
+    b) If we do, it proceeds to load user code. This may or may not include a grist.ready() call that will invoke grist.sectionApi.configure(). But since we don't know whether or not, we'll set a timeout
+       to call grist.sectionApi.configure() manually *if any loaded user code hasn't done so by itself* inside of 3 seconds.
   4. For user code that does include a grist.ready() call, we've already set up a message middleware in our constructor. This will pick up the 'configure' message coming from the iframe holding the user code,
-     add this widget's own column mappings to it and then forward it to Grist.
+     add this widget's own column mappings to it and then forward it to Grist. It will also clear the timeout mentioned in 3. b).
 */
 
 class GristPlayground {
-  #readyMessageTimeoutHandle;
+  #sectionConfigureCallTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
   #isFirstLoadDone;
+  #isContentFrameReady;
   constructor (config=null) {
     this.defaultConfig = {
       ...Config,
@@ -55,6 +56,11 @@ class GristPlayground {
       doSendReadyMessage: false,
       disableInitEvent: true
     });
+    this.#sectionConfigureCallTimeoutHandle = null;
+    this.#contentGristReadyDeclaration = {};
+    this.#config = null;
+    this.#isFirstLoadDone = false;
+    this.#isContentFrameReady = false;
     this.adapter.onCursorMoved(() => {
       console.error("onCursorMoved",this);
       this.load();
@@ -68,18 +74,15 @@ class GristPlayground {
     grist.onRecord(async (record) => {
       if (!this.#isFirstLoadDone) {
         this.#isFirstLoadDone = true;
-        this.adapter.mappings = await grist.sectionApi.mappings();
+        await this.load();
+        /*this.adapter.mappings = await grist.sectionApi.mappings();
         [this.adapter.tableName = await Promise.all([
           await grist.getSelectedTableId(),
           await grist.getTable()
         ]);
-        await this.load();
+        await this.load();*/
       }
     });
-    this.#readyMessageTimeoutHandle = undefined;
-    this.#contentGristReadyDeclaration = {};
-    this.#config = null;
-    this.#isFirstLoadDone = false;
     this.initRPCMiddleware();
   }
   get #areMappingsReady() {
@@ -105,20 +108,20 @@ class GristPlayground {
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
           msg.data.args[0].requiredAccess ??= 'read table';
           msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.adapter.readyPayload.columns ];
-          clearTimeout(this.#readyMessageTimeoutHandle);
+          clearTimeout(this.#sectionConfigureCallTimeoutHandle);
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
         this.eContentWindow.postMessage(msg.data, '*');
       }
     });
-    this.#readyMessageTimeoutHandle = setTimeout(async () => {
+    /*this.#sectionConfigureCallTimeoutHandle = setTimeout(async () => {
       await grist.sectionApi.configure(this.adapter.readyPayload);  // This will make Grist reload the widget.
       console.error("forced sectionApi.configure() invocation because user code didn't do it. Current state:",this,"Current mappings:",this.adapter.mappings,"fetching mappings:",await grist.sectionApi.mappings());
-    }, 10000);
+    }, 10000);*/
   }
   #onContentFrameLoaded() {
-    if (!this.#areMappingsReady) { return; }
+    if (!this.#isContentFrameReady) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
     console.error("onContentFrameLoaded",this);
     const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars && jsContent) {
@@ -152,6 +155,30 @@ class GristPlayground {
     }
   }
   async load () {
+    if (!this.#isFirstLoadDone) { return; }
+    if (!this.#areMappingsReady) {
+      await grist.sectionApi.configure(this.adapter.readyPayload);  // This will cause Grist to reload the widget.
+      return;
+    }
+    console.error("load!");
+    await this.applyConfig();
+    if (this.adapter.hasMapping('playground_config')) {
+      this.eConfigOpenBtn.style.display =  'initial';
+    } else {
+      this.eConfigOpenBtn.style.display =  'none';
+    }
+    this.#isContentFrameReady = true;
+    /*this.#sectionConfigureCallTimeoutHandle = setTimeout(async () => {
+      await grist.sectionApi.configure(this.adapter.readyPayload);  // This will cause Grist to reload the widget.
+    }, 3000);*/
+    const htmlContent = this.adapter.getCursorField('playground_html');
+    if (htmlContent) {
+      this.eContentFrame.srcdoc = htmlContent;
+    } else {
+      this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
+    }
+  }
+  /*async load () {
     if (!this.#areMappingsReady) { return; }
     console.error("load!",this);
     await this.applyConfig();
@@ -166,7 +193,7 @@ class GristPlayground {
     } else {
       this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
     }
-  }
+  }*/
   async clearConfig() {
     if(this.adapter.hasMapping('playground_config')) {
                                                                                     this.adapter.skipMessage('onRecord');
