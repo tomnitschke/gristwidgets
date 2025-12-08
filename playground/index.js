@@ -135,6 +135,12 @@ class GristPlayground {
   }
   async load () {
     console.error("load!",this);
+    if (!this.adapter.mappings) {
+      this.adapter.mappings = await grist.sectionApi.mappings();
+      if (!this.adapter.mappings) {
+        throw new Error("Couldn't get mappings.");
+      }
+    }
     await this.applyConfig();
     if (this.adapter.hasMapping('playground_config')) {
       this.eConfigOpenBtn.style.display =  'initial';
