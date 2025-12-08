@@ -65,12 +65,12 @@ class GristPlayground {
     this.#isContentFrameReady = false;
     this.initRPCMiddleware();
     this.adapter.onCursorMoved(() => {
-      console.error("onCursorMoved",this);
+      //console.error("onCursorMoved",this);
       this.#wasLoadStarted = true;
       this.load();
     });
     this.adapter.onRecordsModified(() => {
-      console.error("onRecordsModified",this);
+      //console.error("onRecordsModified",this);
       this.#wasLoadStarted = true;
       if (this.config.enableAutoreload) {
         this.load();
@@ -122,7 +122,7 @@ class GristPlayground {
   }
   #onContentFrameLoaded() {
     if (!this.#isContentFrameReady) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
-    console.error("onContentFrameLoaded",this);
+    //console.error("onContentFrameLoaded",this);
     const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars) {
       this.eContentDocument.head.appendChild(
@@ -167,7 +167,7 @@ class GristPlayground {
       return;
     }
     this.eStatus.style.display = 'none';
-    console.error("load!");
+    //console.error("load!");
     await this.applyConfig();
     this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') ? 'block' : 'none';
     this.eReloadBtn.style.display = this.config.enableAutoreload ? 'none' : 'block';
