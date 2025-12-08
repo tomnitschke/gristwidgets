@@ -86,7 +86,7 @@ class GristPlayground {
         this.adapter.tableName = msg.tableId;
         this.adapter.tableOps = grist.getTable(msg.tableId);
       }
-    }
+    });
   }
   get #areMappingsReady() {
     return Boolean(this.adapter.mappings);
