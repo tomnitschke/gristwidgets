@@ -90,16 +90,28 @@ export class GristSectionAdapter extends EventTarget {
       onOptions: 0,
     };
     grist.onRecord((record, mappings) => {
+      if (this.#skipMessages.onRecord) {
+        this.#skipMessages.onRecord--;
+        return;
+      }
       this.#onUpdateCursor(record);
       this.#onUpdateMappings(mappings);
       this.#tryDispatchInitEvent();
     });
     grist.onRecords((records, mappings) => {
+      if (this.#skipMessages.onRecords) {
+        this.#skipMessages.onRecords--;
+        return;
+      }
       this.#onUpdateRecords(records);
       this.#onUpdateMappings(mappings);
       this.#tryDispatchInitEvent();
     });
     grist.onNewRecord((mappings) => {
+      if (this.#skipMessages.onNewRecord) {
+        this.#skipMessages.onNewRecord--;
+        return;
+      }
       this.#onUpdateMappings();
       this.cursor = { id: -1 };
       this.#tryDispatchInitEvent();
@@ -108,6 +120,10 @@ export class GristSectionAdapter extends EventTarget {
       }
     });
     grist.onOptions((options, interactionOptions) => {
+      if (this.#skipMessages.onOptions) {
+        this.#skipMessages.onOptions--;
+        return;
+      }
       this.#onUpdateOptions(options);
       this.#onUpdateInteractionOptions(interactionOptions);
       this.#tryDispatchInitEvent();
