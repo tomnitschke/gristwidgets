@@ -244,7 +244,7 @@ export class GristSectionAdapter extends EventTarget {
   onOptionsEditorRequested(callbackFn) { this.addEventListener('optionsEditorRequested', callbackFn); }
   hasMapping(mappedColName) {
     this.#assertInitEventDispatched();
-    return mappedColName in this.mappings;
+    return typeof this.mappings[mappedColName] !== 'undefined' && typeof this.mappings[mappedColName] !== 'null';
   }
   skipMessage(messageName, amountToSkip=1) {
     if (!(messageName in this.#skipMessages)) {
