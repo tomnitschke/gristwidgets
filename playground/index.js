@@ -40,6 +40,7 @@ class GristPlayground {
     this.eContentFrame.addEventListener('load', this.#onContentFrameLoaded.bind(this));
     this.eConfigPanel = document.querySelector('#config');
     this.eReloadBtn = document.querySelector('#reloadBtn');
+    this.eReloadBtn.addEventListener('click', async () => { await this.load(); });
     this.eConfigOpenBtn = document.querySelector('#configOpenBtn');
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
     this.eConfigOpenBtn.addEventListener('click', async () => { this.openConfigPanel() });
