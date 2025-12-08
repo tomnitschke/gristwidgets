@@ -264,7 +264,7 @@ export class GristSectionAdapter extends EventTarget {
     return await this.writeCursor({ [this.mappings[mappedColName]]: value }, opOptions);
   }
   scheduleRecordOperation(recId, fn, timeoutMs=500) {
-    if (!recId || (recId < 1 && recId !== 'new') {
+    if (!recId || (recId < 1 && recId !== 'new')) {
       throw new Error(`Invalid recId '${recId}' provided. It must be a valid record id (i.e. a number >= 1) or the string 'new'.`);
     }
     this.removeRecordOperation(recId);
