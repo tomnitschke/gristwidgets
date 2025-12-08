@@ -43,15 +43,18 @@ class GristPlayground {
       doSendReadyMessage: false,
       disableInitEvent: true
     });
-    this.adapter.onInitOrCursorMoved(() => {
+    /*this.adapter.onInitOrCursorMoved(() => {
       console.error("onInitOrCursorMoved",this);
       this.load();
-    });
+    });*/
     this.adapter.onRecordsModified(() => {
       console.error("onRecordsModified",this);
       if (this.config.enableAutoreload) {
         this.load();
       }
+    });
+    grist.onRecord(async (record) => {
+      console.error("grist.onRecord",record,"adapter state:",this.adapter);
     });
     this.#readyMessageTimeoutHandle = undefined;
     this.#contentGristReadyDeclaration = {};
