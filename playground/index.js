@@ -77,10 +77,6 @@ class GristPlayground {
     grist.onRecord(async (record) => {
       if (!this.#wasLoadStarted) {
         this.#wasLoadStarted = true;
-        [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
-          await grist.getSelectedTableId(),
-          await grist.getTable()
-        ]);
         await this.load();
         /*this.adapter.mappings = await grist.sectionApi.mappings();
         [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
@@ -172,6 +168,12 @@ class GristPlayground {
       */
       await grist.sectionApi.configure(this.adapter.readyPayload);
       return;
+    }
+    if (!this.adapter.tableName) {
+        [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
+          await grist.getSelectedTableId(),
+          await grist.getTable()
+        ]);
     }
     this.eStatus.style.display = 'none';
     console.error("load!");
