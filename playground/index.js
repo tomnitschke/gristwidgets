@@ -27,6 +27,7 @@ class GristPlayground {
   #sectionConfigureCallTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
+  #wasFirstLoadStarted;
   #isFirstLoadDone;
   #isContentFrameReady;
   constructor (config=null) {
@@ -62,18 +63,22 @@ class GristPlayground {
     this.#isFirstLoadDone = false;
     this.#isContentFrameReady = false;
     this.adapter.onCursorMoved(() => {
-      console.error("onCursorMoved",this);
-      this.load();
+      if (this.#isFirstLoadDone) {
+        console.error("onCursorMoved",this);
+        this.load();
+      }
     });
     this.adapter.onRecordsModified(() => {
-      console.error("onRecordsModified",this);
-      if (this.config.enableAutoreload) {
-        this.load();
+      if (this.#isFirstLoadDone) {
+        console.error("onRecordsModified",this);
+        if (this.config.enableAutoreload) {
+          this.load();
+        }
       }
     });
     grist.onRecord(async (record) => {
       if (!this.#isFirstLoadDone) {
-        this.#isFirstLoadDone = true;
+        this.#wasFirstLoadStarted = true;
         await this.load();
         /*this.adapter.mappings = await grist.sectionApi.mappings();
         [this.adapter.tableName = await Promise.all([
@@ -153,9 +158,10 @@ class GristPlayground {
       eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
       this.eContentDocument.head.appendChild(eCustomScript);
     }
+    this.#isFirstLoadDone = true;
   }
   async load () {
-    if (!this.#isFirstLoadDone) { return; }
+    if (!this.#wasFirstLoadStarted) { return; }
     if (!this.#areMappingsReady) {
       await grist.sectionApi.configure(this.adapter.readyPayload);  // This will cause Grist to reload the widget.
       return;
