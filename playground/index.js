@@ -60,6 +60,7 @@ class GristPlayground {
     this.#sectionConfigureCallTimeoutHandle = null;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
+    this.#wasFirstLoadStarted = false;
     this.#isFirstLoadDone = false;
     this.#isContentFrameReady = false;
     this.adapter.onCursorMoved(() => {
