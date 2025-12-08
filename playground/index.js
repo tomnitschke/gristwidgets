@@ -44,8 +44,8 @@ class GristPlayground {
       doSendReadyMessage: false,
       disableInitEvent: true
     });
-    this.adapter.onInitOrCursorMoved(() => {
-      console.error("onInitOrCursorMoved",this);
+    this.adapter.onCursorMoved(() => {
+      console.error("onCursorMoved",this);
       this.load();
     });
     this.adapter.onRecordsModified(() => {
@@ -58,8 +58,9 @@ class GristPlayground {
       if (!this.#isFirstLoadDone) {
         this.#isFirstLoadDone = true;
         this.adapter.mappings = await grist.sectionApi.mappings();
-        console.error("grist.onRecord",record,"adapter state:",this.adapter);
-        await this.load();
+        if (this.adapter.mappings) {
+          await this.load();
+        }
       }
     });
     this.#readyMessageTimeoutHandle = undefined;
@@ -97,16 +98,11 @@ class GristPlayground {
       }
     });
     this.#readyMessageTimeoutHandle = setTimeout(async () => {
-      await grist.sectionApi.configure(this.adapter.readyPayload);
+      await grist.sectionApi.configure(this.adapter.readyPayload);  // This will make Grist reload the widget.
       console.error("forced sectionApi.configure() invocation because user code didn't do it. Current state:",this,"Current mappings:",this.adapter.mappings,"fetching mappings:",await grist.sectionApi.mappings());
-      //await this.load();
-    }, 10000);
+    }, 3000);
     this.#isInited = true;
   }
-  /*async init () {
-    this.adapter.mappings = await grist.sectionApi.mappings();
-    //this.adapter._forceDispatchInitEvent();
-  }*/
   #onContentFrameLoaded() {
     if (!this.#isInited) { return; }
     console.error("onContentFrameLoaded",this);
@@ -174,7 +170,7 @@ class GristPlayground {
     if (eConfigItem.classList.contains('configParseAsJSON')) {
       value = Util.jsonDecode(value, null) || undefined;
     }
-    if (this.adapter.hasMapping('sandbox_config')) {
+    if (this.adapter.hasMapping('playground_config')) {
       this.userConfig[configKey] = value;
       this.#config = null;
                                                                                     this.adapter.skipMessage('onRecord');
