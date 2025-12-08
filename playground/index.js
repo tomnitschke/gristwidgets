@@ -77,9 +77,13 @@ class GristPlayground {
     grist.onRecord(async (record) => {
       if (!this.#wasLoadStarted) {
         this.#wasLoadStarted = true;
+        [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
+          await grist.getSelectedTableId(),
+          await grist.getTable()
+        ]);
         await this.load();
         /*this.adapter.mappings = await grist.sectionApi.mappings();
-        [this.adapter.tableName = await Promise.all([
+        [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
           await grist.getSelectedTableId(),
           await grist.getTable()
         ]);
