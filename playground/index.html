@@ -17,16 +17,16 @@
   </style>
 </head>
 <body>
-  <sl-button id="configOpenBtn">Sandbox Config</sl-button>
+  <sl-button id="configOpenBtn">Playground Config</sl-button>
   <sl-dialog id="config" label="Config">
     <div id="configContainer">
       <sl-checkbox class="configItem" id="config_enableAutoreload" size="small">Enable auto-reload</sl-checkbox>
       <sl-checkbox class="configItem" id="config_importGristThemeCSSVars" size="small">Import Grist theme CSS vars into loaded content</sl-checkbox>
       <sl-textarea class="configItem" id="config_jsPrelude" label="Default JS content">
-        <p slot="help-text">Any JS code defined here will always be inserted into the sandbox, regardless of what user content gets loaded. This code will get loaded before any user code.</p>
+        <p slot="help-text">Any JS code defined here will always be inserted into the playground, regardless of what user content gets loaded. This code will get loaded before any user code.</p>
       </sl-textarea>
       <sl-textarea class="configItem" id="config_htmlPrelude" label="Default HTML content">
-        <p slot="help-text">Any HTML markup defined here will always be inserted into the sandbox, regardless of what user content gets loaded. This markup will be inserted after any user markup.</p>
+        <p slot="help-text">Any HTML markup defined here will always be inserted into the playground, regardless of what user content gets loaded. This markup will be inserted after any user markup.</p>
       </sl-textarea>
     </div>
     <sl-button-group slot="footer">
