@@ -291,7 +291,7 @@ export class GristSectionAdapter extends EventTarget {
     }, timeoutMs);
   }
   async scheduleWriteCursor(fieldsAndValues, timeoutMs, opOptions=undefined) {
-    this.scheduleRecordOperation(this.cursor.recId, async (recordId) => {
+    this.scheduleRecordOperation(this.cursor.id, async (recordId) => {
       await this.writeRecord(recordId, fieldsAndValues, opOptions);
     }, timeoutMs);
   }
