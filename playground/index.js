@@ -6,8 +6,9 @@ import { GristSectionAdapter } from '../sanegrist/grist-section-adapter.js';
 const Config = {
   enableAutoreload: true,
   importGristThemeCSSVars: true,
-  jsPrelude: '',    ///TODO
-  htmlPrelude: '',  ///TODO
+  jsPrelude: '',
+  htmlPrelude: '',
+  showConfigButton: true,
 }
 
 
@@ -241,7 +242,7 @@ class GristPlayground {
     const elems = [];
     for (const [configKey, configValue] of Object.entries(this.config)) {
       ///const storedValue = await grist.getOption(configKey);
-      const storedValue = this.userConfig[configKey];
+      const storedValue = configKey in this.userConfig ? this.userConfig[configKey] : this.defaultConfig[configKey];
       const eInput = this.eConfigPanel.querySelector(`sl-input#config_${configKey}`);
       const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config_${configKey}`);
       const eTextarea = this.eConfigPanel.querySelector(`sl-textarea#config_${configKey}`);
