@@ -297,24 +297,31 @@ export class GristSectionAdapter extends EventTarget {
     }
   }
   async runRecordOperations(recIds=undefined) {
+    const ops = [];
     for (const [recId, op] of Object.entries(this.recordOps)) {
       if (!recIds || (recIds.includes && recIds.includes(recId))) {
-        await op.fn(recId);  // See scheduleRecordOperation()
+        //await op.fn(recId);  // See scheduleRecordOperation()
+        ops.push(async () => {
+          await op.fn(recId);
+        });
         this.removeRecordOperation(recId);
       }
     }
+    if (ops) {
+      await Promise.allSettled(ops);
+    }
   }
-  async scheduleWriteRecord(recId, fieldsAndValues, timeoutMs, opOptions=undefined) {
+  scheduleWriteRecord(recId, fieldsAndValues, timeoutMs, opOptions=undefined) {
     this.scheduleRecordOperation(recId, async (recordId) => {
       await this.writeRecord(recordId, fieldsAndValues, opOptions);
     }, timeoutMs);
   }
-  async scheduleWriteCursor(fieldsAndValues, timeoutMs, opOptions=undefined) {
+  scheduleWriteCursor(fieldsAndValues, timeoutMs, opOptions=undefined) {
     this.scheduleRecordOperation(this.cursor.id, async (recordId) => {
       await this.writeRecord(recordId, fieldsAndValues, opOptions);
     }, timeoutMs);
   }
-  async scheduleWriteCursorField(mappedColName, value, timeoutMs, opOptions=undefined)  {
+  scheduleWriteCursorField(mappedColName, value, timeoutMs, opOptions=undefined)  {
     this.scheduleRecordOperation(this.cursor.id, async (recordId) => {
       this.#assertMappingExists(mappedColName);
       await this.writeRecord(recordId, { [this.mappings[mappedColName]]: value }, opOptions);
