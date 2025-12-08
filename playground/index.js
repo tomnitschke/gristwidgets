@@ -171,10 +171,8 @@ class GristPlayground {
       return;
     }
     if (!this.adapter.tableName) {  // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
-        [this.adapter.tableName, this.adapter.tableOps] = await Promise.all([
-          await grist.getSelectedTableId(),
-          await grist.getTable()
-        ]);
+      this.adapter.tableName = await grist.getSelectedTableId();
+      this.adapter.tableOps = await grist.getTable();
     }
     this.eStatus.style.display = 'none';
     console.error("load!");
