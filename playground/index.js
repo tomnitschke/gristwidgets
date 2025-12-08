@@ -56,6 +56,7 @@ class GristPlayground {
     });
     grist.onRecord(async (record) => {
       if (!this.#isFirstLoadDone) {
+        this.#isFirstLoadDone = true;
         this.adapter.mappings = await grist.sectionApi.mappings();
         console.error("grist.onRecord",record,"adapter state:",this.adapter);
         await this.load();
