@@ -27,7 +27,7 @@ class GristPlayground {
   #sectionConfigureCallTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
-  #wasFirstLoadStarted;
+  #wasLoadStarted;
   #isContentFrameReady;
   constructor (config=null) {
     this.defaultConfig = {
@@ -59,21 +59,23 @@ class GristPlayground {
     this.#sectionConfigureCallTimeoutHandle = null;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
-    this.#wasFirstLoadStarted = false;
+    this.#wasLoadStarted = false;
     this.#isContentFrameReady = false;
     this.adapter.onCursorMoved(() => {
       console.error("onCursorMoved",this);
+      this.#wasLoadStarted = true;
       this.load();
     });
     this.adapter.onRecordsModified(() => {
       console.error("onRecordsModified",this);
+      this.#wasLoadStarted = true;
       if (this.config.enableAutoreload) {
         this.load();
       }
     });
     grist.onRecord(async (record) => {
-      if (!this.#wasFirstLoadStarted) {
-        this.#wasFirstLoadStarted = true;
+      if (!this.#wasLoadStarted) {
+        this.#wasLoadStarted = true;
         await this.load();
         /*this.adapter.mappings = await grist.sectionApi.mappings();
         [this.adapter.tableName = await Promise.all([
@@ -155,7 +157,7 @@ class GristPlayground {
     }
   }
   async load () {
-    if (!this.#wasFirstLoadStarted) { return; }
+    if (!this.#wasLoadStarted) { return; }
     if (!this.#areMappingsReady) {
       await grist.sectionApi.configure(this.adapter.readyPayload);  // This will cause Grist to reload the widget.
       return;
