@@ -77,7 +77,7 @@ class GristPlayground {
       }
     });
     grist.onRecord(async (record) => {
-      if (!this.#isFirstLoadDone) {
+      if (!this.#wasFirstLoadStarted) {
         this.#wasFirstLoadStarted = true;
         await this.load();
         /*this.adapter.mappings = await grist.sectionApi.mappings();
