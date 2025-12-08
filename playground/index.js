@@ -28,7 +28,6 @@ class GristPlayground {
   #contentGristReadyDeclaration;
   #config;
   #wasFirstLoadStarted;
-  #isFirstLoadDone;
   #isContentFrameReady;
   constructor (config=null) {
     this.defaultConfig = {
@@ -61,20 +60,15 @@ class GristPlayground {
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
     this.#wasFirstLoadStarted = false;
-    this.#isFirstLoadDone = false;
     this.#isContentFrameReady = false;
     this.adapter.onCursorMoved(() => {
-      if (this.#isFirstLoadDone) {
-        console.error("onCursorMoved",this);
-        this.load();
-      }
+      console.error("onCursorMoved",this);
+      this.load();
     });
     this.adapter.onRecordsModified(() => {
-      if (this.#isFirstLoadDone) {
-        console.error("onRecordsModified",this);
-        if (this.config.enableAutoreload) {
-          this.load();
-        }
+      console.error("onRecordsModified",this);
+      if (this.config.enableAutoreload) {
+        this.load();
       }
     });
     grist.onRecord(async (record) => {
@@ -159,7 +153,6 @@ class GristPlayground {
       eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
       this.eContentDocument.head.appendChild(eCustomScript);
     }
-    this.#isFirstLoadDone = true;
   }
   async load () {
     if (!this.#wasFirstLoadStarted) { return; }
