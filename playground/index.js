@@ -152,11 +152,9 @@ class GristPlayground {
     }
     // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
     if (!this.adapter.tableName) {
-      grist.getTable().then((tableOps) => {
-        this.adapter.tableOps = tableOps;
-        grist.getSelectedTableId().then((tableName) => {
-          this.adapter.tableName = tableName;
-        });
+      grist.getSelectedTableId().then((tableName) => {
+        this.adapter.tableName = tableName;
+        this.adapter.tableOps = grist.getTable();
       });
     }
   }
@@ -205,7 +203,8 @@ class GristPlayground {
     }
   }*/
   async clearConfig() {
-    if(this.adapter.hasMapping('playground_config')) {
+    if (!this.adapter.tableName) { return; }
+    if (this.adapter.hasMapping('playground_config')) {
                                                                                     this.adapter.skipMessage('onRecord');
                                                                                     this.adapter.skipMessage('onRecords');
                                                                                     await this.adapter.writeCursorField('playground_config', '{}');
@@ -222,7 +221,7 @@ class GristPlayground {
     if (eConfigItem.classList.contains('configParseAsJSON')) {
       value = Util.jsonDecode(value, null) || undefined;
     }
-    if (this.adapter.hasMapping('playground_config')) {
+    if (this.adapter.hasMapping('playground_config') && this.adapter.tableName) {
       this.userConfig[configKey] = value;
       this.#config = null;
                                                                                     this.adapter.skipMessage('onRecord');
