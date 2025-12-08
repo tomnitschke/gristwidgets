@@ -25,7 +25,6 @@ const Config = {
 */
 
 class GristPlayground {
-  //#sectionConfigureCallTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
   #wasLoadStarted;
@@ -58,7 +57,6 @@ class GristPlayground {
       doSendReadyMessage: false,
       disableInitEvent: true
     });
-    //this.#sectionConfigureCallTimeoutHandle = null;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
     this.#wasLoadStarted = false;
@@ -112,17 +110,12 @@ class GristPlayground {
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
           msg.data.args[0].requiredAccess ??= this.adapter.readyPayload.requiredAccess;
           msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.adapter.readyPayload.columns ];
-          //clearTimeout(this.#sectionConfigureCallTimeoutHandle);
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
         this.eContentWindow.postMessage(msg.data, '*');
       }
     });
-    /*this.#sectionConfigureCallTimeoutHandle = setTimeout(async () => {
-      await grist.sectionApi.configure(this.adapter.readyPayload);  // This will make Grist reload the widget.
-      console.error("forced sectionApi.configure() invocation because user code didn't do it. Current state:",this,"Current mappings:",this.adapter.mappings,"fetching mappings:",await grist.sectionApi.mappings());
-    }, 10000);*/
   }
   #onContentFrameLoaded() {
     if (!this.#isContentFrameReady) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
@@ -159,8 +152,12 @@ class GristPlayground {
     }
     // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
     if (!this.adapter.tableName) {
-      this.adapter.tableOps = await grist.getTable();
-      this.adapter.tableName = await grist.getSelectedTableId();
+      grist.getTable().then((tableOps) => {
+        this.adapter.tableOps = tableOps;
+        grist.getSelectedTableId().then((tableName) => {
+          this.adapter.tableName = tableName;
+        });
+      });
     }
   }
   async load () {
@@ -184,9 +181,6 @@ class GristPlayground {
       this.eConfigOpenBtn.style.display =  'none';
     }
     this.#isContentFrameReady = true;
-    /*this.#sectionConfigureCallTimeoutHandle = setTimeout(async () => {
-      await grist.sectionApi.configure(this.adapter.readyPayload);  // This will cause Grist to reload the widget.
-    }, 3000);*/
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
       this.eContentFrame.srcdoc = htmlContent;
