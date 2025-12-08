@@ -268,7 +268,10 @@ export class GristSectionAdapter extends EventTarget {
       throw new Error(`Invalid recId '${recId}' provided. It must be a valid record id (i.e. a number >= 1) or the string 'new'.`);
     }
     this.removeRecordOperation(recId);
-    this.recordOps[recId] = new RecordOp(recId, fn, timeoutMs, setTimeout(fn, timeoutMs));
+    this.recordOps[recId] = new RecordOp(recId, fn, timeoutMs, setTimeout(async () => {
+      await fn(recId);  // 'await' works for sync functions, too; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#conversion_to_promise
+      this.removeRecordOperation(recId);
+    }, timeoutMs));
   }
   removeRecordOperation(recId) {
     const op = this.recordOps[recId];
@@ -280,7 +283,7 @@ export class GristSectionAdapter extends EventTarget {
   async runRecordOperations(recIds=undefined) {
     for (const [recId, op] of Object.entries(this.recordOps)) {
       if (!recIds || (recIds.includes && recIds.includes(recId))) {
-        await op.fn(recId);  // 'await' works for sync functions, too; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#conversion_to_promise
+        await op.fn(recId);  // See scheduleRecordOperation()
         this.removeRecordOperation(recId);
       }
     }
