@@ -39,6 +39,7 @@ class GristPlayground {
     this.eContentFrame = document.querySelector('#content');
     this.eContentFrame.addEventListener('load', this.#onContentFrameLoaded.bind(this));
     this.eConfigPanel = document.querySelector('#config');
+    this.eReloadBtn = document.querySelector('#reloadBtn');
     this.eConfigOpenBtn = document.querySelector('#configOpenBtn');
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
     this.eConfigOpenBtn.addEventListener('click', async () => { this.openConfigPanel() });
@@ -167,11 +168,8 @@ class GristPlayground {
     this.eStatus.style.display = 'none';
     console.error("load!");
     await this.applyConfig();
-    if (this.adapter.hasMapping('playground_config')) {
-      this.eConfigOpenBtn.style.display =  'block';
-    } else {
-      this.eConfigOpenBtn.style.display =  'none';
-    }
+    this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') ? 'block' : 'none';
+    this.eReloadBtn.style.display = this.config.enableAutoreload ? 'none' : 'block';
     this.#isContentFrameReady = true;
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
@@ -180,22 +178,6 @@ class GristPlayground {
       this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
     }
   }
-  /*async load () {
-    if (!this.#areMappingsReady) { return; }
-    console.error("load!",this);
-    await this.applyConfig();
-    if (this.adapter.hasMapping('playground_config')) {
-      this.eConfigOpenBtn.style.display =  'initial';
-    } else {
-      this.eConfigOpenBtn.style.display =  'none';
-    }
-    const htmlContent = this.adapter.getCursorField('playground_html');
-    if (htmlContent) {
-      this.eContentFrame.srcdoc = htmlContent;
-    } else {
-      this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
-    }
-  }*/
   async clearConfig() {
     if (!this.adapter.tableName) { return; }
     if (this.adapter.hasMapping('playground_config')) {
