@@ -15,7 +15,6 @@ class GristPlayground {
   #readyMessageTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
-  #isInited;
   #isFirstLoadDone;
   constructor (config=null) {
     this.defaultConfig = {
@@ -49,11 +48,9 @@ class GristPlayground {
       this.load();
     });
     this.adapter.onRecordsModified(() => {
-      if (this.#isFirstLoadDone) {
-        console.error("onRecordsModified",this);
-        if (this.config.enableAutoreload) {
-          this.load();
-        }
+      console.error("onRecordsModified",this);
+      if (this.config.enableAutoreload) {
+        this.load();
       }
     });
     grist.onRecord(async (record) => {
@@ -64,17 +61,17 @@ class GristPlayground {
           await grist.getSelectedTableId(),
           this.adapter.tableOps = await grist.getTable()
         ]);
-        if (this.adapter.mappings) {
-          await this.load();
-        }
+        await this.load();
       }
     });
     this.#readyMessageTimeoutHandle = undefined;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
-    this.#isInited = false;
     this.#isFirstLoadDone = false;
     this.initRPCMiddleware();
+  }
+  get #areMappingsReady() {
+    return Boolean(this.adapter.mappings);
   }
   get eContentWindow() { return this.eContentFrame.contentWindow; }
   get eContentDocument() { return this.eContentFrame.contentWindow.document; }
@@ -107,10 +104,9 @@ class GristPlayground {
       await grist.sectionApi.configure(this.adapter.readyPayload);  // This will make Grist reload the widget.
       console.error("forced sectionApi.configure() invocation because user code didn't do it. Current state:",this,"Current mappings:",this.adapter.mappings,"fetching mappings:",await grist.sectionApi.mappings());
     }, 10000);
-    this.#isInited = true;
   }
   #onContentFrameLoaded() {
-    if (!this.#isInited) { return; }
+    if (!this.#areMappingsReady) { return; }
     console.error("onContentFrameLoaded",this);
     const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars && jsContent) {
@@ -144,6 +140,7 @@ class GristPlayground {
     }
   }
   async load () {
+    if (!this.#areMappingsReady) { return; }
     console.error("load!",this);
     await this.applyConfig();
     if (this.adapter.hasMapping('playground_config')) {
