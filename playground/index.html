@@ -13,11 +13,13 @@
     sl-dialog::part(close-button) { display: none; }
     #configContainer { display:flex; flex-direction:column; row-gap:var(--sl-spacing-small); }
     #content { height:100%;width:100%;border:solid 1px var(--grist-theme-widget-border);box-sizing:border-box; }
-    #configOpenBtn { position:absolute; z-index:9999; top:20px; right:20px; }
+    #reloadBtn { position:absolute; z-index:9999; top:10px; left:10px; }
+    #configOpenBtn { position:absolute; z-index:9999; top:10px; right:10px; }
   </style>
 </head>
 <body>
   <div id="status">Please allow 'full' document access for this widget.</div>
+  <sl-button id="reloadBtn" style="display:none;">Reload Playground</sl-button>
   <sl-button id="configOpenBtn" style="display:none;">Playground Config</sl-button>
   <sl-dialog id="config" label="Config">
     <div id="configContainer">
