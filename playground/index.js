@@ -35,6 +35,7 @@ class GristPlayground {
       ...config,
     };
     this.userConfig = {};
+    this.eStatus = document.querySelector('#status');
     this.eContentFrame = document.querySelector('#content');
     this.eContentFrame.addEventListener('load', this.#onContentFrameLoaded.bind(this));
     this.eConfigPanel = document.querySelector('#config');
@@ -126,7 +127,7 @@ class GristPlayground {
     if (!this.#isContentFrameReady) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
     console.error("onContentFrameLoaded",this);
     const jsContent = this.adapter.getCursorField('playground_js');
-    if (this.config.importGristThemeCSSVars && jsContent) {
+    if (this.config.importGristThemeCSSVars) {
       this.eContentDocument.head.appendChild(
         this.eContentDocument.importNode(document.querySelector('style#grist-theme'), true)
       );
@@ -157,15 +158,22 @@ class GristPlayground {
     }
   }
   async load () {
+    this.eStatus.innerText = 'Loading...';
     if (!this.#wasLoadStarted) { return; }
     if (!this.#areMappingsReady) {
-      await grist.sectionApi.configure(this.adapter.readyPayload);  // This will cause Grist to reload the widget.
+      /*
+        The behaviour of sectionApi.configure() differs depending on whether any columns are already mapped.
+        a) If there aren't (i.e. if we're on a clean slate), Grist will simply stop sending messages until the user has created a mapping; then proceed to send an 'onRecords' with mappingsChanged = true.
+        b) If there are, but not all required columns are mapped, Grist will show the "Please map columns" page; then once the user has created all necessary mappings, the widget will reload completely.
+      */
+      await grist.sectionApi.configure(this.adapter.readyPayload);
       return;
     }
+    this.eStatus.style.display = 'none';
     console.error("load!");
     await this.applyConfig();
     if (this.adapter.hasMapping('playground_config')) {
-      this.eConfigOpenBtn.style.display =  'initial';
+      this.eConfigOpenBtn.style.display =  'block';
     } else {
       this.eConfigOpenBtn.style.display =  'none';
     }
