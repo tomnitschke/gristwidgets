@@ -2,45 +2,54 @@ import { Util } from './util.mjs';
 import { RecordUtil } from './recordutil.mjs';
 
 
-export class InitEvent extends Event {
+class InitEvent extends Event {
   constructor() {
     super('init');
   }
 }
-export class CursorMovedEvent extends Event {
+class CursorMovedEvent extends Event {
   constructor() {
     super('cursorMoved');
   }
 }
-export class CursorMovedToNewEvent extends Event {
+class CursorMovedToNewEvent extends Event {
   constructor() {
     super('cursorMovedToNew');
   }
 }
-export class MappingsUpdatedEvent extends Event {
+class MappingsUpdatedEvent extends Event {
   constructor() {
     super('mappingsUpdated');
   }
 }
-export class RecordsModifiedEvent extends Event {
+class RecordsModifiedEvent extends Event {
   constructor(delta) {
     super('recordsModified');
     this.delta = delta;
   }
 }
-export class OptionsUpdatedEvent extends Event {
+class OptionsUpdatedEvent extends Event {
   constructor() {
     super('optionsUpdated');
   }
 }
-export class InteractionOptionsUpdatedEvent extends Event {
+class InteractionOptionsUpdatedEvent extends Event {
   constructor() {
     super('interactionOptionsUpdated');
   }
 }
-export class OptionsEditorRequestedEvent extends Event {
+class OptionsEditorRequestedEvent extends Event {
   constructor() {
     super('optionsEditorRequested');
+  }
+}
+
+class RecordOp {
+  constructor(recId, fn, timeoutMs, timeoutHandle) {
+    this.recId = recId;
+    this.fn = fn;
+    this.timeoutMs = timeoutMs;
+    this.timeoutHandle = timeoutHandle;
   }
 }
 
@@ -70,6 +79,7 @@ export class GristSectionAdapter extends EventTarget {
     this.optionsPrev = null;
     this.interactionOptions = null;
     this.interactionOptionsPrev = null;
+    this.recordOps = {};
     this.#_wasInitEventDispatched = false;
     this.#initEventTimeoutHandle = null;
     this.#isFetchingTableName = false;
@@ -252,5 +262,43 @@ export class GristSectionAdapter extends EventTarget {
     this.#assertInitEventDispatched();
     this.#assertMappingExists(mappedColName);
     return await this.writeCursor({ [this.mappings[mappedColName]]: value }, opOptions);
+  }
+  scheduleRecordOperation(recId, fn, timeoutMs=500) {
+    if (!recId || (recId < 1 && recId !== 'new') {
+      throw new Error(`Invalid recId '${recId}' provided. It must be a valid record id (i.e. a number >= 1) or the string 'new'.`);
+    }
+    this.removeRecordOperation(recId);
+    this.recordOps[recId] = new RecordOp(recId, fn, timeoutMs, setTimeout(fn, timeoutMs));
+  }
+  removeRecordOperation(recId) {
+    const op = this.recordOps[recId];
+    if (op) {
+      clearTimeout(op.timeoutHandle);
+      delete this.recordOps[recId];
+    }
+  }
+  async runRecordOperations(recIds=undefined) {
+    for (const [recId, op] of Object.entries(this.recordOps)) {
+      if (!recIds || (recIds.includes && recIds.includes(recId))) {
+        await op.fn(recId);  // 'await' works for sync functions, too; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#conversion_to_promise
+        this.removeRecordOperation(recId);
+      }
+    }
+  }
+  async scheduleWriteRecord(recId, fieldsAndValues, timeoutMs, opOptions=undefined) {
+    this.scheduleRecordOperation(recId, async (recordId) => {
+      await this.writeRecord(recordId, fieldsAndValues, opOptions);
+    }, timeoutMs);
+  }
+  async scheduleWriteCursor(fieldsAndValues, timeoutMs, opOptions=undefined) {
+    this.scheduleRecordOperation(this.cursor.recId, async (recordId) => {
+      await this.writeRecord(recordId, fieldsAndValues, opOptions);
+    }, timeoutMs);
+  }
+  async scheduleWriteCursorField(mappedColName, value, timeoutMs, opOptions=undefined)  {
+    this.scheduleRecordOperation(this.cursor.id, async (recordId) => {
+      this.#assertMappingExists(mappedColName);
+      await this.writeRecord(recordId, { [this.mappings[mappedColName]]: value }, opOptions);
+    }, timeoutMs);
   }
 }
