@@ -157,6 +157,11 @@ class GristPlayground {
       eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
       this.eContentDocument.head.appendChild(eCustomScript);
     }
+    // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
+    if (!this.adapter.tableName) {
+      this.adapter.tableOps = await grist.getTable();
+      this.adapter.tableName = await grist.getSelectedTableId();
+    }
   }
   async load () {
     this.eStatus.innerText = 'Loading...';
@@ -169,10 +174,6 @@ class GristPlayground {
       */
       await grist.sectionApi.configure(this.adapter.readyPayload);
       return;
-    }
-    if (!this.adapter.tableName) {  // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
-      this.adapter.tableOps = await grist.getTable();
-      //this.adapter.tableName = await grist.getSelectedTableId();
     }
     this.eStatus.style.display = 'none';
     console.error("load!");
