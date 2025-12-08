@@ -25,7 +25,7 @@ const Config = {
 */
 
 class GristPlayground {
-  #sectionConfigureCallTimeoutHandle;
+  //#sectionConfigureCallTimeoutHandle;
   #contentGristReadyDeclaration;
   #config;
   #wasLoadStarted;
@@ -58,11 +58,12 @@ class GristPlayground {
       doSendReadyMessage: false,
       disableInitEvent: true
     });
-    this.#sectionConfigureCallTimeoutHandle = null;
+    //this.#sectionConfigureCallTimeoutHandle = null;
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
     this.#wasLoadStarted = false;
     this.#isContentFrameReady = false;
+    this.initRPCMiddleware();
     this.adapter.onCursorMoved(() => {
       console.error("onCursorMoved",this);
       this.#wasLoadStarted = true;
@@ -87,7 +88,6 @@ class GristPlayground {
         await this.load();*/
       }
     });
-    this.initRPCMiddleware();
   }
   get #areMappingsReady() {
     return Boolean(this.adapter.mappings);
@@ -110,9 +110,9 @@ class GristPlayground {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
           this.#contentGristReadyDeclaration = structuredClone(msg.data.args[0]);
-          msg.data.args[0].requiredAccess ??= 'read table';
+          msg.data.args[0].requiredAccess ??= this.adapter.readyPayload.requiredAccess;
           msg.data.args[0].columns = [ ...(msg.data.args[0].columns || []), ...this.adapter.readyPayload.columns ];
-          clearTimeout(this.#sectionConfigureCallTimeoutHandle);
+          //clearTimeout(this.#sectionConfigureCallTimeoutHandle);
         }
         window.parent.postMessage(msg.data, '*');
       } else if (msg.source === window.parent) {
