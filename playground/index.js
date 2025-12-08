@@ -169,7 +169,7 @@ class GristPlayground {
       await grist.sectionApi.configure(this.adapter.readyPayload);
       return;
     }
-    if (!this.adapter.tableName) {
+    if (!this.adapter.tableName) {  // This information will be missing because we've disabled GristSectionAdapter's init event functionality, see ctor.
         [this.adapter.tableName, this.adapter.tableOps = await Promise.all([
           await grist.getSelectedTableId(),
           await grist.getTable()
