@@ -145,6 +145,7 @@ class GristPlayground {
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       eGristPluginApiScript.async = false;
       eGristPluginApiScript.defer = false;
+      eGristPluginApiScript.addEventListener('load', (evt) => { console.error("grist api script loaded",evt); });
       this.eContentDocument.head.appendChild(eGristPluginApiScript);
       const eCustomScript = this.eContentDocument.createElement('script');
       eCustomScript.type = 'module';
