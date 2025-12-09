@@ -145,14 +145,15 @@ class GristPlayground {
       eGristPluginApiScript.src = 'https://docs.getgrist.com/grist-plugin-api.js';
       eGristPluginApiScript.async = false;
       eGristPluginApiScript.defer = false;
-      eGristPluginApiScript.addEventListener('load', (evt) => { console.error("grist api script loaded",evt); });
+      eGristPluginApiScript.addEventListener('load', (evt) => {
+        const eCustomScript = this.eContentDocument.createElement('script');
+        eCustomScript.type = 'module';
+        eCustomScript.async = false;
+        eCustomScript.defer = false;
+        eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
+        this.eContentDocument.head.appendChild(eCustomScript);
+      });
       this.eContentDocument.head.appendChild(eGristPluginApiScript);
-      const eCustomScript = this.eContentDocument.createElement('script');
-      eCustomScript.type = 'module';
-      eCustomScript.async = false;
-      eCustomScript.defer = false;
-      eCustomScript.appendChild(this.eContentDocument.createTextNode(jsContent));
-      this.eContentDocument.head.appendChild(eCustomScript);
     }
   }
   async load () {
