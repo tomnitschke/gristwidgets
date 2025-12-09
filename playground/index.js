@@ -164,6 +164,7 @@ class GristPlayground {
         b) If there are, but not all required columns are mapped, Grist will show the "Please map columns" page; then once the user has created all necessary mappings, the widget will reload completely.
       */
       await grist.sectionApi.configure(this.adapter.readyPayload);
+      this.eStatus.innerText = 'Column mappings missing or incomplete. Please map all required columns.';
       return;
     }
     this.eStatus.style.display = 'none';
