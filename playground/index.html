@@ -9,16 +9,25 @@
 
   <style>
     :not(:defined) { visibility: hidden; }
-    html, body { margin:0; padding:0; var(--grist-theme-medium-font-size); font-family: var(--grist-theme-font-family); }
+    html, body { margin:0; padding:0; font-size:var(--grist-theme-medium-font-size); font-family:var(--grist-theme-font-family); }
     sl-dialog::part(close-button) { display: none; }
     #configContainer { display:flex; flex-direction:column; row-gap:var(--sl-spacing-small); }
     #content { height:100%;width:100%;border:solid 1px var(--grist-theme-widget-border);box-sizing:border-box; }
     #reloadBtn { position:absolute; z-index:9999; bottom:10px; left:10px; }
     #configOpenBtn { position:absolute; z-index:9999; bottom:10px; right:10px; }
+
+    :not(:defined) { visibility:hidden; }
+    html, body { margin:0; padding:0; font-size:var(--grist-theme-medium-font-size); font-family: var(--grist-theme-font-family); }
+    sl-dialog::part(header) { display:none; }
+    #config::part(panel) { display:flex; flex-direction:column; align-content:flex-start; row-gap:var(--sl-spacing-small); --width:90%; }
+    #config h1 { font-size:1.2rem; }
+    .configRow { display:flex; justify-content:flex-start; }
+    .configGroup { display:flex }
+    .configRow, .configGroup { align-items:baseline; column-gap:10px; }
   </style>
 </head>
 <body>
-  <div id="status">Please allow 'full' document access for this widget.</div>
+  <div id="status"></div>
   <sl-button id="reloadBtn" size="small" variant="neutral" outline style="display:none;">
     <sl-icon slot="prefix" name="arrow-clockwise"></sl-icon>
     Reload Playground
@@ -28,16 +37,24 @@
     Playground Config
   </sl-button>
   <sl-dialog id="config" label="Config">
-    <div id="configContainer">
+    <div class="config-row">
+      <h1>General Settings</h1>
       <sl-checkbox class="configItem" id="config_enableButtons" size="small" help-text="Show the 'Reload Playground' and 'Playground Settings' buttons. WARNING: If you hide these, the only way to edit these settings (and get them back) is to manually edit the settings JSON stored on the Grist record.">Enable playground buttons</sl-checkbox>
       <sl-checkbox class="configItem" id="config_enableAutoreload" size="small">Enable auto-reload</sl-checkbox>
+    </div>
+    <div class="config-row">
+      <h1>Settings for Playground Content</h1>
       <sl-checkbox class="configItem" id="config_importGristThemeCSSVars" size="small">Import Grist theme CSS vars into loaded content</sl-checkbox>
+    </div>
+    <div class="config-row">
       <sl-textarea class="configItem" id="config_jsPrelude" label="Static JS content">
         <p slot="help-text">Any JS code defined here will always be inserted into the playground, regardless of what user content gets loaded. This code will get loaded before any user code.</p>
       </sl-textarea>
       <sl-textarea class="configItem" id="config_htmlPrelude" label="Static HTML content">
         <p slot="help-text">Any HTML markup defined here will always be inserted into the playground, regardless of what user content gets loaded. This markup will be inserted before any user markup.</p>
       </sl-textarea>
+    </div>
+    <div class="config-row">
       <sl-textarea class="configItem" id="config_defaultHtml" label="Default HTML content">
         <p slot="help-text">HTML markup to insert if there is no user-defined markup. Defaults to an empty HTML document.</p>
       </sl-textarea>
