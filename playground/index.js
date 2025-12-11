@@ -9,6 +9,7 @@ const Config = {
   jsPrelude: '',
   htmlPrelude: '',
   showConfigButton: true,
+  enableButtons: true,
 }
 
 
