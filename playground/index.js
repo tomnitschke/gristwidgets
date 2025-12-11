@@ -172,8 +172,8 @@ class GristPlayground {
     this.eStatus.style.display = 'none';
     //console.error("load!");
     await this.applyConfig();
-    this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') ? 'block' : 'none';
-    this.eReloadBtn.style.display = this.config.enableAutoreload ? 'none' : 'block';
+    this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') && this.config.enableButtons ? 'block' : 'none';
+    this.eReloadBtn.style.display = this.config.enableAutoreload || !this.config.enableButtons ? 'none' : 'block';
     this.#isContentFrameReady = true;
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
