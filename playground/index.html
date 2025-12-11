@@ -49,11 +49,11 @@
       <sl-checkbox class="configItem" id="config_importGristThemeCSSVars" size="small">Import Grist theme CSS vars into loaded content</sl-checkbox>
     </div>
     <div class="config-row">
-      <sl-textarea class="configItem" id="config_jsPrelude" label="Static JS content">
-        <p slot="help-text">Any JS code defined here will always be inserted into the playground, regardless of what user content gets loaded. This code will get loaded before any user code.</p>
+      <sl-textarea class="configItem" id="config_jsPrelude" label="JS Prelude">
+        <p slot="help-text">JS code to be inserted into the document head before any user-defined code.</p>
       </sl-textarea>
-      <sl-textarea class="configItem" id="config_htmlPrelude" label="Static HTML content">
-        <p slot="help-text">Any HTML markup defined here will always be inserted into the playground, regardless of what user content gets loaded. This markup will be inserted before any user markup.</p>
+      <sl-textarea class="configItem" id="config_htmlPrelude" label="HTML Prelude">
+        <p slot="help-text">HTML markup to be inserted into the document head before any user-defined markup.</p>
       </sl-textarea>
     </div>
     <div class="config-row">
