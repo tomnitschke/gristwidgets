@@ -40,7 +40,9 @@
     <h1>General Settings</h1>
     <div class="config-row">
       <sl-checkbox class="configItem" id="config_enableButtons" size="small" help-text="Show the 'Reload Playground' and 'Playground Settings' buttons. WARNING: If you hide these, the only way to edit these settings (and get them back) is to manually edit the settings JSON stored on the Grist record.">Enable playground buttons</sl-checkbox>
-      <sl-checkbox class="configItem" id="config_enableAutoreload" size="small">Enable auto-reload</sl-checkbox>
+    </div>
+    <div class="config-row">
+      <sl-checkbox class="configItem" id="config_enableAutoreload" size="small" help-text="Automatically reload the playground whenever the user-supplied HTML and/or JS changes.">Enable auto-reload</sl-checkbox>
     </div>
     <h1>Settings for Playground Content</h1>
     <div class="config-row">
@@ -56,7 +58,7 @@
     </div>
     <div class="config-row">
       <sl-textarea class="configItem" id="config_defaultHtml" label="Default HTML content">
-        <p slot="help-text">HTML markup to insert if there is no user-defined markup. Defaults to an empty HTML document.</p>
+        <p slot="help-text">HTML markup to insert if there is no user-defined markup.</p>
       </sl-textarea>
     </div>
     <sl-button-group slot="footer">
