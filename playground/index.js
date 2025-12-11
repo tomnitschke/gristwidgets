@@ -94,6 +94,7 @@ class GristPlayground {
         this.adapter.tableOps = grist.getTable(msg.tableId);
       }
     });
+    this.eStatus.innerHTML = `Please allow 'full' document access for this widget.`;
   }
   get #areMappingsReady() {
     return Boolean(this.adapter.mappings);
@@ -178,8 +179,7 @@ class GristPlayground {
     this.eStatus.style.display = 'none';
     //console.error("load!");
     await this.applyConfig();
-    this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') && this.config.enableButtons ? 'block' : 'none';
-    this.eReloadBtn.style.display = this.config.enableAutoreload || !this.config.enableButtons ? 'none' : 'block';
+    this.#updateButtons();
     this.#isContentFrameClearToLoad = true;
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
@@ -188,10 +188,16 @@ class GristPlayground {
       this.eContentFrame.srcdoc = this.config.defaultHtml;
     }
   }
-  clear () {
+  async clear () {
+    await this.applyConfig();
+    this.#updateButtons();
     this.eStatus.style.display = 'none';
     this.#isContentFrameClearToLoad = false;
     this.eContentFrame.srcdoc = this.config.defaultHtml;
+  }
+  #updateButtons() {
+    this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') && this.config.enableButtons ? 'block' : 'none';
+    this.eReloadBtn.style.display = this.config.enableAutoreload || !this.config.enableButtons ? 'none' : 'block';
   }
   async clearConfig() {
     if (!this.adapter.tableName) { return; }
