@@ -53,7 +53,7 @@
         <p slot="help-text">JS code to be inserted into the document head before any user-defined code.</p>
       </sl-textarea>
       <sl-textarea class="configItem" id="config_htmlPrelude" label="HTML Prelude">
-        <p slot="help-text">HTML markup to be inserted into the document head before any user-defined markup.</p>
+        <p slot="help-text">HTML markup to be inserted into the document head before any user-defined markup. NOTE: If this includes any &lt;script&gt; tags, they won't be executed. If you want JS code to run, use the 'JS prelude' option instead.</p>
       </sl-textarea>
     </div>
     <div class="config-row">
