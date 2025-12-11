@@ -10,6 +10,7 @@ const Config = {
   htmlPrelude: '',
   showConfigButton: true,
   enableButtons: true,
+  defaultHtml: '<!DOCTYPE html><html><head></head><body></body></html>',
 }
 
 
@@ -29,7 +30,7 @@ class GristPlayground {
   #contentGristReadyDeclaration;
   #config;
   #wasLoadStarted;
-  #isContentFrameReady;
+  #isContentFrameClearToLoad;
   constructor (config=null) {
     this.defaultConfig = {
       ...Config,
@@ -63,7 +64,7 @@ class GristPlayground {
     this.#contentGristReadyDeclaration = {};
     this.#config = null;
     this.#wasLoadStarted = false;
-    this.#isContentFrameReady = false;
+    this.#isContentFrameClearToLoad = false;
     this.initRPCMiddleware();
     this.adapter.onCursorMoved(() => {
       //console.error("onCursorMoved",this);
@@ -76,6 +77,9 @@ class GristPlayground {
       if (this.config.enableAutoreload) {
         this.load();
       }
+    });
+    this.adapter.onCursorMovedToNew(() => {
+      this.clear();
     });
     grist.onRecord(async (record) => {
       if (!this.#wasLoadStarted) {
@@ -122,7 +126,7 @@ class GristPlayground {
     });
   }
   #onContentFrameLoaded() {
-    if (!this.#isContentFrameReady) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
+    if (!this.#isContentFrameClearToLoad) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
     //console.error("onContentFrameLoaded",this);
     const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars) {
@@ -158,6 +162,7 @@ class GristPlayground {
     }
   }
   async load () {
+    this.eStatus.style.display = 'block';
     this.eStatus.innerText = 'Loading...';
     if (!this.#wasLoadStarted) { return; }
     if (!this.#areMappingsReady) {
@@ -175,13 +180,18 @@ class GristPlayground {
     await this.applyConfig();
     this.eConfigOpenBtn.style.display = this.adapter.hasMapping('playground_config') && this.config.enableButtons ? 'block' : 'none';
     this.eReloadBtn.style.display = this.config.enableAutoreload || !this.config.enableButtons ? 'none' : 'block';
-    this.#isContentFrameReady = true;
+    this.#isContentFrameClearToLoad = true;
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
       this.eContentFrame.srcdoc = htmlContent;
     } else {
-      this.eContentFrame.srcdoc = '<!DOCTYPE html><html><head></head><body></body></html>';
+      this.eContentFrame.srcdoc = this.config.defaultHtml;
     }
+  }
+  clear () {
+    this.eStatus.style.display = 'none';
+    this.#isContentFrameClearToLoad = false;
+    this.eContentFrame.srcdoc = this.config.defaultHtml;
   }
   async clearConfig() {
     if (!this.adapter.tableName) { return; }
