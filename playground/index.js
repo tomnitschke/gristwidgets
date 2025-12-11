@@ -144,7 +144,7 @@ class GristPlayground {
       this.eContentDocument.head.appendChild(eJsPrelude);
     }
     if (this.config.htmlPrelude) {
-      this.eContentDocument.body.insertAdjacentHTML('afterbegin', this.config.htmlPrelude);
+      this.eContentDocument.head.insertAdjacentHTML('beforeend', this.config.htmlPrelude);
     }
     if (jsContent) {
       const eGristPluginApiScript = this.eContentDocument.createElement('script');
