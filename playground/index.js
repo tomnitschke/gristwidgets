@@ -268,7 +268,7 @@ class GristPlayground {
     }
   }
   async applyConfig () {
-    if (this.adapter.hasMapping('playground_config')) {
+    if (this.#areMappingsReady && this.adapter.hasMapping('playground_config')) {
       this.userConfig = Util.jsonDecode(this.adapter.getCursorField('playground_config'), {});
       this.#config = null;
     }
