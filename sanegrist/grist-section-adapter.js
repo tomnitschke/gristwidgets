@@ -63,6 +63,7 @@ export class GristSectionAdapter extends EventTarget {
   #initEventTimeoutHandle;
   #isFetchingTableName;
   #skipMessages;
+  #skipEvents;
   constructor(readyPayload=undefined, config=undefined) {
     super();
     this.config = {...Config, ...config};
@@ -89,6 +90,15 @@ export class GristSectionAdapter extends EventTarget {
       onNewRecord: 0,
       onOptions: 0,
     };
+    this.#skipEvents = {
+      cursorMoved: 0,
+      cursorMovedToNew: 0,
+      mappingsUpdated: 0,
+      recordsModified: 0,
+      optionsUpdated: 0,
+      interactionOptionsUpdated: 0,
+      optionsEditorRequested: 0,
+    };
     grist.onRecord((record, mappings) => {
       if (this.#skipMessages.onRecord) {
         this.#skipMessages.onRecord--;
@@ -96,7 +106,7 @@ export class GristSectionAdapter extends EventTarget {
       }
       this.#onUpdateCursor(record);
       this.#onUpdateMappings(mappings);
-      this.#tryDispatchInitEvent();
+      this.#maybeDispatchInit();
     });
     grist.onRecords((records, mappings) => {
       if (this.#skipMessages.onRecords) {
@@ -105,7 +115,7 @@ export class GristSectionAdapter extends EventTarget {
       }
       this.#onUpdateRecords(records);
       this.#onUpdateMappings(mappings);
-      this.#tryDispatchInitEvent();
+      this.#maybeDispatchInit();
     });
     grist.onNewRecord((mappings) => {
       if (this.#skipMessages.onNewRecord) {
@@ -114,7 +124,7 @@ export class GristSectionAdapter extends EventTarget {
       }
       this.#onUpdateMappings();
       this.cursor = { id: -1 };
-      this.#tryDispatchInitEvent();
+      this.#maybeDispatchInit();
       if (this.#wasInitEventDispatched) {
         this.dispatchEvent(new CursorMovedToNewEvent());
       }
@@ -126,18 +136,19 @@ export class GristSectionAdapter extends EventTarget {
       }
       this.#onUpdateOptions(options);
       this.#onUpdateInteractionOptions(interactionOptions);
-      this.#tryDispatchInitEvent();
+      this.#maybeDispatchInit();
     });
     if (this.config.doSendReadyMessage) {
       grist.ready({
         onEditOptions: () => {
-          this.#tryDispatchInitEvent();
-          this.dispatchEvent(new OptionsEditorRequestedEvent());
+          this.#maybeDispatchInit();
+          this.#dispatch(new OptionsEditorRequestedEvent());
+          //this.dispatchEvent(new OptionsEditorRequestedEvent());
         },
         ...this.readyPayload
       });
     }
-    this.#tryDispatchInitEvent();
+    this.#maybeDispatchInit();
   }
   get #mayDispatchInitEvent() {
     return Boolean(this.tableName && this.tableOps && this.mappings && this.cursor && this.records);
@@ -148,7 +159,7 @@ export class GristSectionAdapter extends EventTarget {
   set #wasInitEventDispatched(value) {
     this.#_wasInitEventDispatched = value;
   }
-  #tryDispatchInitEvent(doForce=false) {
+  #maybeDispatchInit(doForce=false) {
     if (this.#wasInitEventDispatched) {
       return;
     }
@@ -165,18 +176,26 @@ export class GristSectionAdapter extends EventTarget {
       this.#wasInitEventDispatched = true;
       this.dispatchEvent(new InitEvent());
     } else {
-      this.#initEventTimeoutHandle = setTimeout(() => { this.#tryDispatchInitEvent(); }, 500);
+      this.#initEventTimeoutHandle = setTimeout(() => { this.#maybeDispatchInit(); }, 500);
+    }
+  }
+  #dispatch(event) {
+    if (this.#skipEvents[event.type] > 0) {
+      this.#skipEvents[event.type]--;
+    } else {
+      this.dispatchEvent(event);
     }
   }
   _forceDispatchInitEvent() {
-    this.#tryDispatchInitEvent(true);
+    this.#maybeDispatchInit(true);
   }
   #onUpdateCursor(record) {
       if (record) {
         this.cursorPrev = this.cursor ?? record;
         this.cursor = record;
         if (this.#wasInitEventDispatched && this.cursor.id !== this.cursorPrev.id) {
-          this.dispatchEvent(new CursorMovedEvent());
+          this.#dispatch(new CursorMovedEvent());
+          //this.dispatchEvent(new CursorMovedEvent());
         }
       }
   }
@@ -185,7 +204,8 @@ export class GristSectionAdapter extends EventTarget {
         this.mappingsPrev = this.mappings ?? mappings;
         this.mappings = mappings;
         if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.mappingsPrev, this.mappings)) {
-          this.dispatchEvent(new MappingsUpdatedEvent());
+          this.#dispatch(new MappingsUpdatedEvent());
+          //this.dispatchEvent(new MappingsUpdatedEvent());
         }
       }
   }
@@ -198,7 +218,8 @@ export class GristSectionAdapter extends EventTarget {
           if (this.cursor) {
             this.cursor = this.records.find((rec) => rec.id === this.cursor.id);
           }
-          this.dispatchEvent(new RecordsModifiedEvent(delta));
+          this.#dispatch(new RecordsModifiedEvent());
+          //this.dispatchEvent(new RecordsModifiedEvent(delta));
         }
       }
   }
@@ -207,7 +228,8 @@ export class GristSectionAdapter extends EventTarget {
       this.optionsPrev = this.options ?? options;
       this.options = options;
       if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.optionsPrev, this.options)) {
-        this.dispatchEvent(new OptionsUpdatedEvent());
+        this.#dispatch(new OptionsUpdatedEvent());
+        //this.dispatchEvent(new OptionsUpdatedEvent());
       }
     }
   }
@@ -216,7 +238,8 @@ export class GristSectionAdapter extends EventTarget {
       this.interactionOptionsPrev = this.interactionOptions ?? interactionOptions;
       this.interactionOptions = interactionOptions;
       if (this.#wasInitEventDispatched && !Util.areDictsEqual(this.interactionOptionsPrev, this.interactionOptions)) {
-        this.dispatchEvent(new InteractionOptionsUpdatedEvent());
+        this.#dispatch(new InteractionOptionsUpdatedEvent());
+        //this.dispatchEvent(new InteractionOptionsUpdatedEvent());
       }
     }
   }
@@ -251,6 +274,12 @@ export class GristSectionAdapter extends EventTarget {
       throw new Error(`Unknown message '${messageName}'.`);
     }
     this.#skipMessages[messageName] += amountToSkip;
+  }
+  skipEvent(eventName, amountToSkip=1) {
+    if(!(eventName in this.#skipEvents)) {
+      throw new Error(`Unknown event '${eventName}'.`);
+    }
+    this.#skipEvents[eventName] += amountToSkip;
   }
   getRecordField(record, mappedColName) {
     this.#assertInitEventDispatched();
