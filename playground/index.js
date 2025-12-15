@@ -179,7 +179,6 @@ class GristPlayground {
     this.eStatus.style.display = 'none';
     //console.error("load!");
     await this.applyConfig();
-    this.#updateButtons();
     this.#isContentFrameClearToLoad = true;
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
@@ -190,7 +189,6 @@ class GristPlayground {
   }
   async clear () {
     await this.applyConfig();
-    this.#updateButtons();
     this.eStatus.style.display = 'none';
     this.#isContentFrameClearToLoad = false;
     this.eContentFrame.srcdoc = this.config.defaultHtml;
@@ -272,6 +270,7 @@ class GristPlayground {
       this.userConfig = Util.jsonDecode(this.adapter.getCursorField('playground_config'), {});
       this.#config = null;
     }
+    this.#updateButtons();
   }
 }
 
