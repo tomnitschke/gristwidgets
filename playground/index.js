@@ -178,7 +178,8 @@ class GristPlayground {
     }
     this.eStatus.style.display = 'none';
     //console.error("load!");
-    await this.applyConfig();
+    await this.loadConfig();
+    this.applyConfig();
     this.#isContentFrameClearToLoad = true;
     const htmlContent = this.adapter.getCursorField('playground_html');
     if (htmlContent) {
@@ -188,7 +189,8 @@ class GristPlayground {
     }
   }
   async clear () {
-    await this.applyConfig();
+    await this.loadConfig();
+    this.applyConfig();
     this.eStatus.style.display = 'none';
     this.#isContentFrameClearToLoad = false;
     this.eContentFrame.srcdoc = this.config.defaultHtml;
@@ -218,7 +220,7 @@ class GristPlayground {
     }
     if (this.adapter.hasMapping('playground_config') && this.adapter.tableName) {
       this.userConfig[configKey] = value;
-      this.#config = null;
+      this.applyConfig();
                                                                                     this.adapter.skipMessage('onRecord');
                                                                                     this.adapter.skipMessage('onRecords');
                                                                                     await this.adapter.writeCursorField('playground_config', Util.jsonEncode(this.userConfig, '{}'));
@@ -265,11 +267,13 @@ class GristPlayground {
       }
     }
   }
-  async applyConfig () {
+  async loadConfig () {
     if (this.#areMappingsReady && this.adapter.hasMapping('playground_config')) {
       this.userConfig = Util.jsonDecode(this.adapter.getCursorField('playground_config'), {});
-      this.#config = null;
     }
+  }
+  async applyConfig () {
+    this.#config = null;
     this.#updateButtons();
   }
 }
