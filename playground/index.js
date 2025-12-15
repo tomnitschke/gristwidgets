@@ -202,8 +202,9 @@ class GristPlayground {
   async clearConfig() {
     if (!this.adapter.tableName) { return; }
     if (this.adapter.hasMapping('playground_config')) {
-                                                                                    this.adapter.skipMessage('onRecord');
-                                                                                    this.adapter.skipMessage('onRecords');
+                                                                                    //this.adapter.skipMessage('onRecord');
+                                                                                    //this.adapter.skipMessage('onRecords');
+                                                                                    this.adapter.skipEvent('recordsModified');
                                                                                     await this.adapter.writeCursorField('playground_config', '{}');
     }
   }
@@ -221,8 +222,9 @@ class GristPlayground {
     if (this.adapter.hasMapping('playground_config') && this.adapter.tableName) {
       this.userConfig[configKey] = value;
       this.applyConfig();
-                                                                                    this.adapter.skipMessage('onRecord');
-                                                                                    this.adapter.skipMessage('onRecords');
+                                                                                    //this.adapter.skipMessage('onRecord');
+                                                                                    //this.adapter.skipMessage('onRecords');
+                                                                                    this.adapter.skipEvent('recordsModified');
                                                                                     await this.adapter.writeCursorField('playground_config', Util.jsonEncode(this.userConfig, '{}'));
     }
     ///await grist.setOption(configKey, value);
