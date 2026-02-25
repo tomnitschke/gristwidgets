@@ -1,3 +1,21 @@
+/**
+ * Grist Docxtemplater Widget — Batch Mode
+ *
+ * Generates merged .docx documents from Grist data.
+ *
+ * How it works:
+ *   1. TEMPLATE: Reads the .docx template from the selected Document_Templating row.
+ *   2. DATA: Fetches all records from the Vehicles and Vehicle_Owners tables.
+ *   3. SELECTION: Shows a searchable case list where the user picks which cases to process.
+ *   4. PROCESSING: For each selected case and each of its owners, generates a letter
+ *      using the template, then merges ALL letters into one .docx file with page breaks.
+ *      One click, one download, one file to print.
+ *
+ * Column mapping (in Grist widget settings):
+ *   - "Template Attachment ID" (required): Map to the column holding the template attachment ID.
+ *   - "Output File Name" (optional): Map to a column for the merged file's name.
+ */
+
 function ready(fn) {
   if (document.readyState !== "loading") {
     fn();
@@ -6,479 +24,618 @@ function ready(fn) {
   }
 }
 
-const ATTACHMENTID_COL_NAME = "attachment_id";
-const DATA_COL_NAME = "data";
-const FILENAME_COL_NAME = "filename";
-const USEANGULAR_COL_NAME = "use_angular_parser";
-const USEIMAGEMODULE_COL_NAME = "use_image_module";
-const DELIMITERSTART_COL_NAME = "delimiter_start";
-const DELIMITEREND_COL_NAME = "delimiter_end";
-const currentData = { url: null, data: null, outputFileName: null, useAngular: true, useImageModule: true, delimiterStart: '{', delimiterEnd: '}' };
-let gristAccessToken = null;
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
-function setStatusMessage(msg) {
-  let contentElem = document.querySelector("#content");
-  let statusMessageElem = document.querySelector("#status_message");
-  if (!contentElem || !statusMessageElem) return false;
-  statusMessageElem.innerHTML = msg;
-  contentElem.style.display = "block";
-  return true;
+// Columns that contain dates (Grist stores these as Unix timestamps).
+// These will be formatted as MM/DD/YYYY.
+// >>> If you add new Date columns to Vehicles, add them here. <<<
+const DATE_COLUMNS = ['VehImpDate', 'DateFirstLetter', 'ADDDate'];
+
+// Columns that contain dollar amounts.
+// These will be formatted as $ X,XXX.XX.
+// >>> If you add new currency columns to Vehicles, add them here. <<<
+const CURRENCY_COLUMNS = [
+  'ADDState1Cost', 'ADDState2Cost', 'ADDNatCost', 'TowingFee',
+  'OwnerInfoCost', 'NonADD_StateFee', 'ProcFee', 'DailyStorage',
+  'Storage', 'Totals', 'LetterFee', 'Postage'
+];
+
+// Columns to exclude from template placeholders.
+const SKIP_PREFIXES = ['#', 'gristHelper_'];
+const SKIP_COLUMNS = ['id', 'manualSort'];
+
+// Maximum number of cases to render at once (for performance).
+const DISPLAY_LIMIT = 300;
+
+// Delay between rendering individual documents (ms).
+// Prevents the browser from freezing during large batches.
+const RENDER_DELAY_MS = 5;
+
+// ============================================================
+// STATE
+// ============================================================
+
+const state = {
+  templateUrl: null,
+  outputFileNameBase: null,
+  vehicles: [],           // Array of vehicle row objects
+  owners: [],             // Array of owner row objects
+  ownersByVehicle: {},    // { vehicleId: [owner, owner, ...] }
+  selectedVehicleIds: new Set(),
+  gristAccessToken: null,
+};
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+
+/**
+ * Format a value for use in a template placeholder.
+ */
+function formatValue(colName, value) {
+  if (value === null || value === undefined || value === '') return '';
+
+  // Date columns: convert Unix timestamp to MM/DD/YYYY.
+  if (DATE_COLUMNS.includes(colName) && typeof value === 'number' && value > 0) {
+    const date = new Date(value * 1000);
+    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+    const dd = date.getDate().toString().padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+  }
+
+  // Currency columns: format as $ X,XXX.XX.
+  if (CURRENCY_COLUMNS.includes(colName) && typeof value === 'number') {
+    const abs = Math.abs(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (value < 0 ? '-' : '') + '$ ' + abs;
+  }
+
+  return String(value);
 }
 
-function resetStatusMessage() {
-  let contentElem = document.querySelector("#content");
-  if (contentElem) {
-    contentElem.style.display = "block";
+/**
+ * Convert Grist's columnar format { col: [vals] } to an array of row objects.
+ */
+function columnarToRows(tableData) {
+  const rows = [];
+  const columns = Object.keys(tableData);
+  if (columns.length === 0 || !tableData.id) return rows;
+  const n = tableData.id.length;
+  for (let i = 0; i < n; i++) {
+    const row = {};
+    for (const col of columns) {
+      row[col] = tableData[col][i];
+    }
+    rows.push(row);
   }
-  let statusResetButtonElem = document.querySelector("#button_status_reset");
-  if (statusResetButtonElem) {
-    statusResetButtonElem.style.display = "none";
-  }
-  let processButtonElem = document.querySelector("#button_process");
-  if (processButtonElem) {
-    processButtonElem.style.display = "inline-block";
-  }
+  return rows;
 }
 
-function handleError(err) {
-  if (!setStatusMessage(err)) {
-    console.error("docxtemplater: FATAL: ", err);
-    document.body.innerHTML = String(err);
+/**
+ * Build a placeholder mapping for one vehicle + one owner.
+ * Returns a flat {placeholder: value} dictionary for docxtemplater.
+ */
+function buildPlaceholderMapping(vehicle, owner) {
+  const mapping = {};
+
+  // 1) Add all vehicle columns (includes formula columns like CustStreet, CustomerName, etc.)
+  for (const [key, value] of Object.entries(vehicle)) {
+    if (SKIP_COLUMNS.includes(key)) continue;
+    if (SKIP_PREFIXES.some(p => key.startsWith(p))) continue;
+    mapping[key] = formatValue(key, value);
+  }
+
+  // 2) Override / add owner-specific columns.
+  //    Every Vehicle_Owners column is included (except Case, which is a reference ID
+  //    and would overwrite the Case text from Vehicles).
+  if (owner) {
+    for (const [key, value] of Object.entries(owner)) {
+      if (SKIP_COLUMNS.includes(key)) continue;
+      if (SKIP_PREFIXES.some(p => key.startsWith(p))) continue;
+      if (key === 'Case') continue;  // don't overwrite the Case # with a row ID
+      mapping[key] = formatValue(key, value);
+    }
+  }
+
+  return mapping;
+}
+
+/**
+ * Get a Grist attachment download URL.
+ */
+async function getAttachmentUrl(attachmentId) {
+  if (!state.gristAccessToken) {
+    state.gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
+  }
+  return `${state.gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${state.gristAccessToken.token}`;
+}
+
+/**
+ * Fetch binary content from a URL (wrapper around PizZipUtils).
+ */
+function fetchBinary(url) {
+  return new Promise((resolve, reject) => {
+    PizZipUtils.getBinaryContent(url, (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+/**
+ * Small async delay (keeps the UI responsive during long loops).
+ */
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ============================================================
+// UI FUNCTIONS
+// ============================================================
+
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+}
+
+function showProgress(visible) {
+  document.getElementById('progress-bar').className = visible ? 'progress-bar' : 'progress-bar hidden';
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+/**
+ * Render the case list with checkboxes.
+ */
+function renderCaseList() {
+  const container = document.getElementById('case-list');
+  const search = (document.getElementById('search-box').value || '').toLowerCase().trim();
+
+  if (state.vehicles.length === 0) {
+    container.innerHTML = '<div class="list-message">No vehicles found.</div>';
     return;
   }
-  let statusResetButtonElem = document.querySelector("#button_status_reset");
-  if (statusResetButtonElem) {
-    statusResetButtonElem.style.display = "block";
-    document.querySelector("#content").style.display = "none";
-  }
-  let processButtonElem = document.querySelector("#button_process");
-  if (processButtonElem) {
-    processButtonElem.style.display = "none";
-  }
-  console.error("docxtemplater: ", err);
-}
 
-function handleDocxtemplaterError(docxtemplaterError) {
-  // If there is an error in the template, make sure to provide useful details to the user.
-  if (docxtemplaterError instanceof docxtemplater.Errors.XTTemplateError) {
-    docxtemplaterError = docxtemplaterError.properties.errors;
-  }
-  if (0 in docxtemplaterError && "name" in docxtemplaterError[0] && "message" in docxtemplaterError[0]) {
-    if ("properties" in docxtemplaterError[0] && "explanation" in docxtemplaterError[0].properties) {
-      let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].properties.explanation}`;
-      console.warn(`docxtemplater: ${msg}`);
-      return handleError(new Error(msg));
-    }
-    // Fallback in case there isn't an 'explanation' field.
-    let msg = `${docxtemplaterError[0].name}: ${docxtemplaterError[0].message}`;
-    console.warn(`docxtemplater: ${msg}`);
-    return handleError(new Error(msg));
-  }
-  // Handle any other errors normally.
-  return handleError(renderError);
-}
-
-async function gristGetAttachmentURL(attachmentId) {
-  if (!(/^\d+$/.test(attachmentId))) {
-    let msg = `Invalid Grist attachment id '${attachmentId}'. It should be an integer but is of type '${typeof attachmentId}'.`;
-    console.error(`docxtemplater: ${msg}`);
-    throw new Error(msg);
-  }
-  attachmentId = Number(attachmentId);
-  // Get a Grist access token if we don't already have one.
-  if (!gristAccessToken) {
-    console.log(`docxtemplater: Getting new Grist access token.`);
-    gristAccessToken = await grist.docApi.getAccessToken({ readOnly: true });
-  }
-  // Use the token to get a URL to the attachment.
-  let url = `${gristAccessToken.baseUrl}/attachments/${attachmentId}/download?auth=${gristAccessToken.token}`;
-  console.log(`docxtemplater: Obtained Grist attachment URL: '${url}'`);
-  return url;
-}
-
-async function getGristImageAttachmentURL(imgAttachmentIdOrUrl) {
-  if (/(?:https?):\/\/(\w+:?\w*)?(\S+)(:\d+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(imgAttachmentIdOrUrl))
-  {
-    // This looks like a URL.
-    return imgAttachmentIdOrUrl;
-  } else {
-    // Otherwise assume it is an attachment id. Note that gristGetAttachmentURL() will throw
-    // if the value can't be cast to Number.
-    return await gristGetAttachmentURL(imgAttachmentIdOrUrl);
-  }
-}
-
-async function gristRecordSelected(record, mappedColNamesToRealColNames) {
-  console.log("docxtemplater: gristRecordSelected() with record, mappedColNamesToRealColNames:", record, mappedColNamesToRealColNames);
-  try {
-    //const mappedRecord = grist.mapColumnNames(record);
-    // Unfortunately, Grist's mapColumnNames function doesn't handle optional column mappings
-    // properly, so we need to map stuff ourselves.
-    const mappedRecord = {}
-    if (mappedColNamesToRealColNames) {
-      for (const[mappedColName, realColName] of Object.entries(mappedColNamesToRealColNames)) {
-        if (realColName in record) {
-          mappedRecord[mappedColName] = record[realColName];
-          // If we're mapping one of the essential columns but that column is empty/its data is falsy,
-          // display an error message to the user.
-          if ([ATTACHMENTID_COL_NAME, DATA_COL_NAME, FILENAME_COL_NAME].includes(mappedColName) && !(mappedRecord[mappedColName])) {
-            let msg = `<b>Required column '${mappedColName}' is empty. Please make sure it contains valid data.`;
-            console.error(`docxtemplater: ${msg}`);
-            throw new Error(msg);
-          }
-        }
-      }
-    }
-    // Make sure all required columns have been mapped.
-    if (!(ATTACHMENTID_COL_NAME in mappedRecord || DATA_COL_NAME in mappedRecord || FILENAME_COL_NAME in mappedRecord)) {
-      let msg = "<b>Please map all columns first.</b>";
-      console.error(`docxtemplater: ${msg}`);
-      throw new Error(msg);
-    }
-    // Set up the currentData object.
-    currentData.url = await gristGetAttachmentURL(mappedRecord[ATTACHMENTID_COL_NAME]);
-    currentData.data = mappedRecord[DATA_COL_NAME];
-    console.log(`docxtemplater: Input placeholder data is of type '${typeof currentData.data}' and looks like this:`, currentData.data);
-    if (typeof currentData.data !== "object") {
-      let msg = `<b>Can't read placeholder data.</b><br />The data needs to be a dictionary (or a list of dictionaries) but seems to be a '${typeof currentData.data}'. Make sure the column holding said data is set to type 'Any'.`;
-      console.error(`docxtemplater: ${msg}`);
-      throw new Error(msg);
-    }
-    // MODIFIED: Accept both a single dictionary and a list (array) of dictionaries.
-    // If it's a list, each entry will generate a separate document.
-    if (Array.isArray(currentData.data)) {
-      // Validate that every item in the list is a dictionary.
-      for (let i = 0; i < currentData.data.length; i++) {
-        if (typeof currentData.data[i] !== "object" || Array.isArray(currentData.data[i]) || currentData.data[i] === null) {
-          let msg = `<b>Item ${i + 1} in the placeholder data list is not a dictionary.</b>`;
-          console.error(`docxtemplater: ${msg}`);
-          throw new Error(msg);
-        }
-      }
-      if (currentData.data.length === 0) {
-        let msg = `<b>The placeholder data list is empty.</b>`;
-        console.error(`docxtemplater: ${msg}`);
-        throw new Error(msg);
-      }
-      console.log(`docxtemplater: Received a list of ${currentData.data.length} placeholder mappings. Will generate ${currentData.data.length} document(s).`);
-    } else if (!("constructor" in currentData.data) || currentData.data.constructor != Object) {
-      let msg = `Supplied data is not a dictionary (or list of dictionaries): '${currentData.data}'`;
-      console.error(`docxtemplater: ${msg}`);
-      throw new Error(msg);
-    }
-    if (USEANGULAR_COL_NAME in mappedRecord) {
-      currentData.useAngular = mappedRecord[USEANGULAR_COL_NAME];
-      console.log("docxtemplater: Will Angular expressions parser be used:", currentData.useAngular);
-    }
-    if (USEIMAGEMODULE_COL_NAME in mappedRecord) {
-      currentData.useImageModule = mappedRecord[USEIMAGEMODULE_COL_NAME];
-      console.log("docxtemplater: Will image module be used:", currentData.useImageModule);
-    }
-    if (DELIMITERSTART_COL_NAME in mappedRecord && mappedRecord[DELIMITERSTART_COL_NAME]) {
-      currentData.delimiterStart = mappedRecord[DELIMITERSTART_COL_NAME];
-      console.log(`docxtemplater: Custom starting delimiter: '${currentData.delimiterStart}'`);
-    }
-    if (DELIMITEREND_COL_NAME in mappedRecord && mappedRecord[DELIMITEREND_COL_NAME]) {
-      currentData.delimiterEnd = mappedRecord[DELIMITEREND_COL_NAME];
-      console.log(`docxtemplater: Custom ending delimiter: '${currentData.delimiterEnd}'`);
-    }
-    currentData.outputFileName = mappedRecord[FILENAME_COL_NAME];
-    console.log(`docxtemplater: Output file name set to: '${currentData.outputFileName}'`);
-    // Now we have all the data nicely validated and present in currentData,
-    // all that's left to do is to display a ready message and the 'process' button.
-    if (Array.isArray(currentData.data) && currentData.data.length > 1) {
-      setStatusMessage(`Ready. Click 'Process' to generate ${currentData.data.length} documents (one per owner).`);
-    } else {
-      setStatusMessage("Ready. Click 'Process' to generate the document.");
-    }
-  } catch (err) {
-    return handleError(err);
-  }
-}
-
-// Original single-file processing function (kept for backward compatibility).
-function processFile(url, data, outputFileName) {
-  try {
-    if (!url || !data || !outputFileName) {
-      let msg = "Any of the arguments 'url', 'data', 'outputFileName' seems to be missing/falsy.";
-      console.error(`docxtemplater: ${msg}`);
-      throw new Error(msg);
-    }
-    return PizZipUtils.getBinaryContent(url, function(err, content) {
-      if (err) {
-        let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-        console.error(`docxtemplater: ${msg}`);
-        throw new Error(msg);
-      }
-      try
-      {
-        const docxtemplaterOptions = {
-          paragraphLoop: true,
-          linebreaks: true,
-          delimiters: { start: currentData.delimiterStart, end: currentData.delimiterEnd },
-          nullGetter: function(part, scope) {
-            // Implement a default nullGetter that doesn't grace users' documents with instances of 'undefined'.
-            if (!part.module) {
-              // If we've encountered an unknown placeholder, just leave it as is.
-              if ("value" in part) {
-                return `${currentData.delimiterStart}${part.value}${currentData.delimiterEnd}`;
-              }
-              return "";
-            }
-            if (part.module === "rawxml") {
-              // Replace any '@'-prefixed placeholders with nothing. This is docxtemplater's default implementation.
-              return "";
-            }
-            // Replace any known but empty-valued placeholders with nothing. This is docxtemplater's default implementation.
-            return "";
-          },
-        };
-        if (currentData.useAngular) {
-          // Enable the Angular expressions parser.
-          docxtemplaterOptions.parser = AngularExpressionsParser;
-        }
-        //TODO
-        // Enable the image module.
-        if (currentData.useImageModule) {
-          docxtemplaterOptions.modules = [new ImageModule({
-            //TODO make this configurable?
-            centered: false,
-            getImage: async function(imgAttachmentIdOrUrl, tagName) {
-              console.log("docxtemplater: getImage! imgAttachmentIdOrUrl, tagName:", imgAttachmentIdOrUrl, tagName);
-              let url = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
-              return new Promise(function(resolve, reject) {
-                PizZipUtils.getBinaryContent(url, function(err, content) {
-                  if (err) {
-                    //throw err;
-                    let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-                    console.warn(`docxtemplater: Couldn't load image with attachment id '${imgAttachmentIdOrUrl}' (URL: '${url}') into placeholder '${tagName}': ${msg}`);
-                    return reject(err);
-                  }
-                  return resolve(content);
-                });
-              });
-            },
-            getSize: async function(image, imgAttachmentIdOrUrl, tagName) {
-              console.log("docxtemplater: getSize! imgAttachmentIdOrUrl, image, tagName:", imgAttachmentIdOrUrl, image, tagName);
-              let url = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
-              return new Promise(function(resolve, reject) {
-                const img = new Image();
-                img.src = url;
-                img.onload = function() {
-                  return resolve([img.width, img.height]);
-                };
-                img.onerror = function(e) {
-                  console.warn(`docxtemplater: Couldn't fetch image from '${url}' for placeholder '${tagName}'. Maybe it's a CORS issue?`);
-                  return reject(e);
-                };
-              });
-            },
-          })];
-        }
-        let templater = null;
-        try
-        {
-          // Initialize docxtemplater.
-          templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
-        } catch (docxtemplaterError) {
-          return handleDocxtemplaterError(docxtemplaterError);
-        }
-        // Render the document.
-        templater.renderAsync(data).then(function() {
-          // When done, offer the final document for download.
-          setStatusMessage("Document ready for download.");
-          saveAs(templater.getZip().generate({
-            type: "blob",
-            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            compression: "DEFLATE",
-          }), outputFileName);
-        }).catch(function(docxtemplaterError) {
-          return handleDocxtemplaterError(docxtemplaterError);
-        });
-      } catch (e) {
-        return handleError(e);
-      }
-    });
-  } catch (err) {
-    // Handle any other errors apart from what docxtemplater might have thrown.
-    return handleError(err);
-  }
-}
-
-// NEW: Process multiple documents from a list of placeholder mappings.
-// Fetches the template once, then renders a separate document for each mapping.
-function processMultipleFiles(url, dataList, baseOutputFileName) {
-  try {
-    if (!url || !dataList || !baseOutputFileName) {
-      let msg = "Any of the arguments 'url', 'dataList', 'baseOutputFileName' seems to be missing/falsy.";
-      console.error(`docxtemplater: ${msg}`);
-      throw new Error(msg);
-    }
-    setStatusMessage(`Generating ${dataList.length} document(s)...`);
-    // Fetch the template binary content ONCE.
-    return PizZipUtils.getBinaryContent(url, async function(err, content) {
-      if (err) {
-        let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-        console.error(`docxtemplater: ${msg}`);
-        throw new Error(msg);
-      }
-      try {
-        // Build the base filename parts (strip .docx extension for numbering).
-        let baseName = baseOutputFileName;
-        let ext = ".docx";
-        if (baseName.toLowerCase().endsWith(".docx")) {
-          baseName = baseName.slice(0, -5);
-        }
-
-        for (let i = 0; i < dataList.length; i++) {
-          const data = dataList[i];
-          // Build a unique output filename for each document.
-          // If there's an OwnerName in the data, use that; otherwise use a number.
-          let suffix;
-          if (data.OwnerName && String(data.OwnerName).trim()) {
-            // Sanitize the owner name for use in a filename.
-            suffix = String(data.OwnerName).trim().replace(/[<>:"/\\|?*]/g, "_");
-          } else {
-            suffix = String(i + 1);
-          }
-          let outputFileName;
-          if (dataList.length === 1) {
-            outputFileName = baseName + ext;
-          } else {
-            outputFileName = `${baseName}_${suffix}${ext}`;
-          }
-
-          setStatusMessage(`Generating document ${i + 1} of ${dataList.length}...`);
-
-          const docxtemplaterOptions = {
-            paragraphLoop: true,
-            linebreaks: true,
-            delimiters: { start: currentData.delimiterStart, end: currentData.delimiterEnd },
-            nullGetter: function(part, scope) {
-              if (!part.module) {
-                if ("value" in part) {
-                  return `${currentData.delimiterStart}${part.value}${currentData.delimiterEnd}`;
-                }
-                return "";
-              }
-              if (part.module === "rawxml") {
-                return "";
-              }
-              return "";
-            },
-          };
-          if (currentData.useAngular) {
-            docxtemplaterOptions.parser = AngularExpressionsParser;
-          }
-          if (currentData.useImageModule) {
-            docxtemplaterOptions.modules = [new ImageModule({
-              centered: false,
-              getImage: async function(imgAttachmentIdOrUrl, tagName) {
-                console.log("docxtemplater: getImage! imgAttachmentIdOrUrl, tagName:", imgAttachmentIdOrUrl, tagName);
-                let imgUrl = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
-                return new Promise(function(resolve, reject) {
-                  PizZipUtils.getBinaryContent(imgUrl, function(err, imgContent) {
-                    if (err) {
-                      let msg = `${err.name} in PizZipUtils.getBinaryContent: ${err.message}`;
-                      console.warn(`docxtemplater: Couldn't load image: ${msg}`);
-                      return reject(err);
-                    }
-                    return resolve(imgContent);
-                  });
-                });
-              },
-              getSize: async function(image, imgAttachmentIdOrUrl, tagName) {
-                console.log("docxtemplater: getSize! imgAttachmentIdOrUrl, image, tagName:", imgAttachmentIdOrUrl, image, tagName);
-                let imgUrl = await getGristImageAttachmentURL(imgAttachmentIdOrUrl);
-                return new Promise(function(resolve, reject) {
-                  const img = new Image();
-                  img.src = imgUrl;
-                  img.onload = function() {
-                    return resolve([img.width, img.height]);
-                  };
-                  img.onerror = function(e) {
-                    console.warn(`docxtemplater: Couldn't fetch image from '${imgUrl}' for placeholder '${tagName}'.`);
-                    return reject(e);
-                  };
-                });
-              },
-            })];
-          }
-
-          let templater = null;
-          try {
-            // Each iteration needs a fresh PizZip from the same content buffer.
-            templater = new window.docxtemplater(new PizZip(content), docxtemplaterOptions);
-          } catch (docxtemplaterError) {
-            return handleDocxtemplaterError(docxtemplaterError);
-          }
-
-          try {
-            await templater.renderAsync(data);
-            saveAs(templater.getZip().generate({
-              type: "blob",
-              mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-              compression: "DEFLATE",
-            }), outputFileName);
-            console.log(`docxtemplater: Generated document '${outputFileName}'.`);
-          } catch (docxtemplaterError) {
-            return handleDocxtemplaterError(docxtemplaterError);
-          }
-
-          // Small delay between downloads so the browser doesn't block them.
-          if (i < dataList.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 750));
-          }
-        }
-
-        setStatusMessage(`Done! ${dataList.length} document(s) generated.`);
-      } catch (e) {
-        return handleError(e);
-      }
-    });
-  } catch (err) {
-    return handleError(err);
-  }
-}
-
-
-
-
-// Start once the DOM is ready.
-ready(function(){
-  // Set up a global error handler.
-  window.addEventListener("error", function(err) {
-    handleError(err);
+  // Filter vehicles by search term.
+  const filtered = state.vehicles.filter(v => {
+    if (!search) return true;
+    const caseNum = String(v.Case || '').toLowerCase();
+    const desc = [v.VehYear, v.VehMake, v.VehMod].filter(Boolean).join(' ').toLowerCase();
+    const customer = String(v.CustomerName || '').toLowerCase();
+    return caseNum.includes(search) || desc.includes(search) || customer.includes(search);
   });
-  // Let Grist know we're ready to talk.
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="list-message">No matching cases.</div>';
+    return;
+  }
+
+  // Only render up to DISPLAY_LIMIT for performance.
+  const display = filtered.slice(0, DISPLAY_LIMIT);
+  const overflow = filtered.length - display.length;
+
+  let html = '';
+  for (const v of display) {
+    const caseNum = v.Case || '(no case #)';
+    const desc = [v.VehYear, v.VehMake, v.VehMod].filter(Boolean).join(' ');
+    const customer = v.CustomerName || '';
+    const owners = state.ownersByVehicle[v.id] || [];
+    const isSelected = state.selectedVehicleIds.has(v.id);
+
+    html += `<div class="case-item ${isSelected ? 'selected' : ''}" data-vid="${v.id}">
+      <input type="checkbox" ${isSelected ? 'checked' : ''}>
+      <div class="case-info">
+        <div class="case-number">${escHtml(String(caseNum))}</div>
+        <div class="case-desc">${escHtml(desc)}${customer ? ' — ' + escHtml(customer) : ''}</div>
+      </div>
+      <span class="owner-badge">${owners.length} owner${owners.length !== 1 ? 's' : ''}</span>
+    </div>`;
+  }
+
+  if (overflow > 0) {
+    html += `<div class="list-overflow">${overflow} more case(s) match — narrow your search to see them.</div>`;
+  }
+
+  container.innerHTML = html;
+
+  // Attach click handlers.
+  container.querySelectorAll('.case-item').forEach(el => {
+    el.addEventListener('click', e => {
+      // Don't double-fire when clicking the checkbox itself.
+      if (e.target.tagName === 'INPUT') return;
+      toggleCase(Number(el.dataset.vid));
+    });
+    el.querySelector('input').addEventListener('change', () => {
+      toggleCase(Number(el.dataset.vid));
+    });
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleCase(vehicleId) {
+  if (state.selectedVehicleIds.has(vehicleId)) {
+    state.selectedVehicleIds.delete(vehicleId);
+  } else {
+    state.selectedVehicleIds.add(vehicleId);
+  }
+  renderCaseList();
+  updateSummary();
+}
+
+function selectAll() {
+  // Select only the currently visible (search-filtered) cases.
+  const search = (document.getElementById('search-box').value || '').toLowerCase().trim();
+  for (const v of state.vehicles) {
+    if (!search) {
+      state.selectedVehicleIds.add(v.id);
+      continue;
+    }
+    const caseNum = String(v.Case || '').toLowerCase();
+    const desc = [v.VehYear, v.VehMake, v.VehMod].filter(Boolean).join(' ').toLowerCase();
+    const customer = String(v.CustomerName || '').toLowerCase();
+    if (caseNum.includes(search) || desc.includes(search) || customer.includes(search)) {
+      state.selectedVehicleIds.add(v.id);
+    }
+  }
+  renderCaseList();
+  updateSummary();
+}
+
+function selectNone() {
+  state.selectedVehicleIds.clear();
+  renderCaseList();
+  updateSummary();
+}
+
+function updateSummary() {
+  let totalLetters = 0;
+  for (const vid of state.selectedVehicleIds) {
+    const owners = state.ownersByVehicle[vid] || [];
+    totalLetters += Math.max(owners.length, 1); // at least 1 letter even if 0 owners
+  }
+  document.getElementById('selected-count').textContent = state.selectedVehicleIds.size;
+  document.getElementById('letter-count').textContent = totalLetters;
+
+  document.getElementById('process-btn').disabled =
+    !state.templateUrl || state.selectedVehicleIds.size === 0;
+}
+
+// ============================================================
+// GRIST INTEGRATION
+// ============================================================
+
+/**
+ * Called when the user selects a row in Document_Templating.
+ * We read the template attachment from that row.
+ */
+async function handleRecordSelected(record, mappedColNamesToRealColNames) {
+  try {
+    const mapped = {};
+    if (mappedColNamesToRealColNames) {
+      for (const [mName, rName] of Object.entries(mappedColNamesToRealColNames)) {
+        if (rName in record) mapped[mName] = record[rName];
+      }
+    }
+
+    const info = document.getElementById('template-info');
+
+    if (mapped.attachment_id) {
+      state.templateUrl = await getAttachmentUrl(mapped.attachment_id);
+      const displayName = mapped.filename || mapped.template_name || 'Template loaded';
+      state.outputFileNameBase = mapped.filename || mapped.template_name || 'merged_letters';
+      info.textContent = displayName;
+      info.className = 'active';
+    } else {
+      state.templateUrl = null;
+      info.textContent = 'Select a template row to begin...';
+      info.className = '';
+    }
+
+    updateSummary();
+  } catch (err) {
+    setStatus('Error loading template: ' + err.message, true);
+  }
+}
+
+/**
+ * Fetch all Vehicles and Vehicle_Owners from Grist.
+ */
+async function loadData() {
+  try {
+    setStatus('Loading data from Grist...');
+
+    const [vehiclesRaw, ownersRaw] = await Promise.all([
+      grist.docApi.fetchTable('Vehicles'),
+      grist.docApi.fetchTable('Vehicle_Owners')
+    ]);
+
+    state.vehicles = columnarToRows(vehiclesRaw);
+    state.owners = columnarToRows(ownersRaw);
+
+    // Sort vehicles by Case number.
+    state.vehicles.sort((a, b) => String(a.Case || '').localeCompare(String(b.Case || '')));
+
+    // Index owners by their vehicle reference (Vehicle_Owners.Case is a reference → vehicle row ID).
+    state.ownersByVehicle = {};
+    for (const owner of state.owners) {
+      const vid = owner.Case;
+      if (!state.ownersByVehicle[vid]) state.ownersByVehicle[vid] = [];
+      state.ownersByVehicle[vid].push(owner);
+    }
+
+    renderCaseList();
+    updateSummary();
+    setStatus(`Loaded ${state.vehicles.length} cases and ${state.owners.length} owners.`);
+  } catch (err) {
+    setStatus('Error loading data: ' + err.message, true);
+    document.getElementById('case-list').innerHTML =
+      '<div class="list-message" style="color:#e53935;">Failed to load data. Make sure the widget has full document access.</div>';
+  }
+}
+
+// ============================================================
+// DOCUMENT GENERATION & MERGING
+// ============================================================
+
+/**
+ * Generate a single filled document. Returns a PizZip object.
+ */
+async function generateSingleDoc(templateContent, data) {
+  const options = {
+    paragraphLoop: true,
+    linebreaks: true,
+    delimiters: { start: '{', end: '}' },
+    nullGetter: function(part) {
+      if (!part.module) {
+        // Unknown placeholder → leave it visible so the user can spot it.
+        if ("value" in part) return '{' + part.value + '}';
+        return '';
+      }
+      return '';
+    },
+  };
+
+  // Angular expressions parser (e.g. for conditionals in templates).
+  if (typeof AngularExpressionsParser !== 'undefined') {
+    options.parser = AngularExpressionsParser;
+  }
+
+  // Image module (for inserting Grist attachment images).
+  if (typeof ImageModule !== 'undefined') {
+    options.modules = [new ImageModule({
+      centered: false,
+      getImage: async function(tagValue) {
+        const url = /^https?:\/\//.test(tagValue) ? tagValue : await getAttachmentUrl(tagValue);
+        return fetchBinary(url);
+      },
+      getSize: async function(img, tagValue) {
+        const url = /^https?:\/\//.test(tagValue) ? tagValue : await getAttachmentUrl(tagValue);
+        return new Promise((resolve, reject) => {
+          const i = new Image();
+          i.src = url;
+          i.onload = () => resolve([i.width, i.height]);
+          i.onerror = reject;
+        });
+      },
+    })];
+  }
+
+  const zip = new PizZip(templateContent);
+  const doc = new window.docxtemplater(zip, options);
+  await doc.renderAsync(data);
+  return doc.getZip();
+}
+
+/**
+ * Merge multiple PizZip documents into one, with page breaks between them.
+ * All documents must be based on the same template (same styles, fonts, etc.)
+ */
+function mergeDocuments(zips) {
+  if (zips.length === 0) return null;
+  if (zips.length === 1) return zips[0];
+
+  const baseZip = zips[0];
+  let baseXml = baseZip.file('word/document.xml').asText();
+
+  const PAGE_BREAK = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+
+  for (let i = 1; i < zips.length; i++) {
+    const addXml = zips[i].file('word/document.xml').asText();
+
+    // Extract body content from the additional document.
+    const bodyOpen = addXml.indexOf('<w:body');
+    if (bodyOpen === -1) continue;
+    const bodyOpenEnd = addXml.indexOf('>', bodyOpen) + 1;
+    const bodyClose = addXml.lastIndexOf('</w:body>');
+    if (bodyClose === -1) continue;
+    let bodyContent = addXml.substring(bodyOpenEnd, bodyClose);
+
+    // Strip the trailing <w:sectPr …>…</w:sectPr> from the extracted body
+    // (only the base document's sectPr should remain, at the very end).
+    const sectPrStart = bodyContent.lastIndexOf('<w:sectPr');
+    if (sectPrStart !== -1) {
+      bodyContent = bodyContent.substring(0, sectPrStart);
+    }
+
+    // Insert page break + body content into the base document,
+    // just before the base's final <w:sectPr>.
+    const baseSectPr = baseXml.lastIndexOf('<w:sectPr');
+    if (baseSectPr !== -1) {
+      baseXml = baseXml.substring(0, baseSectPr)
+              + PAGE_BREAK
+              + bodyContent
+              + baseXml.substring(baseSectPr);
+    } else {
+      // Fallback: insert before </w:body>.
+      baseXml = baseXml.replace('</w:body>', PAGE_BREAK + bodyContent + '</w:body>');
+    }
+  }
+
+  baseZip.file('word/document.xml', baseXml);
+  return baseZip;
+}
+
+/**
+ * Main processing function.
+ * Builds placeholder mappings → generates letters → merges → downloads.
+ */
+async function processAll() {
+  if (!state.templateUrl || state.selectedVehicleIds.size === 0) return;
+
+  const btn = document.getElementById('process-btn');
+  btn.disabled = true;
+  showProgress(true);
+  setProgress(0);
+
+  try {
+    // ---- Step 1: Fetch the template binary. ----
+    setStatus('Downloading template...');
+    const templateContent = await fetchBinary(state.templateUrl);
+
+    // ---- Step 2: Build placeholder mappings for every selected case + owner. ----
+    const allMappings = [];
+    for (const vid of state.selectedVehicleIds) {
+      const vehicle = state.vehicles.find(v => v.id === vid);
+      if (!vehicle) continue;
+
+      const owners = state.ownersByVehicle[vid] || [];
+      if (owners.length === 0) {
+        // No owners → one letter with just the vehicle/customer data.
+        allMappings.push(buildPlaceholderMapping(vehicle, null));
+      } else {
+        for (const owner of owners) {
+          allMappings.push(buildPlaceholderMapping(vehicle, owner));
+        }
+      }
+    }
+
+    if (allMappings.length === 0) {
+      setStatus('No letters to generate.', true);
+      btn.disabled = false;
+      showProgress(false);
+      return;
+    }
+
+    // ---- Step 3: Generate each letter from the template. ----
+    const generatedZips = [];
+    for (let i = 0; i < allMappings.length; i++) {
+      setStatus(`Generating letter ${i + 1} of ${allMappings.length}...`);
+      setProgress(Math.round(((i + 1) / allMappings.length) * 80));
+
+      try {
+        const zip = await generateSingleDoc(templateContent, allMappings[i]);
+        generatedZips.push(zip);
+      } catch (docErr) {
+        // Surface template errors to the user.
+        let msg = docErr.message || String(docErr);
+        if (docErr.properties && docErr.properties.errors) {
+          const first = docErr.properties.errors[0];
+          msg = first.properties && first.properties.explanation
+            ? first.properties.explanation
+            : first.message;
+        }
+        setStatus(`Error in letter ${i + 1}: ${msg}`, true);
+        btn.disabled = false;
+        showProgress(false);
+        return;
+      }
+
+      // Yield to the browser briefly so the UI stays responsive.
+      if (i % 10 === 9) await sleep(RENDER_DELAY_MS);
+    }
+
+    // ---- Step 4: Merge all letters into one file. ----
+    setStatus('Merging into one document...');
+    setProgress(90);
+    const merged = mergeDocuments(generatedZips);
+    if (!merged) {
+      setStatus('Error: nothing was generated.', true);
+      btn.disabled = false;
+      showProgress(false);
+      return;
+    }
+
+    // ---- Step 5: Download. ----
+    setProgress(100);
+    let filename = state.outputFileNameBase || 'merged_letters';
+    if (!filename.toLowerCase().endsWith('.docx')) filename += '.docx';
+
+    const blob = merged.generate({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      compression: 'DEFLATE',
+    });
+
+    saveAs(blob, filename);
+    setStatus(`Done! ${allMappings.length} letter(s) merged into "${filename}".`);
+  } catch (err) {
+    console.error('docxtemplater batch error:', err);
+    setStatus('Error: ' + (err.message || err), true);
+  } finally {
+    btn.disabled = false;
+    showProgress(false);
+    updateSummary();
+  }
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+ready(function() {
+  window.addEventListener('error', function(e) {
+    setStatus('Error: ' + (e.message || e), true);
+  });
+
   grist.ready({
-    // We require "full" mode in order to be allowed access to attachments.
-    requiredAccess: "full",
+    requiredAccess: 'full',
     columns: [
-      { name: ATTACHMENTID_COL_NAME, type: "Int", title: "Attachment ID", description: "ID number of a Grist attachment." },
-      { name: DATA_COL_NAME, type: "Any", strictType: true, title: "Placeholder Data", description: "Must be a dictionary of the form {placeholder_name: value_to_replace_by}, or a list of such dictionaries (one document will be generated per entry)." },
-      { name: FILENAME_COL_NAME, type: "Text,Choice", title: "Output File Name", description: "Name of the resulting file that will be offered for download. Should include the '.docx' extension. When multiple documents are generated, the owner name or a number will be appended." },
-      { name: USEANGULAR_COL_NAME, type: "Bool", optional: true, title: "Use Angular Parser?", description: "Whether to use the Angular expressions parser or not. The default is 'true'." },
-      { name: USEIMAGEMODULE_COL_NAME, type: "Bool", optional: true, title: "Use Image Module?", description: "Whether to use the image module (allows insertion of images from Grist attachments) or not. The default is 'true'." },
-      { name: DELIMITERSTART_COL_NAME, type: "Text,Choice", optional: true, title: "Custom Delimiter: Start", description: "Custom delimiter to use for the start of placeholders. The default is '{'." },
-      { name: DELIMITEREND_COL_NAME, type: "Text,Choice", optional: true, title: "Custom Delimiter: End", description: "Custom delimiter to use for the end of placeholders. The default is '}'." },
+      {
+        name: 'attachment_id',
+        type: 'Int',
+        title: 'Template Attachment ID',
+        description: 'ID number of the .docx template attachment in Grist.',
+      },
+      {
+        name: 'filename',
+        type: 'Text,Choice',
+        optional: true,
+        title: 'Output File Name',
+        description: 'Base filename for the merged output document.',
+      },
+      {
+        name: 'template_name',
+        type: 'Text,Choice',
+        optional: true,
+        title: 'Template Name',
+        description: 'Display name for the selected template (shown in the widget).',
+      },
     ],
   });
-  // Register callback for when the user selects a record in Grist.
-  grist.onRecord(gristRecordSelected);
-  // MODIFIED: The process button now checks whether data is a list (multiple docs) or a single dict.
-  document.querySelector("#button_process").addEventListener("click", function(){
-    setStatusMessage("Working...");
-    if (Array.isArray(currentData.data)) {
-      // Multiple mappings: generate one document per entry.
-      processMultipleFiles(currentData.url, currentData.data, currentData.outputFileName);
-    } else {
-      // Single mapping: original behavior.
-      processFile(currentData.url, currentData.data, currentData.outputFileName);
-    }
+
+  // When the user selects a row in Document_Templating, load the template.
+  grist.onRecord(handleRecordSelected);
+
+  // Fetch all vehicle + owner data right away.
+  loadData();
+
+  // Wire up UI controls.
+  document.getElementById('process-btn').addEventListener('click', processAll);
+  document.getElementById('search-box').addEventListener('input', () => renderCaseList());
+  document.getElementById('select-all').addEventListener('click', selectAll);
+  document.getElementById('select-none').addEventListener('click', selectNone);
+  document.getElementById('refresh-btn').addEventListener('click', () => {
+    state.selectedVehicleIds.clear();
+    loadData();
   });
-  document.querySelector("#button_status_reset").addEventListener("click", function(){
-    resetStatusMessage();
-  });
-  console.log("docxtemplater: Ready.");
+
+  console.log('docxtemplater batch mode: Ready.');
 });

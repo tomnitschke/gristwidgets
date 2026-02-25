@@ -11,20 +11,224 @@
     <script src="docxtemplater-image-module.js"></script>
     <script src="index.js"></script>
     <style>
-      #button_process {
-        width: 200pt;
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 12px;
+        font-size: 13px;
+        color: #333;
+        background: #fff;
       }
+
+      /* Step containers */
+      .step {
+        margin-bottom: 14px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .step-header {
+        background: #f5f5f5;
+        padding: 7px 12px;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #666;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .step-body { padding: 10px 12px; }
+
+      /* Template info */
+      #template-info { color: #999; font-style: italic; }
+      #template-info.active { color: #16b378; font-style: normal; font-weight: 500; }
+
+      /* Controls bar */
+      .controls { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      #search-box {
+        flex: 1;
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+      }
+      #search-box:focus { border-color: #16b378; }
+      .link-btn {
+        color: #16b378;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        user-select: none;
+      }
+      .link-btn:hover { text-decoration: underline; }
+      .separator { color: #ccc; }
+
+      /* Case list */
+      #case-list {
+        max-height: 350px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 4px;
+      }
+      .case-item {
+        display: flex;
+        align-items: center;
+        padding: 7px 10px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .case-item:last-child { border-bottom: none; }
+      .case-item:hover { background: #f8f8f8; }
+      .case-item.selected { background: #e8f5e9; }
+      .case-item input[type="checkbox"] { margin-right: 10px; flex-shrink: 0; }
+      .case-info { flex: 1; min-width: 0; }
+      .case-number { font-weight: 600; }
+      .case-desc { color: #777; font-size: 12px; margin-top: 1px; }
+      .owner-badge {
+        background: #f0f0f0;
+        color: #666;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        white-space: nowrap;
+        margin-left: 8px;
+        flex-shrink: 0;
+      }
+      .case-item.selected .owner-badge { background: #c8e6c9; color: #2e7d32; }
+      .list-message {
+        padding: 20px;
+        text-align: center;
+        color: #999;
+        font-style: italic;
+      }
+      .list-overflow {
+        padding: 8px;
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        font-style: italic;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      /* Summary */
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 13px;
+      }
+      .summary-row strong { color: #16b378; }
+
+      /* Process button */
+      #process-btn {
+        width: 100%;
+        padding: 10px;
+        background: #16b378;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+        transition: background 0.15s;
+      }
+      #process-btn:hover:not(:disabled) { background: #0f9d62; }
+      #process-btn:disabled { background: #ccc; cursor: default; }
+
+      /* Progress bar */
+      .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: #e0e0e0;
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: #16b378;
+        transition: width 0.3s;
+        width: 0%;
+      }
+      .hidden { display: none; }
+
+      /* Status bar */
       #status {
-        font-size: 8pt;
-        margin-top: 10pt;
-        font-weight: bold;
+        font-size: 12px;
+        color: #888;
+        margin-top: 8px;
+        min-height: 16px;
       }
+      #status.error { color: #e53935; font-weight: 500; }
+
+      /* Refresh button */
+      .refresh-btn {
+        color: #999;
+        cursor: pointer;
+        font-size: 11px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        padding: 2px 8px;
+        background: white;
+        transition: background 0.1s;
+      }
+      .refresh-btn:hover { background: #eee; color: #333; }
     </style>
   </head>
   <body>
-    <div id="content" style="display:none;">
-      <input id="button_process" type="button" value="Process!" />
+    <!-- STEP 1: Template Selection -->
+    <div class="step">
+      <div class="step-header">1. Template</div>
+      <div class="step-body">
+        <div id="template-info">Select a template row to begin...</div>
+      </div>
     </div>
-    <div id="status"><span id="status_message"></span><input type="button" id="button_status_reset" style="display:none;" value="OK" /></div>
+
+    <!-- STEP 2: Case Selection -->
+    <div class="step">
+      <div class="step-header">
+        2. Select Cases
+        <button class="refresh-btn" id="refresh-btn" title="Reload data from Grist">&#8635; Refresh</button>
+      </div>
+      <div class="step-body">
+        <div class="controls">
+          <input type="text" id="search-box" placeholder="Search by case number or vehicle...">
+          <span class="link-btn" id="select-all">All</span>
+          <span class="separator">&middot;</span>
+          <span class="link-btn" id="select-none">None</span>
+        </div>
+        <div id="case-list">
+          <div class="list-message">Loading cases...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Generate -->
+    <div class="step">
+      <div class="step-header">3. Generate</div>
+      <div class="step-body">
+        <div class="summary-row">
+          <span>Cases selected:</span>
+          <strong id="selected-count">0</strong>
+        </div>
+        <div class="summary-row">
+          <span>Letters to generate:</span>
+          <strong id="letter-count">0</strong>
+        </div>
+        <button id="process-btn" disabled>Process</button>
+        <div class="progress-bar hidden" id="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status"></div>
   </body>
 </html>
