@@ -42,7 +42,7 @@ class GristMonaco {
       requiredAccess: 'full',
       columns: [
         { name: 'content', title: 'Content', type: 'Text', strictType: true },
-        { name: 'columnRecord', title: 'Column Record', type: 'Any', optional: true, description: `Grist column record (from table '_grist_Tables_column'). If provided, the editor operates on this column's formula rather than the mapped 'Content' column.` },
+        { name: 'columnRecord', title: 'Column Record', type: 'Any', strictType: true, optional: true, description: `Record from table '_grist_Tables_column'. This must be provided by a formula column of type "Any". If provided, the editor operates on the targeted column's formula rather than the mapped 'Content' column.` },
         { name: 'codeLang', title: 'Language', type: 'Text', optional: true, description: `Used for syntax highlighting and autocompletions on the currently loaded content. Defaults to '${this.config.defaultCodeLang}' if not mapped.` },
         { name: 'isReadonly', title: 'Readonly', type: 'Bool', optional: true, description: `Boolean to indicate whether the editor should act as a readonly viewer for the currently loaded content.` },
         { name: 'additionMonacoConfigForRecord', title: 'Additional Monaco Config', type: 'Text', optional: true, description: `Optional config options for Monaco editor, as a JSON string. Options given here override those given in the widget config, if any. For available options, see https://microsoft.github.io/monaco-editor/docs.html#interfaces/editor.IStandaloneEditorConstructionOptions.html` },
