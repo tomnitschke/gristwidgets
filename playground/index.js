@@ -1,5 +1,4 @@
 import { Util } from '../sanegrist/util.mjs';
-//import { GristWidget } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/gristwidget.mjs';
 import { GristSectionAdapter } from '../sanegrist/grist-section-adapter.js';
 
 
@@ -67,12 +66,10 @@ class GristPlayground {
     this.#isContentFrameClearToLoad = false;
     this.initRPCMiddleware();
     this.adapter.onCursorMoved(() => {
-      //console.error("onCursorMoved",this);
       this.#wasLoadStarted = true;
       this.load();
     });
     this.adapter.onRecordsModified(() => {
-      //console.error("onRecordsModified",this);
       this.#wasLoadStarted = true;
       if (this.config.enableAutoreload) {
         this.load();
@@ -110,9 +107,7 @@ class GristPlayground {
   async initRPCMiddleware () {
     await grist.rpc.sendReadyMessage();
     grist.rpc.registerFunc('editOptions', () => {});
-    /*await this.init();*/
     window.addEventListener('message', (msg) => {
-      //if (!this.eContentFrame) { return; }
       if (msg.source === this.eContentWindow) {
         if (msg.data?.iface === 'CustomSectionAPI' && msg.data?.meth === 'configure') {
           msg.data.args ??= [{}];
@@ -128,7 +123,6 @@ class GristPlayground {
   }
   #onContentFrameLoaded() {
     if (!this.#isContentFrameClearToLoad) { return; }  // Ignore the 'onload' event from the initial 'about:blank' iframe.
-    //console.error("onContentFrameLoaded",this);
     const jsContent = this.adapter.getCursorField('playground_js');
     if (this.config.importGristThemeCSSVars) {
       this.eContentDocument.head.appendChild(
@@ -169,15 +163,14 @@ class GristPlayground {
     if (!this.#areMappingsReady) {
       /*
         The behaviour of sectionApi.configure() differs depending on whether any columns are already mapped.
-        a) If there aren't (i.e. if we're on a clean slate), Grist will simply stop sending messages until the user has created a mapping; then proceed to send an 'onRecords' with mappingsChanged = true.
-        b) If there are, but not all required columns are mapped, Grist will show the "Please map columns" page; then once the user has created all necessary mappings, the widget will reload completely.
+        a) If they aren't (i.e. if we're on a clean slate), Grist will simply stop sending messages until the user has created a mapping; then proceed to send an 'onRecords' with mappingsChanged = true.
+        b) If some but not all required columns are, Grist will show the "Please map columns" page; then once the user has created all necessary mappings, the widget will reload completely.
       */
       await grist.sectionApi.configure(this.adapter.readyPayload);
       this.eStatus.innerText = 'Column mappings missing or incomplete. Please map all required columns.';
       return;
     }
     this.eStatus.style.display = 'none';
-    //console.error("load!");
     await this.loadConfig();
     this.applyConfig();
     this.#isContentFrameClearToLoad = true;
@@ -202,10 +195,8 @@ class GristPlayground {
   async clearConfig() {
     if (!this.adapter.tableName) { return; }
     if (this.adapter.hasMapping('playground_config')) {
-                                                                                    //this.adapter.skipMessage('onRecord');
-                                                                                    //this.adapter.skipMessage('onRecords');
-                                                                                    this.adapter.skipEvent('recordsModified');
-                                                                                    await this.adapter.writeCursorField('playground_config', '{}');
+      this.adapter.skipEvent('recordsModified');
+      await this.adapter.writeCursorField('playground_config', '{}');
     }
   }
   async #onConfigItemChanged (eConfigItem) {
@@ -222,17 +213,13 @@ class GristPlayground {
     if (this.adapter.hasMapping('playground_config') && this.adapter.tableName) {
       this.userConfig[configKey] = value;
       this.applyConfig();
-                                                                                    //this.adapter.skipMessage('onRecord');
-                                                                                    //this.adapter.skipMessage('onRecords');
-                                                                                    this.adapter.skipEvent('recordsModified');
-                                                                                    await this.adapter.writeCursorField('playground_config', Util.jsonEncode(this.userConfig, '{}'));
+      this.adapter.skipEvent('recordsModified');
+      await this.adapter.writeCursorField('playground_config', Util.jsonEncode(this.userConfig, '{}'));
     }
-    ///await grist.setOption(configKey, value);
   }
   async #getConfigElements () {
     const elems = [];
     for (const [configKey, configValue] of Object.entries(this.config)) {
-      ///const storedValue = await grist.getOption(configKey);
       const storedValue = configKey in this.userConfig ? this.userConfig[configKey] : this.defaultConfig[configKey];
       const eInput = this.eConfigPanel.querySelector(`sl-input#config_${configKey}`);
       const eCheckbox = this.eConfigPanel.querySelector(`sl-checkbox#config_${configKey}`);
