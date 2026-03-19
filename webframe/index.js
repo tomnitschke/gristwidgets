@@ -57,7 +57,7 @@ class GristWebframe {
         this.eContentFrame.src = this.config.url;
       }
     } else {
-      const url = this.adapter.getCursorField(this.adapter.mappings.url);
+      const url = this.adapter.getCursorField("url");
       if (this.adapter.hasMapping("url") && url !== this.currentURL) {
         this.currentURL = url;
         this.eContentFrame.src = url;
