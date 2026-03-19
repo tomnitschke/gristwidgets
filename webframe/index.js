@@ -66,6 +66,7 @@ class GristWebframe {
   }
   async clear () {
     if (!this.config.url) {
+      this.currentURL = undefined;
       this.eContentFrame.src = "about:blank";
     }
   }
