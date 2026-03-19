@@ -127,5 +127,5 @@ class GristWebframe {
 }
 
 Util.onDOMReady(() => {
-  const gristPlayground = new GristPlayground();
+  const gristWebframe = new GristWebframe();
 });
