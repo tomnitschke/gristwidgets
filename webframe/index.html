@@ -2,10 +2,13 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="index.js"></script>
+    <script type="module" src="index.js"></script>
     <style>
-      html, body, #the_frame {
+      html, body, #content {
         height: 100%;
         width: 100%;
         padding: 0px;
@@ -13,12 +16,21 @@
         margin: 0px;
         overflow: hidden;
       }
-      #the_frame {
+      #content {
         display: block;
       }
     </style>
   </head>
   <body>
-    <iframe id="the_frame"></iframe>
+    <iframe id="content"></iframe>
+    <sl-dialog id="config" label="Config">
+      <div class="config-row">
+        <sl-checkbox class="configItem" id="config_url" size="small" help-text="">URL</sl-checkbox>
+      </div>
+      <sl-button-group slot="footer">
+        <sl-button id="configResetBtn" size="small">Reset</sl-button>
+        <sl-button size="small" variant="primary" onclick="document.querySelector('#config').hide();">Close</sl-button>
+      </sl-button-group>
+    </sl-dialog>
   </body>
 </html>
