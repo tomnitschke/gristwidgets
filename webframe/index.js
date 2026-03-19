@@ -56,9 +56,12 @@ class GristWebframe {
         this.currentURL = this.config.url;
         this.eContentFrame.src = this.config.url;
       }
-    } else if (this.adapter.hasMapping("url") && this.adapter.mappings.url !== this.currentURL) {
-      this.currentURL = this.adapter.mappings.url;
-      this.eContentFrame.src = this.adapter.mappings.url;
+    } else {
+      const url = this.adapter.getCursorField(this.adapter.mappings.url);
+      if (this.adapter.hasMapping("url") && url !== this.currentURL) {
+        this.currentURL = url;
+        this.eContentFrame.src = url;
+      }
     }
   }
   async clear () {
