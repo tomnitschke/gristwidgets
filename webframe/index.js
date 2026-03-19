@@ -15,6 +15,9 @@ class GristWebframe {
     };
     this.eContentFrame = document.querySelector('#content');
     this.eConfigPanel = document.querySelector('#config');
+      this.eConfigPanel.addEventListener('sl-hide', () => {
+        window.location.reload();
+      });
     this.eConfigResetBtn = document.querySelector('#configResetBtn');
     this.eConfigResetBtn.addEventListener('click', async () => {
         await grist.setOptions({});
