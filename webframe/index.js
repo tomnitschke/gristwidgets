@@ -4,6 +4,7 @@ import { GristSectionAdapter } from '../sanegrist/grist-section-adapter.js';
 
 const Config = {
   url: undefined,
+  html: undefined,
 };
 
 
@@ -31,6 +32,7 @@ class GristWebframe {
       requiredAccess: 'read table',
       columns: [
         { name: 'url', title: 'URL', type: 'Text', optional: true },
+        { name: 'html', title: 'Static HTML', type: 'Text', optional: true },
       ],
     });
     this.adapter.onInit(() => {
@@ -59,16 +61,18 @@ class GristWebframe {
         this.currentURL = this.config.url;
         this.eContentFrame.src = this.config.url;
       }
-    } else {
+    } else if (this.adapter.hasMapping("url")) {
       const url = this.adapter.getCursorField("url");
-      if (this.adapter.hasMapping("url") && url !== this.currentURL) {
+      if (url !== this.currentURL) {
         this.currentURL = url;
         this.eContentFrame.src = url;
       }
+    } else if (this.config.html) {
+      this.eContentFrame.srcdoc = this.config.html;
     }
   }
   async clear () {
-    if (!this.config.url) {
+    if (!this.config.url && !this.config.html) {
       this.currentURL = undefined;
       this.eContentFrame.src = "about:blank";
     }
