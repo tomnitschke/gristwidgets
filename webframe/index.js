@@ -54,7 +54,7 @@ class GristWebframe {
     this.adapter.onOptionsUpdated(async () => {
         this.applyConfig(this.adapter.options);
     });
-    this.load();
+    this.adapter._forceDispatchinitEvent();
   }
   
   async load () {
