@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css" />
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
-
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script type="module" src="index.js"></script>
     <style>
@@ -27,6 +26,9 @@
     <sl-dialog id="config" label="Config">
       <div class="config-row">
         <sl-input class="configItem" id="config_url" size="small" label="URL" placeholder=""></sl-input>
+      </div>
+      <div class="config-row">
+        <sl-textarea class="configItem" id="config_html" label="Static HTML"></sl-textarea>
       </div>
       <sl-button-group slot="footer">
         <sl-button id="configResetBtn" size="small">Reset</sl-button>
