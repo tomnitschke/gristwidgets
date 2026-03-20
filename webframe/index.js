@@ -54,7 +54,9 @@ class GristWebframe {
     this.adapter.onOptionsUpdated(async () => {
         this.applyConfig(this.adapter.options);
     });
+    this.load();
   }
+  
   async load () {
     if (this.config.url) {
       if (this.config.url !== this.currentURL) {
@@ -71,12 +73,14 @@ class GristWebframe {
       this.eContentFrame.srcdoc = this.config.html;
     }
   }
+  
   async clear () {
     if (!this.config.url && !this.config.html) {
       this.currentURL = undefined;
       this.eContentFrame.src = "about:blank";
     }
   }
+  
   async #onConfigItemChanged (eConfigItem) {
     const configKey = eConfigItem.id.slice(7);
     let value = eConfigItem.value;
@@ -90,6 +94,7 @@ class GristWebframe {
     }
     await grist.setOption(configKey, value);
   }
+  
   async #getConfigElements () {
     const elems = [];
     for (const [configKey, configValue] of Object.entries(this.config)) {
@@ -109,6 +114,7 @@ class GristWebframe {
     }
     return elems;
   }
+  
   async openConfigPanel () {
     this.eConfigPanel.show();
     for (const {elem, elemType, elemValue, storedValue, configKey, configValue} of await this.#getConfigElements()) {
@@ -129,6 +135,7 @@ class GristWebframe {
       }
     }
   }
+  
   applyConfig(configToApply) {
     this.config = {
         ...this.config,
