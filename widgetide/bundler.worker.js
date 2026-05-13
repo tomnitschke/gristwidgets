@@ -1,8 +1,9 @@
-const UNPKG_DOMAIN = "unpkg.com/";
-const ESBUILD_LIB_REMAINDER = "esbuild-wasm@0.25.0/lib/browser.js";
+// Protocol prefix added directly to tokens to ensure valid absolute URL generation
+const UNPKG_DOMAIN = "https://unpkg.com/";
+const ESBUILD_LIB_REMAINDER = "esbuild-wasm@0.25.0/esm/browser.js"; // Targeting explicit ESM build
 const ESBUILD_WASM_REMAINDER = "esbuild-wasm@0.25.0/esbuild.wasm";
 
-const ESMSH_DOMAIN = "esm.sh/";
+const ESMSH_DOMAIN = "https://esm.sh/";
 
 let esbuild = null;
 let esbuildInitialized = false;
@@ -53,7 +54,7 @@ self.onmessage = async (e) => {
     self.currentFiles = files;
 
     try {
-      // Lazy-load the ES module dynamically to comply with browser cross-origin worker security
+      // The browser will now successfully parse this as a valid network location
       if (!esbuild) {
         esbuild = await import(`${UNPKG_DOMAIN}${ESBUILD_LIB_REMAINDER}`);
       }
@@ -74,9 +75,8 @@ self.onmessage = async (e) => {
         define: { 'process.env.NODE_ENV': '"development"' }
       });
 
-      self.postMessage({ type: 'SUCCESS', code: result.outputFiles[0].text });
+      self.postMessage({ type: 'SUCCESS', code: result.outputFiles[0].text }); // Targeting the array explicitly
     } catch (err) {
-      // This will now catch both loading/initialization errors and compilation errors
       self.postMessage({ type: 'ERROR', message: err.message });
     }
   }
