@@ -1,5 +1,25 @@
 function onDOMReady (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }
 
+
+// Reusable 100% FOSS download helper using short-lived Memory Object URLs
+function triggerBrowserDownload(contentString, filename, contentType) {
+  const blob = new Blob([contentString], { type: contentType });
+  const temporaryUrl = URL.createObjectURL(blob);
+  
+  const dummyAnchor = document.createElement('a');
+  dummyAnchor.href = temporaryUrl;
+  dummyAnchor.download = filename; // Tells browser to save file locally instead of navigating to it
+  
+  document.body.appendChild(dummyAnchor);
+  dummyAnchor.click(); // Trigger native system save file interface
+  
+  // Clean up memory space
+  document.body.removeChild(dummyAnchor);
+  URL.revokeObjectURL(temporaryUrl);
+}
+
+
+
 onDOMReady(async () => {
   const bundlerWorker = new Worker('bundler.worker.js', { type: "module" });
   
@@ -28,12 +48,37 @@ onDOMReady(async () => {
   // Target elements
   const previewIframe = document.getElementById('preview');
   const runButton = document.getElementById('run-btn');
+  const downloadBundleBtn = document.getElementById('download-bundle-btn');
+
+  // Variable to store the latest compiled code string in memory
+  let lastCompiledCode = null;
   
   runButton.addEventListener('click', () => {
     runButton.disabled = true;
     runButton.textContent = 'Bundling...';
     bundlerWorker.postMessage({ type: 'BUNDLE', files: userFiles });
   });
+
+  // FEATURE 1: Download the complete, self-contained HTML/JS bundle application
+downloadBundleBtn.addEventListener('click', () => {
+  if (!lastCompiledCode) return;
+
+  // Build the complete standalone page skeleton structure
+  const standaloneHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exported Playground Application</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script>${lastCompiledCode}<\/script>
+</body>
+</html>`;
+
+  triggerBrowserDownload(standaloneHtml, 'index.html', 'text/html');
+});
   
   // Handle data returned back from our background compiler worker
   bundlerWorker.onmessage = (e) => {
@@ -43,6 +88,8 @@ onDOMReady(async () => {
   
     if (type === 'SUCCESS') {
       updatePreview(code);
+      lastCompiledCode = code;
+      downloadBundleBtn.disabled = false;  // Enable download button only if compilation succeeded
     } else if (type === 'ERROR') {
       console.error("Bundle Failed:", message);
       alert(`Compilation Error: ${message}`);
