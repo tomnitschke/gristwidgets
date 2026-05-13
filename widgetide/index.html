@@ -1,6 +1,16 @@
 <!DOCTYPE html><html><head>
   <script type="module" src="./index.js"></script>
+  <style>
+    .secondary-btn { background: #3c3c3c !important; color: #ccc !important; border: 1px solid #555 !important; }
+    .secondary-btn:hover { background: #4d4d4d !important; color: #fff !important; }
+    .secondary-btn:disabled { background: #2d2d2d !important; color: #666 !important; border-color: #333 !important; cursor: not-allowed; }
+  </style>
 </head><body>
-  <button id="run-btn">RUN</button>
+  <div id="controls">
+    <button id="run-btn">Run Code</button>
+    <!-- NEW: Export buttons -->
+    <button id="download-bundle-btn" class="secondary-btn" disabled>Download App Bundle</button>
+    <button id="export-source-btn" class="secondary-btn">Save Source Code</button>
+  </div>
   <iframe style="border:solid 2px red;" id="preview"></iframe>
 </body></html>
