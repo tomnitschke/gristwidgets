@@ -4,8 +4,8 @@ In your HTML head, use an importmap like this:
 <script type="importmap">
     {
       "imports": {
-        "react": "https://esm.sh/react@18.3.1",
-        "react-dom/client": "https://esm.sh/react-dom@18.3.1",
+        "react": "https://esm.sh/react@18.3.1",        //GristSectionAdapterReact is currently tested with React 18.3.1 but any more recent version should work. Older ones, too, probably.
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",    //This is not strictly needed. But if you do need it (for your own component or whatever), make sure the version is in sync with React's!
         "grist-section-adapter": "https://tomnitschke.github.io/gristwidgets/sanegrist/grist-section-adapter-react.js",
       }
     }
@@ -13,16 +13,26 @@ In your HTML head, use an importmap like this:
 
 Then for your react component, do this:
 
-import { GristSectionAdapterReact } from "grist-section-adapter-react";
+import { GristSectionAdapterReact } from "grist-section-adapter";
 function MyReactComponent() {
-    const gristSection = useGristSection({
+    const gristSectionState = useGristSection({    // This makes you component re-render whenever an event (e.g. "onCursorMoved") is fired by the section adapter.
         requiredAccess: "read table",    //or "full"
         columns: []    //your Grist column mappings, see the Grist docs: https://support.getgrist.com/code/modules/grist_plugin_api/#columnstomap
     });
-    //gristSection now holds the current state of the GristSectionAdapter. You can
-    //query gristSection.tableName, gristSection.cursor, and so on (see https://github.com/tomnitschke/gristwidgets/blob/main/sanegrist/grist-section-adapter.js),
-    //and additionally gristSection.isInited (becomes true once the section adapter's "onInit" event has fired)
-    //as well as gristSection.latestEvent (which holds the event that was last emitted from the section adapter, causing the most recent state update).
+    console.log(gristSectionState);
+    //gristSectionState now holds the current state of the GristSectionAdapter. You can
+    //query gristSectionState.tableName, gristSection.cursor, and so on (see https://github.com/tomnitschke/gristwidgets/blob/main/sanegrist/grist-section-adapter.js),
+    //and additionally gristSectionState.isInited (becomes true once the section adapter's "onInit" event has fired)
+    //as well as gristSectionState.latestEvent (which holds the event that was last emitted from the section adapter, causing the most recent state update).
+
+    //Finally, render your component (we're using htm[*] here instead of JSX because we don't want any stupid build steps!):
+    return html`
+        <pre>${JSON.stringify(gristSectionState, undefined, 2)}</pre>
+    `;
+
+    //[*] Here's how to set up htm, quick and dirty:
+    //import htm from 'https://esm.sh/htm?deps=react@18.3.1,react-dom@18.3.1';    //You could import this using the importmap, too, of course. But either way, make sure to keep these version numbers in sync with React's, above!
+    //const html = htm.bind(React.createElement);
 }
 */
 
