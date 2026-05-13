@@ -72,4 +72,4 @@ onDOMReady(async () => {
     const blob = new Blob([htmlTemplate], { type: 'text/html' });
     previewIframe.src = URL.createObjectURL(blob);
   }
-}
+});
