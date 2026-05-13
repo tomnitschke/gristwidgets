@@ -4,9 +4,7 @@ const ESBUILD_WASM_REMAINDER = "esbuild-wasm@0.25.0/esbuild.wasm";
 
 const ESMSH_DOMAIN = "esm.sh/";
 
-// Native ES Module import replaces classic importScripts
-import * as esbuild from `${UNPKG_DOMAIN}${ESBUILD_LIB_REMAINDER}`;
-
+let esbuild = null;
 let esbuildInitialized = false;
 
 const cdnResolverPlugin = {
@@ -54,15 +52,20 @@ self.onmessage = async (e) => {
   if (type === 'BUNDLE') {
     self.currentFiles = files;
 
-    if (!esbuildInitialized) {
-      await esbuild.initialize({
-        worker: false,
-        wasmURL: `${UNPKG_DOMAIN}${ESBUILD_WASM_REMAINDER}`
-      });
-      esbuildInitialized = true;
-    }
-
     try {
+      // Lazy-load the ES module dynamically to comply with browser cross-origin worker security
+      if (!esbuild) {
+        esbuild = await import(`${UNPKG_DOMAIN}${ESBUILD_LIB_REMAINDER}`);
+      }
+
+      if (!esbuildInitialized) {
+        await esbuild.initialize({
+          worker: false,
+          wasmURL: `${UNPKG_DOMAIN}${ESBUILD_WASM_REMAINDER}`
+        });
+        esbuildInitialized = true;
+      }
+
       const result = await esbuild.build({
         entryPoints: ['index.js'],
         bundle: true,
@@ -73,6 +76,7 @@ self.onmessage = async (e) => {
 
       self.postMessage({ type: 'SUCCESS', code: result.outputFiles[0].text });
     } catch (err) {
+      // This will now catch both loading/initialization errors and compilation errors
       self.postMessage({ type: 'ERROR', message: err.message });
     }
   }
