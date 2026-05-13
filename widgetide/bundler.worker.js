@@ -1,9 +1,8 @@
-// Protocol prefix added directly to tokens to ensure valid absolute URL generation
 const UNPKG_DOMAIN = "https://unpkg.com/";
-const ESBUILD_LIB_REMAINDER = "esbuild-wasm@0.25.0/esm/browser.js"; // Targeting explicit ESM build
+const ESBUILD_LIB_REMAINDER = "esbuild-wasm@0.25.0/esm/browser.js";
 const ESBUILD_WASM_REMAINDER = "esbuild-wasm@0.25.0/esbuild.wasm";
 
-const ESMSH_DOMAIN = "https://esm.sh/";
+const ESMSH_DOMAIN = "https://esm.sh"; // Retain protocol for clean parsing
 
 let esbuild = null;
 let esbuildInitialized = false;
@@ -11,25 +10,35 @@ let esbuildInitialized = false;
 const cdnResolverPlugin = {
   name: 'cdn-resolver',
   setup(build) {
+    // 1. Resolve local entry file
     build.onResolve({ filter: /^index\.js$/ }, () => ({ path: 'index.js', namespace: 'local' }));
 
+    // 2. Resolve relative imports inside local files (e.g. ./utils)
     build.onResolve({ filter: /^\.\.?\// }, (args) => ({
       path: new URL(args.path, 'http://local/' + args.importer).pathname.replace(/^\//, ''),
       namespace: 'local'
     }));
 
+    // 3. NEW: Catch root-relative CDN sub-dependencies (e.g. "/react@19...")
+    build.onResolve({ filter: /^\/[^/]/ }, (args) => {
+      return { path: `${ESMSH_DOMAIN}${args.path}`, namespace: 'cdn' };
+    });
+
+    // 4. Catch normal external package names (e.g. "react" or "canvas-confetti")
     build.onResolve({ filter: /^[^./]/ }, (args) => {
       if (args.importer.startsWith(ESMSH_DOMAIN)) {
         return { path: new URL(args.path, args.importer).toString(), namespace: 'cdn' };
       }
-      return { path: `${ESMSH_DOMAIN}${args.path}`, namespace: 'cdn' };
+      return { path: `${ESMSH_DOMAIN}/${args.path}`, namespace: 'cdn' };
     });
 
+    // Load code content for local files
     build.onLoad({ filter: /.*/, namespace: 'local' }, async (args) => {
       const files = self.currentFiles || { 'index.js': 'console.log("No input code provided")' };
       return { contents: files[args.path], loader: 'jsx' };
     });
 
+    // Load code content from external CDN
     build.onLoad({ filter: /.*/, namespace: 'cdn' }, async (args) => {
       try {
         const response = await fetch(args.path);
@@ -37,8 +46,8 @@ const cdnResolverPlugin = {
         
         return {
           contents: await response.text(),
-          loader: 'js',
-          resolveDir: new URL('.', args.path).toString()
+          loader: 'js'
+          // REMOVED: resolveDir. This stops esbuild from trying to run disk-checks in JS envs
         };
       } catch (err) {
         return { errors: [{ text: err.message }] };
@@ -54,7 +63,6 @@ self.onmessage = async (e) => {
     self.currentFiles = files;
 
     try {
-      // The browser will now successfully parse this as a valid network location
       if (!esbuild) {
         esbuild = await import(`${UNPKG_DOMAIN}${ESBUILD_LIB_REMAINDER}`);
       }
@@ -75,7 +83,7 @@ self.onmessage = async (e) => {
         define: { 'process.env.NODE_ENV': '"development"' }
       });
 
-      self.postMessage({ type: 'SUCCESS', code: result.outputFiles[0].text }); // Targeting the array explicitly
+      self.postMessage({ type: 'SUCCESS', code: result.outputFiles[0].text });
     } catch (err) {
       self.postMessage({ type: 'ERROR', message: err.message });
     }
