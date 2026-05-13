@@ -1,7 +1,7 @@
 function onDOMReady (fn) { if (document.readyState !== "loading") { fn(); } else { document.addEventListener("DOMContentLoaded", fn); } }
 
 onDOMReady(async () => {
-  const bundlerWorker = new Worker('bundler.worker.js');
+  const bundlerWorker = new Worker('bundler.worker.js', { type: "module" });
   
   // Simulated user editor input (e.g., from an input textarea or CodeMirror instance)
   const userFiles = {
