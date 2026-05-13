@@ -1,3 +1,31 @@
+/* Usage:
+In your HTML head, use an importmap like this:
+
+<script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1",
+        "grist-section-adapter": "https://tomnitschke.github.io/gristwidgets/sanegrist/grist-section-adapter-react.js",
+      }
+    }
+</script>
+
+Then for your react component, do this:
+
+import { GristSectionAdapterReact } from "grist-section-adapter-react";
+function MyReactComponent() {
+    const gristSection = useGristSection({
+        requiredAccess: "read table",    //or "full"
+        columns: []    //your Grist column mappings, see the Grist docs: https://support.getgrist.com/code/modules/grist_plugin_api/#columnstomap
+    });
+    //gristSection now holds the current state of the GristSectionAdapter. You can
+    //query gristSection.tableName, gristSection.cursor, and so on (see https://github.com/tomnitschke/gristwidgets/blob/main/sanegrist/grist-section-adapter.js),
+    //and additionally gristSection.isInited (becomes true once the section adapter's "onInit" event has fired)
+    //as well as gristSection.latestEvent (which holds the event that was last emitted from the section adapter, causing the most recent state update).
+}
+*/
+
 import React from "react";
 
 import { GristSectionAdapter } from 'https://tomnitschke.github.io/gristwidgets/sanegrist/grist-section-adapter.js';
