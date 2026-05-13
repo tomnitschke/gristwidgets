@@ -1,43 +1,36 @@
-const UNPKG_DOMAIN = "unpkg.com";
+const UNPKG_DOMAIN = "unpkg.com/";
 const ESBUILD_LIB_REMAINDER = "esbuild-wasm@0.25.0/lib/browser.js";
 const ESBUILD_WASM_REMAINDER = "esbuild-wasm@0.25.0/esbuild.wasm";
 
-const ESMSH_DOMAIN = "esm.sh";
+const ESMSH_DOMAIN = "esm.sh/";
 
-// Injecting the main library
-importScripts(UNPKG_DOMAIN + ESBUILD_LIB_REMAINDER);
+// Native ES Module import replaces classic importScripts
+import * as esbuild from `${UNPKG_DOMAIN}${ESBUILD_LIB_REMAINDER}`;
 
 let esbuildInitialized = false;
 
 const cdnResolverPlugin = {
   name: 'cdn-resolver',
   setup(build) {
-    // 1. Entry File Resolution
     build.onResolve({ filter: /^index\.js$/ }, () => ({ path: 'index.js', namespace: 'local' }));
 
-    // 2. Relative Project Imports
     build.onResolve({ filter: /^\.\.?\// }, (args) => ({
       path: new URL(args.path, 'http://local/' + args.importer).pathname.replace(/^\//, ''),
       namespace: 'local'
     }));
 
-    // 3. Bare NPM Package Imports
     build.onResolve({ filter: /^[^./]/ }, (args) => {
-      // If the dependency was requested by an existing file already on esm.sh
       if (args.importer.startsWith(ESMSH_DOMAIN)) {
         return { path: new URL(args.path, args.importer).toString(), namespace: 'cdn' };
       }
-      // Top-level dependency requested by your user
-      return { path: ESMSH_DOMAIN + args.path, namespace: 'cdn' };
+      return { path: `${ESMSH_DOMAIN}${args.path}`, namespace: 'cdn' };
     });
 
-    // Load Local Modules
     build.onLoad({ filter: /.*/, namespace: 'local' }, async (args) => {
       const files = self.currentFiles || { 'index.js': 'console.log("No input code provided")' };
       return { contents: files[args.path], loader: 'jsx' };
     });
 
-    // Fetch NPM Code Modules Over Network
     build.onLoad({ filter: /.*/, namespace: 'cdn' }, async (args) => {
       try {
         const response = await fetch(args.path);
@@ -64,8 +57,7 @@ self.onmessage = async (e) => {
     if (!esbuildInitialized) {
       await esbuild.initialize({
         worker: false,
-        // Assembling the complete binary path from the distinct tokens
-        wasmURL: UNPKG_DOMAIN + ESBUILD_WASM_REMAINDER
+        wasmURL: `${UNPKG_DOMAIN}${ESBUILD_WASM_REMAINDER}`
       });
       esbuildInitialized = true;
     }
