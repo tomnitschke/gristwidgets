@@ -13,13 +13,24 @@ const cdnResolverPlugin = {
     // 1. Resolve local entry file
     build.onResolve({ filter: /^index\.js$/ }, () => ({ path: 'index.js', namespace: 'local' }));
 
-    // 2. Resolve relative imports inside local files (e.g. ./utils)
-    build.onResolve({ filter: /^\.\.?\// }, (args) => ({
-      path: new URL(args.path, 'http://local/' + args.importer).pathname.replace(/^\//, ''),
-      namespace: 'local'
-    }));
+    // 2. FIXED: Resolve relative imports (./ or ../)
+    build.onResolve({ filter: /^\.\.?\// }, (args) => {
+      // If the file requesting this relative asset is a CDN file, resolve it as a CDN url
+      if (args.importer.startsWith('http://') || args.importer.startsWith('https://')) {
+        return {
+          path: new URL(args.path, args.importer).toString(),
+          namespace: 'cdn'
+        };
+      }
+      
+      // Otherwise, it's a relative import inside the user's local code editor
+      return {
+        path: new URL(args.path, 'http://local/' + args.importer).pathname.replace(/^\//, ''),
+        namespace: 'local'
+      };
+    });
 
-    // 3. NEW: Catch root-relative CDN sub-dependencies (e.g. "/react@19...")
+    // 3. Catch root-relative CDN sub-dependencies (e.g. "/react@19...")
     build.onResolve({ filter: /^\/[^/]/ }, (args) => {
       return { path: `${ESMSH_DOMAIN}${args.path}`, namespace: 'cdn' };
     });
@@ -47,7 +58,6 @@ const cdnResolverPlugin = {
         return {
           contents: await response.text(),
           loader: 'js'
-          // REMOVED: resolveDir. This stops esbuild from trying to run disk-checks in JS envs
         };
       } catch (err) {
         return { errors: [{ text: err.message }] };
