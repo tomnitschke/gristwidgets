@@ -81,16 +81,21 @@ class GristSectionAdapterReactBridge {
     }
 }
 
-const gristSectionAdapterReactBridge = new GristSectionAdapterReactBridge({
-    requiredAccess: config.requiredAccess ?? undefined,
-    columns: config.columns ?? undefined,
-});
+const GlobalState = {
+    gristSectionAdapterReactBridge: undefined,
+};
 
 export function useGristSection(config = {}) {
+    if (!GlobalState.gristSectionAdapterReactBridge) {
+        GlobalState.gristSectionAdapterReactBridge = new GristSectionAdapterReactBridge({
+            requiredAccess: config.requiredAccess ?? undefined,
+            columns: config.columns ?? undefined,
+        });
+    }
     /*const [gristSectionAdapterReactBridge] = React.useState(() => new GristSectionAdapterReactBridge({  //NB we're using useState() merely to ensure react runs this stuff exactly once and then keeps it. The result is not really a "state".
         requiredAccess: config.requiredAccess ?? undefined,
         columns: config.columns ?? undefined,
     }));*/
-    const xGristSectionState = React.useSyncExternalStore(gristSectionAdapterReactBridge.subscribe, gristSectionAdapterReactBridge.getSnapshot);
+    const xGristSectionState = React.useSyncExternalStore(GlobalState.gristSectionAdapterReactBridge.subscribe, GlobalState.gristSectionAdapterReactBridge.getSnapshot);
     return xGristSectionState;
 }
