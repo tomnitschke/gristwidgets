@@ -61,6 +61,24 @@ class GristSectionAdapterReactBridge {
     }
     _makeState(overrides) {
         return {
+            sectionAdapter: this.sectionAdapter,
+            gristApi: this.sectionAdapter.gristApi,
+            /*api: {
+                hasMapping: this.sectionAdapter.hasMapping.bind(this),
+                skipMessage: this.sectionAdapter.skipMessage.bind(this),
+                skipEvent: this.sectionAdapter.skipEvent.bind(this),
+                getRecordField: this.sectionAdapter.getRecordField.bind(this),
+                getCursorField: this.sectionAdapter.getCursorField.bind(this),
+                writeRecord: this.sectionAdapter.writeRecord.bind(this),
+                writeCursor: this.sectionAdapter.writeCursor.bind(this),
+                writeCursorField: this.sectionAdapter.writeCursorField.bind(this),
+                scheduleRecordOperation: this.sectionAdapter.scheduleRecordOperation.bind(this),
+                removeRecordOperation: this.sectionAdapter.removeRecordOperation.bind(this),
+                runRecordOperations: this.sectionAdapter.runRecordOperations.bind(this),
+                scheduleWriteRecord: this.sectionAdapter.scheduleWriteRecord.bind(this),
+                scheduleWriteCursor: this.sectionAdapter.scheduleWriteCursor.bind(this),
+                scheduleWriteCursorField: this.sectionAdapter.scheduleWriteCursorField.bind(this),
+            },*/
             tableName: this.sectionAdapter.tableName,
             cursor: this.sectionAdapter.cursor,
             ...overrides,
