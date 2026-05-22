@@ -21,11 +21,13 @@ function MyReactComponent() {
     });
     console.log(gristSectionState);
     //gristSectionState now holds the current state of the GristSectionAdapter. You can
-    //query gristSectionState.tableName, gristSection.cursor, and so on (see https://github.com/tomnitschke/gristwidgets/blob/main/sanegrist/grist-section-adapter.js),
+    //query gristSectionState.api.tableName, gristSection.api.cursor, and so on (see https://github.com/tomnitschke/gristwidgets/blob/main/sanegrist/grist-section-adapter.js),
     //and additionally gristSectionState.isInited (becomes true once the section adapter's "onInit" event has fired)
-    //as well as gristSectionState.latestEvent (which holds the event that was last emitted from the section adapter, causing the most recent state update).
+    //as well as gristSectionState.latestEvent (which holds the event that was last emitted from the section adapter, causing the most recent state update),
+    //gristSectionState.latestStateChange (a Date object reflecting the time the state of the section adapter was last modified),
+    //and, finally, the raw grist plugin api via gristSectionState.gristApi.
 
-    //Finally, render your component (we're using htm[*] here instead of JSX because we don't want any stupid build steps!):
+    //Render your component (we're using htm[*] here instead of JSX because we don't want any stupid build steps!):
     return html`
         <pre>${JSON.stringify(gristSectionState, undefined, 2)}</pre>
     `;
@@ -61,7 +63,8 @@ class GristSectionAdapterReactBridge {
     }
     _makeState(overrides) {
         return {
-            sectionAdapter: this.sectionAdapter,
+            latestStateChange: new Date(),
+            api: this.sectionAdapter,
             gristApi: this.sectionAdapter.gristApi,
             /*api: {
                 hasMapping: this.sectionAdapter.hasMapping.bind(this),
@@ -79,8 +82,8 @@ class GristSectionAdapterReactBridge {
                 scheduleWriteCursor: this.sectionAdapter.scheduleWriteCursor.bind(this),
                 scheduleWriteCursorField: this.sectionAdapter.scheduleWriteCursorField.bind(this),
             },*/
-            tableName: this.sectionAdapter.tableName,
-            cursor: this.sectionAdapter.cursor,
+            /*tableName: this.sectionAdapter.tableName,
+            cursor: this.sectionAdapter.cursor,*/
             ...overrides,
         }
     }
