@@ -99,7 +99,8 @@ export class GristSectionAdapter extends EventTarget {
       interactionOptionsUpdated: 0,
       optionsEditorRequested: 0,
     };
-    grist.onRecord((record, mappings) => {
+    this.gristApi = window.grist;
+    this.gristApi.onRecord((record, mappings) => {
       if (this.#skipMessages.onRecord) {
         this.#skipMessages.onRecord--;
         return;
@@ -108,7 +109,7 @@ export class GristSectionAdapter extends EventTarget {
       this.#onUpdateMappings(mappings);
       this.#maybeDispatchInit();
     });
-    grist.onRecords((records, mappings) => {
+    this.gristApi.onRecords((records, mappings) => {
       if (this.#skipMessages.onRecords) {
         this.#skipMessages.onRecords--;
         return;
@@ -117,7 +118,7 @@ export class GristSectionAdapter extends EventTarget {
       this.#onUpdateMappings(mappings);
       this.#maybeDispatchInit();
     });
-    grist.onNewRecord((mappings) => {
+    this.gristApi.onNewRecord((mappings) => {
       if (this.#skipMessages.onNewRecord) {
         this.#skipMessages.onNewRecord--;
         return;
@@ -129,7 +130,7 @@ export class GristSectionAdapter extends EventTarget {
         this.dispatchEvent(new CursorMovedToNewEvent());
       }
     });
-    grist.onOptions((options, interactionOptions) => {
+    this.gristApi.onOptions((options, interactionOptions) => {
       if (this.#skipMessages.onOptions) {
         this.#skipMessages.onOptions--;
         return;
@@ -139,7 +140,7 @@ export class GristSectionAdapter extends EventTarget {
       this.#maybeDispatchInit();
     });
     if (this.config.doSendReadyMessage) {
-      grist.ready({
+      this.gristApi.ready({
         onEditOptions: () => {
           this.#maybeDispatchInit();
           this.#dispatch(new OptionsEditorRequestedEvent());
@@ -166,10 +167,10 @@ export class GristSectionAdapter extends EventTarget {
     clearTimeout(this.#initEventTimeoutHandle);
     if (!this.tableName && !this.#isFetchingTableName) {
       this.#isFetchingTableName = true;
-      grist.getSelectedTableId().then((tableName) => {
+      this.gristApi.getSelectedTableId().then((tableName) => {
         this.#isFetchingTableName = false;
         this.tableName = tableName;
-        this.tableOps = grist.getTable();
+        this.tableOps = this.gristApi.getTable();
       });
     }
     if (doForce || this.#mayDispatchInitEvent) {
