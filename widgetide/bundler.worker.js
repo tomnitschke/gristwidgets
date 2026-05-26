@@ -91,7 +91,8 @@ self.onmessage = async (e) => {
         bundle: true,
         write: false,
         plugins: [cdnResolverPlugin],
-        define: { 'process.env.NODE_ENV': '"development"' }
+        define: { 'process.env.NODE_ENV': '"development"' },
+        minify: true,
       });
 
       self.postMessage({ type: 'SUCCESS', code: result.outputFiles[0].text });
