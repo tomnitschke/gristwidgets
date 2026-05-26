@@ -87,6 +87,7 @@ self.onmessage = async (e) => {
 
       const result = await esbuild.build({
         entryPoints: ['index.js'],
+        format: "esm",
         bundle: true,
         write: false,
         plugins: [cdnResolverPlugin],
