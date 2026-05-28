@@ -219,8 +219,8 @@ export class GristSectionAdapter extends EventTarget {
           if (this.cursor) {
             this.cursor = this.records.find((rec) => rec.id === this.cursor.id);
           }
-          this.#dispatch(new RecordsModifiedEvent());
-          //this.dispatchEvent(new RecordsModifiedEvent(delta));
+          //this.#dispatch(new RecordsModifiedEvent());
+          this.#dispatch(new RecordsModifiedEvent(delta));
         }
       }
   }
